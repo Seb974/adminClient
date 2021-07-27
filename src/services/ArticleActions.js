@@ -27,8 +27,9 @@ function create(article) {
 function createImage(image) {
     let formData = new FormData();
     formData.append('file', image);
+    formData.append('instance', 'Article');
     return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
-               .then(response => response.data);
+              .then(response => response.data);
 }
 
 export default {

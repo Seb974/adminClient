@@ -93,7 +93,7 @@ const Article = ({ match, history }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const articleWithImage = await getArticleWithImage();
-        const articleToWrite = {...articleWithImage, content: text};
+        const articleToWrite = {...articleWithImage, content: text, image: typeof articleWithImage.image === 'string' ? articleWithImage.image : articleWithImage.image['@id']};
         const request = !editing ? ArticleActions.create(articleToWrite) : ArticleActions.update(id, articleToWrite);
         request
             .then(response => {
@@ -165,7 +165,7 @@ const Article = ({ match, history }) => {
                                     </CFormGroup>
                                 </CCol>
                             </CRow>
-                            <Image entity={ article } setEntity={ setArticle } />
+                            <Image entity={ article } setEntity={ setArticle } isLandscape={ true } sizes="750 x 440"/>
                             <CFormGroup row className="mb-4">
                                 <CCol xs="12" md="12">
                                     <CLabel htmlFor="textarea-input">Résumé</CLabel>

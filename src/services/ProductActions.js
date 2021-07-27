@@ -36,6 +36,7 @@ function deleteFromMercure(products, id) {
 function createImage(image) {
     let formData = new FormData();
     formData.append('file', image);
+    formData.append('instance', "Product");
     return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
               .then(response => response.data['@id']);
 }

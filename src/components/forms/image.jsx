@@ -1,14 +1,14 @@
 import React from 'react';
 import { CCol, CFormGroup, CInputFile, CLabel } from '@coreui/react';
 
-const Image = ({ entity, setEntity }) => {
+const Image = ({ entity, setEntity, isLandscape = false, sizes = "" }) => {
 
     const handleImageChange = ({ currentTarget }) => setEntity({...entity, image: currentTarget.files[0]});
 
     return (
         <>
             <CFormGroup row className="ml-1 mt-4 mb-0">
-                <CLabel>Image</CLabel>
+                <CLabel>Image <small className="ml-2"><i>{ isLandscape ? "Paysage" : "Portrait" } { sizes }</i></small></CLabel>
             </CFormGroup>
             <CFormGroup row className="ml-1 mr-1 mt-0 mb-3">
                 <CCol xs="12" md="12">

@@ -114,7 +114,7 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                     </CFormGroup>
                 </CCol>
             </CRow>
-            <Image entity={ product } setEntity={ setProduct } />
+            <Image entity={ product } setEntity={ setProduct } isLandscape={ false } sizes="600 x 800"/>
             <CRow className="mb-3">
                 <CCol xs="12" sm="12">
                     <Select name="seller" label="Vendeur" value={ isDefined(product.seller) ? product.seller.id : 0 } error={ errors.seller } onChange={ handleSellerChange } required={ true }>
