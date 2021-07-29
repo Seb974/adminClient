@@ -36,6 +36,20 @@ function getNav(translation, currentUser)
     !["ADMIN"].includes(mainRole) ? voidValue : 
       {
         _tag: 'CSidebarNavItem',
+        name: translation("homepages.label"),
+        to: '/components/homepages',
+        icon: 'cil-view-quilt',
+      },
+    !["ADMIN"].includes(mainRole) ? voidValue : 
+      {
+        _tag: 'CSidebarNavItem',
+        name: translation("heroes.label"),
+        to: '/components/heroes',
+        icon: 'cil-wallpaper',
+      },
+    !["ADMIN"].includes(mainRole) ? voidValue : 
+      {
+        _tag: 'CSidebarNavItem',
         name: translation("colors.label"),
         to: '/theme/colors',
         icon: 'cil-drop',

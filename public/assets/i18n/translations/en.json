@@ -48,5 +48,7 @@
     "accounting.label": "Accounting",
     "billing.label": "Biling",
     "bills.label": "Bills",
-    "articles.label": "Articles"
+    "articles.label": "Articles",
+    "homepages.label": "Homepages",
+    "heroes.label": "Heroes"
 }

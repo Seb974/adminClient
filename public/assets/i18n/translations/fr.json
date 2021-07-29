@@ -48,5 +48,7 @@
     "accounting.label": "Comptabilité",
     "billing.label": "Facturation",
     "bills.label": "Factures",
-    "articles.label": "Articles"
+    "articles.label": "Articles",
+    "homepages.label": "Pages d'accueil",
+    "heroes.label": "Héros"
 }
