@@ -24,10 +24,19 @@ function create(banner) {
     return api.post('/api/banners', {...banner});
 }
 
+function createImage(image, homepageName, bannerNumber, main) {
+    let formData = new FormData();
+    formData.append('file', image);
+    formData.append('instance', 'BANNER-' + homepageName.replaceAll(' ', '_').toUpperCase() + '-' + bannerNumber + (main ? '-MAIN' : ''));
+    return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
+              .then(response => response.data);
+}
+
 export default { 
     findAll,
     delete: deleteBanner,
     find,
     update,
-    create
+    create,
+    createImage
 }

@@ -27,7 +27,7 @@ function create(hero) {
 function createImage(image, homepageName) {
     let formData = new FormData();
     formData.append('file', image);
-    formData.append('instance', 'HERO-' + homepageName.replace(' ', '_').toUpperCase());
+    formData.append('instance', 'HERO-' + homepageName.replaceAll(' ', '_').toUpperCase());
     return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
               .then(response => response.data);
 }

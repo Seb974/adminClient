@@ -32,6 +32,8 @@ const Homepages = React.lazy(() => import('./views/components/homepages/homepage
 const Homepage = React.lazy(() => import('./views/components/homepages/homepage'));
 const Heroes = React.lazy(() => import('./views/components/heroes/heroes'));
 const Hero = React.lazy(() => import('./views/components/heroes/hero'));
+const Banners = React.lazy(() => import('./views/components/banners/banners'));
+const Banner = React.lazy(() => import('./views/components/banners/banner'));
 const Relaypoints = React.lazy(() => import('./views/components/relaypoints/relaypoints'));
 const Relaypoint = React.lazy(() => import('./views/components/relaypoints/relaypoint'));
 const Preparations = React.lazy(() => import('./views/components/preparations/preparations'));
@@ -144,6 +146,8 @@ const routes = [
   { path: '/components/homepages', name: 'Homepages', component: Homepages },
   { path: '/components/heroes/:id', name: 'Hero', component: Hero },
   { path: '/components/heroes', name: 'Heroes', component: Heroes },
+  { path: '/components/banners/:id', name: 'Banner', component: Banner },
+  { path: '/components/banners', name: 'Banners', component: Banners },
   { path: '/components/relaypoints/:id', name: 'Relaypoint', component: Relaypoint },
   { path: '/components/relaypoints', name: 'Relaypoints', component: Relaypoints },
   { path: '/components/orders/:id', name: 'Order', component: Order },

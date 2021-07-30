@@ -50,6 +50,13 @@ function getNav(translation, currentUser)
     !["ADMIN"].includes(mainRole) ? voidValue : 
       {
         _tag: 'CSidebarNavItem',
+        name: translation("banners.label"),
+        to: '/components/banners',
+        icon: 'cil-star',
+      },
+    !["ADMIN"].includes(mainRole) ? voidValue : 
+      {
+        _tag: 'CSidebarNavItem',
         name: translation("colors.label"),
         to: '/theme/colors',
         icon: 'cil-drop',

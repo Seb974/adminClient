@@ -124,6 +124,14 @@ const Hero = ({ match, history }) => {
                                     </Select>
                                 </CCol>
                                 <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <Select className="mr-2" name="product" label="Produit associé" onChange={ handleProductChange } value={ isDefined(hero.product) ? hero.product.id : -1 }>
+                                        <option value={ -1 }>Aucun</option>
+                                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
+                                    </Select>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
                                     <CFormGroup>
                                         <CLabel htmlFor="title">Titre</CLabel>
                                         <CInput
@@ -137,8 +145,6 @@ const Hero = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.title }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                            </CRow>
-                            <CRow>
                                 <CCol xs="12" sm="12" md="6" className="mt-4">
                                     <CFormGroup>
                                         <CLabel htmlFor="title">Sous-titre</CLabel>
@@ -153,16 +159,10 @@ const Hero = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.subtitle }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" sm="12" md="6" className="mt-4">
-                                    <Image entity={ hero } setEntity={ setHero } isLandscape={ true }/>
-                                </CCol>
                             </CRow>
                             <CRow>
-                                <CCol xs="12" sm="12" md="6" className="mt-4">
-                                    <Select className="mr-2" name="product" label="Produit associé" onChange={ handleProductChange } value={ isDefined(hero.product) ? hero.product.id : -1 }>
-                                        <option value={ -1 }>Aucun</option>
-                                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                                    </Select>
+                                <CCol xs="12" sm="12" md="6">
+                                    <Image entity={ hero } setEntity={ setHero } isLandscape={ true }/>
                                 </CCol>
                             </CRow>
                             <CRow className="mt-4 d-flex justify-content-center">

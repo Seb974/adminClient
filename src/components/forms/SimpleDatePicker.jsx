@@ -18,7 +18,7 @@ const SimpleDatePicker = ({selectedDate, minDate = new Date(), onDateChange, lab
                     minDate: minDate,
                     dateFormat: "d/m/Y",
                     locale: French,
-                    disable: [ date => date.getDay() === 0]
+                    disable: [ date => date.getDay() === 0 ]
                 }}
             />
         </>
