@@ -43,14 +43,16 @@ const SalesStats = () => {
     }, [sales, products]);
 
     const fetchSales = () => {
-        OrderActions
-            .findStatusBetween(getUTCDates(), status, currentUser)
-            .then(response => {
-                const ownSales = Roles.isSeller(currentUser) && isDefined(seller) ?
-                                 response.map(o => ({...o, items: o.items.filter(i => i.product.seller.id === seller.id)})) :
-                                 response ;
-                setSales(ownSales.filter(o => isDefinedAndNotVoid(o.items)));
-            });
+        if (isDefined(currentUser)) {
+            OrderActions
+                .findStatusBetween(getUTCDates(), status, currentUser)
+                .then(response => {
+                    const ownSales = Roles.isSeller(currentUser) && isDefined(seller) ?
+                                     response.map(o => ({...o, items: o.items.filter(i => i.product.seller.id === seller.id)})) :
+                                     response ;
+                    setSales(ownSales.filter(o => isDefinedAndNotVoid(o.items)));
+                });
+        }
     };
 
     const handleDateChange = datetime => {

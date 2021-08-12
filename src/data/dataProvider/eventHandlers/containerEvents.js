@@ -9,7 +9,6 @@ export const updateContainers = (containers, setContainers, data, setData) => {
                             getUpdatedContainers(entity, updatedContainers);
         return {...entity, treated: true};
     });
-    console.log(updatedContainers);
     setContainers(updatedContainers);
     setData(newData.filter(d => !isDefined(d.treated)));
 

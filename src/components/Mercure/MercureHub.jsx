@@ -23,6 +23,7 @@ const MercureHub = ({ children }) => {
         url.searchParams.append('topic', api.API_DOMAIN + '/api/provisions/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/categories/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/containers/{id}');
+        url.searchParams.append('topic', api.API_DOMAIN + '/api/catalog_prices/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/tourings/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/users/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/users/{id}/metas');
@@ -41,7 +42,7 @@ const MercureHub = ({ children }) => {
         if (data['@id'].includes('tourings'))
             touringEvents.update(data, tourings, setTourings);
 
-        if (data['@id'].includes('containers'))
+        if (data['@id'].includes('containers') || data['@id'].includes('catalog_prices'))
             setUpdatedContainers([...updatedContainers, data]);
 
         if (data['@id'].includes('provisions'))

@@ -33,4 +33,4 @@ const updateLinkedProductsIfNeeded = (id, entity, products, setProducts) => {
         });
         setProducts(updatedProducts);
     }
-}
+};

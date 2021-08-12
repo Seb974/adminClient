@@ -31,7 +31,7 @@ function findBetween(dates, sellers) {
         .then(response => {
             return response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
         });
-}
+};
 
 
 function deleteProvision(id) {
@@ -69,7 +69,8 @@ function getSellersList(sellers) {
     let sellersList = "";
     sellers.map((s, i) => {
         const separator = i < sellers.length - 1 ? "&" : "";
-        sellersList += "seller[]=" + s.value + separator;
+        const value = ('value' in s) ? s.value : s['@id'];
+        sellersList += "seller[]=" + value + separator;
     });
     return sellersList;
 }

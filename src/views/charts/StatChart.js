@@ -75,6 +75,7 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   };
 
   const fetchProvisions = () => {
+      console.log(sellers);
       ProvisionActions
           .findBetween(getUTCDates(), sellers)
           .then(response => setProvisions(response));

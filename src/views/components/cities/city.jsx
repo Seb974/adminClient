@@ -77,14 +77,14 @@ const City = ({ match, history }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(city);
-        const cityToWrite = {...city, conditions: city.conditions.map(condition => {
+        const cityToWrite = {...city, zone: isDefined(city.zone) ? city.zone['@id'] : null,conditions: city.conditions.map(condition => {
             return {
                 ...condition,
                 price: getNumericOrNull(condition.price),
                 minForFree: getNumericOrNull(condition.minForFree),
                 tax : condition.tax['@id'], 
-                userGroups: condition.userGroups.map(group => group['@id'])
+                userGroups: condition.userGroups.map(group => group['@id']),
+                isRelaypoint: false
             }
         })};
         const request = !editing ? CityActions.create(cityToWrite) : CityActions.update(id, cityToWrite);

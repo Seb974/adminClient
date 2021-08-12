@@ -57,7 +57,8 @@ const Container = ({ match, history }) => {
                     const { catalogPrices, ...container } = response; 
                     setContainer(container);
                     if (catalogPrices.length > 0) {
-                        setCatalogOptions(catalogPrices.map(catalog => ({...catalog.catalog, amount: catalog.amount})));
+                        // setCatalogOptions(catalogPrices.map(catalog => ({...catalog.catalog, amount: catalog.amount})));
+                        setCatalogOptions(catalogPrices);
                     }
                 })
                 .catch(error => {
@@ -133,7 +134,7 @@ const Container = ({ match, history }) => {
                 alert: getFloat(container.stock.alert),
                 security: getFloat(container.stock.security),
             },
-            catalogPrices: catalogOptions.map(catalog => ({catalog: catalog['@id'], amount: getFloat(catalog.amount) }))
+            catalogPrices: catalogOptions.map(catalogPrice => ({...catalogPrice, catalog: catalogPrice.catalog['@id'], amount: getFloat(catalogPrice.amount) }))
         };
     }
 

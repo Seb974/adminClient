@@ -55,7 +55,7 @@ const Homepage = ({ match, history }) => {
                 .then( response => {
                     setHomepage(response);
                     if (isDefinedAndNotVoid(response.countdowns)) {
-                        setCountdown(response.countdowns[0]);
+                        setCountdown({...response.countdowns[0], date: new Date(response.countdowns[0].date)});
                     }
                 })
                 .catch(error => {

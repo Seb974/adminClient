@@ -102,7 +102,8 @@ const Relaypoint = ({ match, history }) => {
                     price: getNumericOrNull(condition.price),
                     minForFree: getNumericOrNull(condition.minForFree),
                     tax : condition.tax['@id'], 
-                    userGroups: condition.userGroups.map(group => group['@id'])
+                    userGroups: condition.userGroups.map(group => group['@id']),
+                    isRelaypoint: true
                 }
             }),
             promotion: isDefined(discountValue) ? getPromotionToWrite(discountValue) : null,
