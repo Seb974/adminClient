@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import ArticleActions from 'src/services/ArticleActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CTextarea } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSwitch, CTextarea } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import Image from 'src/components/forms/image';
 import ReactQuill from 'react-quill';
@@ -13,11 +13,11 @@ const Article = ({ match, history }) => {
 
     const quill = useRef(null);
     const { id = "new" } = match.params;
-    const defaultError = {title: "", image: "", summary: "", content: ""};
+    const defaultError = {title: "", image: "", summary: "", content: "", visible: ""};
 
     const [text, setText] = useState("");
     const [editing, setEditing] = useState(false);
-    const [article, setArticle] = useState({ title: "", summary: "", image: null, content: "" });
+    const [article, setArticle] = useState({ title: "", summary: "", image: null, content: "", visible: true });
     const [errors, setErrors] = useState(defaultError);
 
     useEffect(() => fetchArticle(id), []);
@@ -80,7 +80,6 @@ const Article = ({ match, history }) => {
 
     const getArticleWithImage = async () => {
         let articleWithImage = {...article};
-        console.log(article.image);
         if (article.image && !article.image.filePath) {
             console.log("in condition to create image");
             const image = await ArticleActions.createImage(article.image);
@@ -115,6 +114,8 @@ const Article = ({ match, history }) => {
                 }
             });
     };
+
+    const handleVisibilityChange = ({ currentTarget }) => setArticle({...article, visible: !article.visible});
 
     const modules = useMemo(() => ({
         toolbar: {
@@ -176,6 +177,16 @@ const Article = ({ match, history }) => {
                                 <CCol xs="12" md="12">
                                     <CLabel htmlFor="textarea-input">Contenu</CLabel>
                                     <ReactQuill value={ text } modules={ modules } onChange={ setText } theme="snow" ref={ quill }/>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="6" className="mt-4">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="visible" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ article.visible } onChange={ handleVisibilityChange }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Article publié</CCol>
+                                    </CFormGroup>
                                 </CCol>
                             </CRow>
                             <hr className="mt-5"/>
