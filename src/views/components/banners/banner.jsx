@@ -9,15 +9,16 @@ import Image from 'src/components/forms/image';
 import Select from 'src/components/forms/Select';
 import { useContext } from 'react';
 import ProductsContext from 'src/contexts/ProductsContext';
+import { SwatchesPicker } from 'react-color';
 
 const Banner = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const maxBanners = 4;
-    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", main: "", bannerNumber: "" };
+    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", isMain: "", bannerNumber: "", textColor: "", titleColor: "", textShadow: "" };
     const { products } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
-    const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, main: false, bannerNumber: 1 });
+    const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, isMain: false, bannerNumber: 1, textColor: '#fff', titleColor: '#fff', textShadow: true });
     const [homepages, setHomepages] = useState([]);
     const [errors, setErrors] = useState(defaultError);
     const [numberSelect, setNumberSelect] = useState(Array.from(Array(maxBanners).keys()).filter(i => i > 0));
@@ -56,9 +57,7 @@ const Banner = ({ match, history }) => {
         }
     };
 
-    const handleMainChange = ({ currentTarget }) => {
-        setBanner({...banner, [currentTarget.name]: !banner[currentTarget.name]})
-    };
+    const handleIsMainChange = ({ currentTarget }) => setBanner({...banner, isMain: !banner.isMain});
 
     const fetchBanner = id => {
         if (id !== "new") {
@@ -88,6 +87,10 @@ const Banner = ({ match, history }) => {
             });
     };
 
+    const handleTitleColorChange = (color, event) => setBanner({...banner, titleColor: color.hex});
+    const handleTextColorChange = (color, event) => setBanner({...banner, textColor: color.hex});
+    const handleTextShadowChange = ({ currentTarget }) => setBanner({...banner, textShadow: !banner.textShadow});
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const bannerWithImage = await getBannerWithImage();
@@ -96,7 +99,7 @@ const Banner = ({ match, history }) => {
             bannerNumber: getInt(bannerWithImage.bannerNumber),
             image: typeof bannerWithImage.image === 'string' ? bannerWithImage.image : bannerWithImage.image['@id'], 
             homepage: typeof bannerWithImage.homepage === 'string' ? bannerWithImage.homepage : bannerWithImage.homepage['@id'],
-            product: isDefined(bannerWithImage.product) ? bannerWithImage.product['@id'] : null
+            product: isDefined(bannerWithImage.product) ? bannerWithImage.product['@id'] : null,
         };
         console.log(bannerToWrite);
         const request = !editing ? BannerActions.create(bannerToWrite) : BannerActions.update(id, bannerToWrite);
@@ -120,8 +123,9 @@ const Banner = ({ match, history }) => {
 
     const getBannerWithImage = async () => {
         let bannerWithImage = {...banner};
+        console.log(bannerWithImage);
         if (banner.image && !banner.image.filePath) {
-            const image = await BannerActions.createImage(banner.image, banner.homepage.name, banner.bannerNumber, banner.main);
+            const image = await BannerActions.createImage(banner.image, banner.homepage.name, banner.bannerNumber, banner.isMain);
             bannerWithImage = {...bannerWithImage, image: image['@id']}
         }
         return bannerWithImage;
@@ -197,10 +201,30 @@ const Banner = ({ match, history }) => {
                                 <CCol xs="12" sm="6" className="mt-4">
                                     <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
                                         <CCol xs="3" sm="2" md="3">
-                                            <CSwitch name="main" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ banner.main } onChange={ handleMainChange }/>
+                                            <CSwitch name="isMain" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ banner.isMain } onChange={ handleIsMainChange }/>
                                         </CCol>
                                         <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Publicité principale</CCol>
                                     </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" sm="12" md="6" className="d-flex align-items-center">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="textShadow" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ banner.textShadow } onChange={ handleTextShadowChange }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                            Ombre d'écriture
+                                        </CCol>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <CLabel htmlFor="title">Couleur du titre</CLabel>
+                                    <SwatchesPicker name="titleColor" color={ banner.titleColor } onChange={ handleTitleColorChange } />
+                                </CCol>
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <CLabel htmlFor="title">Couleur du texte</CLabel>
+                                    <SwatchesPicker  name="textColor" color={ banner.textColor } onChange={ handleTextColorChange } />
                                 </CCol>
                             </CRow>
                             <CRow className="mt-4 d-flex justify-content-center">

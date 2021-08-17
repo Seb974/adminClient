@@ -9,14 +9,15 @@ import Image from 'src/components/forms/image';
 import Select from 'src/components/forms/Select';
 import { useContext } from 'react';
 import ProductsContext from 'src/contexts/ProductsContext';
+import { SwatchesPicker } from 'react-color';
 
 const Hero = ({ match, history }) => {
 
     const { id = "new" } = match.params;
-    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "" };
+    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", textColor: "", titleColor: "", textShadow: "" };
     const { products } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
-    const [hero, setHero] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null });
+    const [hero, setHero] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, textColor: '#fff', titleColor: '#fff', textShadow: true });
     const [homepages, setHomepages] = useState([]);
     const [errors, setErrors] = useState(defaultError);
 
@@ -67,6 +68,10 @@ const Hero = ({ match, history }) => {
                 history.replace("/components/heroes");
             });
     };
+
+    const handleTitleColorChange = (color, event) => setHero({...hero, titleColor: color.hex});
+    const handleTextColorChange = (color, event) => setHero({...hero, textColor: color.hex});
+    const handleTextShadowChange = ({ currentTarget }) => setHero({...hero, textShadow: !hero.textShadow});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -163,6 +168,26 @@ const Hero = ({ match, history }) => {
                             <CRow>
                                 <CCol xs="12" sm="12" md="6">
                                     <Image entity={ hero } setEntity={ setHero } isLandscape={ true }/>
+                                </CCol>
+                                <CCol xs="12" sm="12" md="6" className="d-flex align-items-center">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="textShadow" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ hero.textShadow } onChange={ handleTextShadowChange }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                            Ombre d'écriture
+                                        </CCol>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <CLabel htmlFor="title">Couleur du titre</CLabel>
+                                    <SwatchesPicker name="titleColor" color={ hero.titleColor } onChange={ handleTitleColorChange } />
+                                </CCol>
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <CLabel htmlFor="title">Couleur du texte</CLabel>
+                                    <SwatchesPicker  name="textColor" color={ hero.textColor } onChange={ handleTextColorChange } />
                                 </CCol>
                             </CRow>
                             <CRow className="mt-4 d-flex justify-content-center">

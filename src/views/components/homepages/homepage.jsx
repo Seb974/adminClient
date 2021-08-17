@@ -10,6 +10,7 @@ import Select from 'src/components/forms/Select';
 import ProductsContext from 'src/contexts/ProductsContext';
 import Image from 'src/components/forms/image';
 import Flatpickr from 'react-flatpickr';
+import { SwatchesPicker } from 'react-color';
 
 const Homepage = ({ match, history }) => {
 
@@ -18,11 +19,12 @@ const Homepage = ({ match, history }) => {
     const { id = "new" } = match.params;
     const { products } = useContext(ProductsContext);
     const today = getDateFrom(now, 0, 0, 0);
+    const defaultError = { name: "", bannersNumber: "", selected: "", date: "", image: "", product: "", title: "", textColor: "", textShadow: "", buttonText: ""};
     const numberSelect = Array.from(Array(maxBanners).keys()).filter(i => i > 0);
     const [editing, setEditing] = useState(false);
     const [homepage, setHomepage] = useState({ name: "", bannersNumber: 1, selected: false });
-    const [countdown, setCountdown] = useState({ date: now, image: null, product: null});
-    const [errors, setErrors] = useState({ name: "", bannersNumber: "", selected: "", date: "", image: "", product: "" });
+    const [countdown, setCountdown] = useState({ date: now, image: null, product: null, title: "", textColor: "#fff", textShadow: false, buttonText: "J'en profite !"});
+    const [errors, setErrors] = useState(defaultError);
 
     useEffect(() => fetchHomepage(id), []);
     useEffect(() => fetchHomepage(id), [id]);
@@ -30,6 +32,10 @@ const Homepage = ({ match, history }) => {
     const handleChange = ({ currentTarget }) => setHomepage({...homepage, [currentTarget.name]: currentTarget.value});
 
     const handleSelection = ({ currentTarget }) => setHomepage({...homepage, [currentTarget.name]: !homepage[currentTarget.name]});
+
+    const handleCountdownChange = ({ currentTarget }) => setCountdown({...countdown, [currentTarget.name]: currentTarget.value});
+
+    const handleTextColorChange = (color, event) => setCountdown({...countdown, textColor: color.hex});
 
     const handleProductChange = ({ currentTarget }) => {
         const selectedId = parseInt(currentTarget.value);
@@ -81,7 +87,7 @@ const Homepage = ({ match, history }) => {
         };
         const request = !editing ? HomepageActions.create(homepageToEdit) : HomepageActions.update(id, homepageToEdit);
         request.then(response => {
-                    setErrors({name: "", selected: ""});
+                    setErrors(defaultError);
                     //TODO : Flash notification de succès
                     history.replace("/components/homepages");
                 })
@@ -176,6 +182,20 @@ const Homepage = ({ match, history }) => {
                                         }}
                                     />
                                 </CCol>
+                                <CCol xs="12" lg="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="title">Titre</CLabel>
+                                        <CInput
+                                            id="title"
+                                            name="title"
+                                            value={ countdown.title }
+                                            onChange={ handleCountdownChange }
+                                            placeholder="Titre"
+                                            invalid={ errors.title.length > 0 }
+                                        />
+                                        <CInvalidFeedback>{ errors.title }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
                             </CRow>
                             <CRow>
                                 <CCol xs="12" sm="6" md="6">
@@ -186,6 +206,26 @@ const Homepage = ({ match, history }) => {
                                         <option value={ -1 }>Aucun</option>
                                         { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
                                     </Select>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" lg="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="title">Bouton</CLabel>
+                                        <CInput
+                                            id="buttonText"
+                                            name="buttonText"
+                                            value={ countdown.buttonText }
+                                            onChange={ handleCountdownChange }
+                                            placeholder="Texte du bouton"
+                                            invalid={ errors.buttonText.length > 0 }
+                                        />
+                                        <CInvalidFeedback>{ errors.buttonText }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" sm="12" md="6" className="">
+                                    <CLabel htmlFor="title">Couleur du texte</CLabel>
+                                    <SwatchesPicker  name="textColor" color={ countdown.textColor } onChange={ handleTextColorChange } />
                                 </CCol>
                             </CRow>
                             <CRow className="mt-4 d-flex justify-content-center">
