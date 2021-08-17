@@ -31,6 +31,7 @@ const Banners = ({ match, history }) => {
         BannerActions.findAll()
           .then(response => {
               const associatedHeroes = isDefined(selectedHomepage) ? response.filter(h => h.homepage.id === selectedHomepage.id) : response;
+              console.log(associatedHeroes);
               setBanners(associatedHeroes);
           })
           .catch(error => console.log(error.response));
@@ -92,7 +93,7 @@ const Banners = ({ match, history }) => {
                   item => <td><Link to={ "/components/banners/" + item.id }>{ item.title }</Link></td>
                 ,
                 'espace':
-                  item => <td>{ item.bannerNumber + (item.main ? ' - Principal' : '') }</td>
+                  item => <td>{ item.bannerNumber + (item.isMain ? ' - Principal' : '') }</td>
                 ,
                 ' ':
                   item => <td><CButton block color="danger" onClick={ () => handleDelete(item) }>Supprimer</CButton></td>
