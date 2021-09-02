@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CSelect, CSwitch } from '@coreui/react';
 import TaxActions from '../../services/TaxActions';
 import PriceGroupActions from '../../services/PriceGroupActions';
+import Flatpickr from 'react-flatpickr';
+import { French } from "flatpickr/dist/l10n/fr.js";
 
 const Price = ({product, setProduct, history }) => {
 
@@ -66,6 +68,11 @@ const Price = ({product, setProduct, history }) => {
         }
     };
 
+    const onDateChange = datetime => {
+        const newDate = new Date(datetime[0].getFullYear(), datetime[0].getMonth(), datetime[0].getDate(), 9, 0, 0);
+        setProduct({...product, offerEnd: newDate});
+    };
+
     return (
         <>
             <hr className="mt-5 mb-5"/>
@@ -127,6 +134,41 @@ const Price = ({product, setProduct, history }) => {
                     }
                 </CFormGroup>
             }
+            <CFormGroup row>
+                <CCol xs="12" md="6" className="mt-4">
+                    <CLabel htmlFor="discount">{ "Taux de remise" }</CLabel>
+                    <CInputGroup>
+                        <CInput
+                            type="number"
+                            name="discount"
+                            id="discount"
+                            value={ product.discount }
+                            onChange={ handleChange } 
+                            placeholder={ "Remise" }
+                        />
+                        <CInputGroupAppend>
+                            <CInputGroupText>%</CInputGroupText>
+                        </CInputGroupAppend>
+                        </CInputGroup>
+                </CCol>
+                <CCol xs="12" md="6" className="mt-4">
+                    <CFormGroup>
+                        <CLabel htmlFor="offerEnd">Valable jusqu'au</CLabel>
+                        <Flatpickr
+                            name="offerEnd"
+                            value={ product.offerEnd }
+                            onChange={ onDateChange }
+                            className="form-control form-control-sm"
+                            options={{
+                                mode: "single",
+                                dateFormat: "d/m/Y",
+                                minDate: 'today',
+                                locale: French,
+                            }}
+                        />
+                    </CFormGroup>
+                </CCol>
+            </CFormGroup>
         </>
     );
 }

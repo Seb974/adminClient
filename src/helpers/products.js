@@ -1,3 +1,5 @@
+import { getFloat } from "./utils";
+
 export const getFormattedVariations = (variations, defaultVariation) => {
     if (variations && variations.length > 0) {
         return variations.map((variation, index) => {
@@ -65,6 +67,8 @@ export const getProductToWrite = (product, type, categories, variations, adapted
         productGroup: type === "mixed" ? null : product.productGroup,
         tax: product.tax['@id'],
         seller: noImgProduct.seller['@id'],
+        discount: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? getFloat(product.discount) : null,
+        offerEnd: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? product.offerEnd : null,
         categories: product.categories.map(category => categories.find(element => element.id === category.value)['@id']),
         stockManaged: type === "mixed" ? null : noImgProduct.stockManaged,
         unit: type === "mixed" ? "U" : noImgProduct.unit,
@@ -112,7 +116,7 @@ export const defineType = (product) => {
 };
 
 export const formatProduct = (product, defaultStock) => {
-    const {prices, categories, stock, variations} = product;
+    const {prices, categories, stock, variations, discount, offerEnd} = product;
     const basePrice = prices !== null && prices !== undefined && prices.length > 0 ? prices[0].amount : "";
     const formattedProduct = {
         ...product, 
@@ -120,7 +124,9 @@ export const formatProduct = (product, defaultStock) => {
         catalogs: isDefinedAndNotVoid(product.catalogs) ? isDefined(product.catalogs[0].label) ? product.catalogs : product.catalogs.map(catalog => ({...catalog, value: catalog.id, label: catalog.name, isFixed: false})) : [],
         categories: categories.map(category => ({value: category.id, label: category.name, isFixed: false})),
         uniquePrice: isDefinedAndNotVoid(prices) ? prices.every(price => price.amount === basePrice) : true,
-        stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock
+        stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock,
+        discount: isDefined(discount) ? discount : "",
+        offerEnd: isDefined(offerEnd) ? new Date(offerEnd) : new Date()
     };
     return formattedProduct;
 };
