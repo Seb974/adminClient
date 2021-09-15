@@ -17,6 +17,8 @@ import PlatformActions from 'src/services/PlatformActions';
 import SupervisorActions from 'src/services/SupervisorActions';
 import Mercure from 'src/mercure/Mercure';
 import CatalogContext from 'src/contexts/CatalogContext';
+import MessageContext from 'src/contexts/MessageContext';
+import MessageActions from 'src/services/MessageActions';
 
 const DataProvider = ({ children }) => {
 
@@ -40,6 +42,7 @@ const DataProvider = ({ children }) => {
     const [seller, setSeller] = useState(null);
     const [supervisor, setSupervisor] = useState(null);
     const [platform, setPlatform] = useState(null);
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
@@ -76,6 +79,10 @@ const DataProvider = ({ children }) => {
             SupervisorActions
                 .getSupervisor(currentUser)
                 .then(response => setSupervisor(response));
+
+        if (isAuthenticated)
+            MessageActions.findAll()
+                        .then(response => setMessages(response));
     },[currentUser]);
 
     useEffect(() => {
@@ -86,8 +93,11 @@ const DataProvider = ({ children }) => {
         }
     }, [catalogs, country]);
 
+    // useEffect(() => console.log(messages), [messages]);
+
     return (
         <PlatformContext.Provider value={ {platform, setPlatform} }>
+        <MessageContext.Provider value={ {messages, setMessages} }>
         <CatalogContext.Provider value={ {catalogs, setCatalogs} }>
         <AuthContext.Provider value={ {isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, eventSource, setEventSource, settings, setSettings, selectedCatalog, setSelectedCatalog, seller, setSeller, supervisor, setSupervisor} }>
         <DeliveryContext.Provider value={ {cities, setCities, relaypoints, setRelaypoints, condition, setCondition, packages, setPackages, totalWeight, setTotalWeight, availableWeight, setAvailableWeight, tourings, setTourings} }>
@@ -101,6 +111,7 @@ const DataProvider = ({ children }) => {
         </DeliveryContext.Provider>
         </AuthContext.Provider>
         </CatalogContext.Provider>
+        </MessageContext.Provider>
         </PlatformContext.Provider>
     );
 }

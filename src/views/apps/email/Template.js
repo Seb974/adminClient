@@ -1,23 +1,14 @@
-import React from 'react'
-import {
-  CSidebar,
-  CSidebarBrand,
-  CSidebarNav,
-  CSidebarNavItem,
-  CContainer,
-  CCard,
-  CCardBody,
-  CSidebarMinimizer
-} from '@coreui/react'
+import React, { useContext } from 'react'
+import { CSidebar, CSidebarBrand, CSidebarNav, CSidebarNavItem, CContainer, CCard, CCardBody, CSidebarMinimizer} from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-
-import {
-  TheAside,
-  TheFooter,
-  TheHeader
-} from '../../../containers'
+import { TheAside, TheFooter, TheHeader } from '../../../containers'
+import MessageContext from 'src/contexts/MessageContext'
+import { isDefinedAndNotVoid } from 'src/helpers/utils'
 
 const EmailNav = ({children}) => {
+
+  const { messages, setMessages } = useContext(MessageContext);
+
   return (
     <div className="c-app">
       <CSidebar
@@ -40,17 +31,26 @@ const EmailNav = ({children}) => {
         <CSidebarNav>
           <CSidebarNavItem 
             color="success"
-            to="./compose"
+            to="/apps/email/compose"
             icon="cil-pencil"
             name="Compose"
           /> 
-          <CSidebarNavItem 
-            to="./inbox"
-            icon="cil-inbox"
-            name="Inbox"
-            badge={{ text: 4, color: 'danger' }}
-          />      
-          <CSidebarNavItem 
+          { isDefinedAndNotVoid(messages) && messages.filter(m => !m.isRead).length > 0 ?
+              <CSidebarNavItem 
+                to="/apps/email/inbox"
+                icon="cil-inbox"
+                name="Inbox"
+                badge={{ text: messages.filter(m => !m.isRead).length, color: 'danger' }}
+              />
+          :
+              <CSidebarNavItem 
+                to="/apps/email/inbox"
+                icon="cil-inbox"
+                name="Inbox"
+              />
+          }
+
+          {/* <CSidebarNavItem 
             icon="cil-star"
             name="Stared"
           />
@@ -71,7 +71,7 @@ const EmailNav = ({children}) => {
             icon="cil-inbox"
             name="Spam"
             badge={{ text: 25, color: 'warning' }}
-          />
+          /> */}
           <CSidebarNavItem
             to="/"
             className="mt-auto"

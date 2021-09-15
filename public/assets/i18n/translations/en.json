@@ -51,5 +51,7 @@
     "articles.label": "Articles",
     "homepages.label": "Homepages",
     "heroes.label": "Heroes",
-    "banners.label": "Banners"
+    "banners.label": "Banners",
+    "aboutUs.label": "About us",
+    "agents.label": "Team"
 }

@@ -1,16 +1,15 @@
-import React from 'react'
-import {
-  CBadge,
-  CDropdown,
-  CDropdownItem,
-  CDropdownMenu,
-  CDropdownToggle,
-  CImg
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
+import React, { useContext } from 'react';
+import { CBadge, CDropdown, CDropdownItem, CDropdownMenu, CDropdownToggle, CImg } from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { Link } from 'react-router-dom';
+import MessageContext from 'src/contexts/MessageContext';
+import { isDefinedAndNotVoid } from 'src/helpers/utils';
 
 const TheHeaderDropdownMssg = () => {
-  const itemsCount = 4
+
+  const messageLimit = 10;
+  const { messages, setMessages } = useContext(MessageContext);
+
   return (
     <CDropdown
       inNav
@@ -18,7 +17,8 @@ const TheHeaderDropdownMssg = () => {
       direction="down"
     >
       <CDropdownToggle className="c-header-nav-link" caret={false}>
-        <CIcon name="cil-envelope-open" /><CBadge shape="pill" color="info">{itemsCount}</CBadge>
+        <CIcon name="cil-envelope-open" />
+            { messages.length > 0 && messages.filter(m => !m.isRead).length && <CBadge shape="pill" color="info">{messages.filter(m => !m.isRead).length}</CBadge> }
       </CDropdownToggle>
       <CDropdownMenu className="pt-0" placement="bottom-end">
         <CDropdownItem
@@ -26,99 +26,40 @@ const TheHeaderDropdownMssg = () => {
           tag="div"
           color="light"
         >
-          <strong>You have {itemsCount} messages</strong>
+          { isDefinedAndNotVoid(messages) ? <strong>Vous avez {messages.filter(m => !m.isRead).length} messages non lus</strong> : <strong>Vous n'avez pas de nouveaux messages</strong> }
         </CDropdownItem>
-        <CDropdownItem href="#">
-          <div className="message">
-            <div className="pt-3 mr-3 float-left">
-              <div className="c-avatar">
-                <CImg
-                  src={'avatars/7.jpg'}
-                  className="c-avatar-img"
-                  alt="admin@bootstrapmaster.com"
-                />
-                <span className="c-avatar-status bg-success"></span>
-              </div>
-            </div>
-            <div>
-              <small className="text-muted">John Doe</small>
-              <small className="text-muted float-right mt-1">Just now</small>
-            </div>
-            <div className="text-truncate font-weight-bold">
-              <span className="fa fa-exclamation text-danger"></span> Important message
-            </div>
-            <div className="small text-muted text-truncate">
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt...
-            </div>
-          </div>
-        </CDropdownItem>
+        { isDefinedAndNotVoid(messages) && 
+          messages.filter(m => !m.isRead)
+                  .filter((m, i) => i < messageLimit)
+                  .sort((a, b) => (a.sentAt > b.sentAt) ? -1 : 1)
+                  .map(message => {
+                      return (
+                          <CDropdownItem href={"/#/apps/email/messages/" + message.id}>
+                              <div className="message" style={{ width: "100%" }}>
+                                <div className="pt-3 mr-3 float-left">
+                                  <div className="c-avatar">
+                                    <CIcon name="cil-user"/>
+                                  </div>
+                                </div>
+                                <div>
+                                  <small className="text-muted">{ message.name }</small>
+                                  <small className="text-muted float-right mt-1">{ (new Date(message.sentAt)).toLocaleString() }</small>
+                                </div>
 
-        <CDropdownItem href="#">
-          <div className="message">
-            <div className="pt-3 mr-3 float-left">
-              <div className="c-avatar">
-                <CImg
-                  src={'avatars/6.jpg'}
-                  className="c-avatar-img"
-                  alt="admin@bootstrapmaster.com"
-                />
-                <span className="c-avatar-status bg-warning"></span>
-              </div>
-            </div>
-            <div>
-              <small className="text-muted">Jane Dovve</small>
-              <small className="text-muted float-right mt-1">5 minutes ago</small>
-            </div>
-            <div className="text-truncate font-weight-bold">Lorem ipsum dolor sit amet</div>
-            <div className="small text-muted text-truncate">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt...
-            </div>
-          </div>
-        </CDropdownItem>
-
-        <CDropdownItem href="#">
-          <div className="message">
-            <div className="pt-3 mr-3 float-left">
-              <div className="c-avatar">
-                <CImg
-                  src={'avatars/5.jpg'}
-                  className="c-avatar-img"
-                  alt="admin@bootstrapmaster.com"
-                />
-                <span className="c-avatar-status bg-danger"></span>
-              </div>
-            </div>
-            <div>
-              <small className="text-muted">Janet Doe</small>
-              <small className="text-muted float-right mt-1">1:52 PM</small>
-            </div>
-            <div className="text-truncate font-weight-bold">Lorem ipsum dolor sit amet</div>
-            <div className="small text-muted text-truncate">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt...
-            </div>
-          </div>
-        </CDropdownItem>
-
-        <CDropdownItem href="#">
-          <div className="message">
-            <div className="pt-3 mr-3 float-left">
-              <div className="c-avatar">
-                <CImg
-                  src={'avatars/4.jpg'}
-                  className="c-avatar-img"
-                  alt="admin@bootstrapmaster.com"
-                />
-                <span className="c-avatar-status bg-info"></span>
-              </div>
-            </div>
-            <div>
-              <small className="text-muted">Joe Doe</small>
-              <small className="text-muted float-right mt-1">4:03 AM</small>
-            </div>
-            <div className="text-truncate font-weight-bold">Lorem ipsum dolor sit amet</div>
-            <div className="small text-muted text-truncate">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt...
-            </div>
-          </div>
-        </CDropdownItem>
-        <CDropdownItem href="#" className="text-center border-top"><strong>View all messages</strong></CDropdownItem>
+                                <div className="text-truncate font-weight-bold">{ message.subject }</div>
+                                <div className="small text-muted text-truncate">
+                                  { message.message.slice(0, 120) }
+                                </div>
+                              </div>
+                          </CDropdownItem>
+                      );
+                  })
+        }
+        <CDropdownItem href="#" className="text-center border-top" style={{ width: "100%", margin: 'auto' }}>
+          <Link to="/apps/email/inbox" style={{ width: "100%", margin: 'auto' }}>
+            <strong>Voir tous les messages</strong>
+          </Link>
+          </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>
   )

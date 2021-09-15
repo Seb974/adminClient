@@ -9,11 +9,14 @@ import { updateContext } from 'src/data/dataProvider/eventHandlers/productEvents
 import { updateCurrentUser } from 'src/data/dataProvider/eventHandlers/userEvents';
 import { updateCategories } from 'src/data/dataProvider/eventHandlers/categoryEvents';
 import { updateContainers } from 'src/data/dataProvider/eventHandlers/containerEvents';
+import { updateMessages } from 'src/data/dataProvider/eventHandlers/messageEvents';
+import MessageContext from 'src/contexts/MessageContext';
 
 const Mercure = ({ children }) => {
 
     const { containers, setContainers } = useContext(ContainerContext);
     const { currentUser, setCurrentUser } = useContext(AuthContext);
+    const { messages, setMessages } = useContext(MessageContext);
     const { products, setProducts, categories, setCategories } = useContext(ProductsContext);
 
     const [updatedUsers, setUpdatedUsers] = useState([]);
@@ -22,9 +25,11 @@ const Mercure = ({ children }) => {
     const [updatedCategories, setUpdatedCategories] = useState([]);
     const [updatedProvisions, setUpdatedProvisions] = useState([]);
     const [updatedContainers, setUpdatedContainers] = useState([]);
+    const [updatedMessages, setUpdatedMessages] = useState([]);
 
     const [productOpering, setProductOpering] = useState(false);
     const [categoryOpering, setCategoryOpering] = useState(false);
+    const [messageOpering, setMessageOpering] = useState(false);
     const [containerOpering, setContainerOpering] = useState(false);
     const [currentUserOpering, setCurrentUserOpering] = useState(false);
 
@@ -60,6 +65,14 @@ const Mercure = ({ children }) => {
         }
     }, [updatedUsers]);
 
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedMessages) && !messageOpering) {
+            setMessageOpering(true);
+            updateMessages(messages, setMessages, updatedMessages, setUpdatedMessages)
+                .then(response => setMessageOpering(response));
+        }
+    }, [updatedMessages]);
+
     return (
         <MercureContext.Provider value={{ 
                 updatedOrders, setUpdatedOrders, 
@@ -67,7 +80,8 @@ const Mercure = ({ children }) => {
                 updatedUsers, setUpdatedUsers, 
                 updatedCategories, setUpdatedCategories,
                 updatedProvisions, setUpdatedProvisions,
-                updatedContainers, setUpdatedContainers
+                updatedContainers, setUpdatedContainers,
+                updatedMessages, setUpdatedMessages,
             }}
         >
             <MercureHub>

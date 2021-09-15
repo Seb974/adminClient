@@ -13,4 +13,6 @@ export default React.createContext({
     setUpdatedProvisions: (value) => {},
     updatedContainers: [],
     setUpdatedContainers: (value) => {},
+    updatedMessages: [],
+    setUpdatedMessages: (value) => {},
 });

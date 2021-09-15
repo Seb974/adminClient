@@ -2,6 +2,8 @@ import React from 'react';
 
 const Products = React.lazy(() => import('./views/components/products/products'));
 const Product = React.lazy(() => import('./views/components/products/product'));
+const Agents = React.lazy(() => import('./views/components/agents/agents'));
+const Agent = React.lazy(() => import('./views/components/agents/agent'));
 const Categories = React.lazy(() => import('./views/components/categories/categories'));
 const Category = React.lazy(() => import('./views/components/categories/category'));
 const Groups = React.lazy(() => import('./views/components/groups/groups'));
@@ -61,6 +63,7 @@ const Supplier = React.lazy(() => import('./views/components/suppliers/supplier'
 const Articles = React.lazy(() => import('./views/components/articles/articles'));
 const Article = React.lazy(() => import('./views/components/articles/article'));
 const Platform = React.lazy(() => import('./views/components/platform/platform'));
+const AboutUs = React.lazy(() => import('./views/components/aboutUs/aboutUs'));
 const CodeEditors = React.lazy(() => import('./views/editors/code-editors/CodeEditors'));
 const TextEditors = React.lazy(() => import('./views/editors/text-editors/TextEditors'));
 
@@ -116,6 +119,8 @@ const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/components/products/:id', name: 'Product', component: Product },
   { path: '/components/products', name: 'Products', component: Products },
+  { path: '/components/agents/:id', name: 'Agent', component: Agent },
+  { path: '/components/agents', name: 'Agents', component: Agents },
   { path: '/components/categories/:id', name: 'Category', component: Category },
   { path: '/components/categories', name: 'Categories', component: Categories },
   { path: '/components/groups/:id', name: 'Group', component: Group },
@@ -174,6 +179,7 @@ const routes = [
   { path: '/components/suppliers', name: 'Suppliers', component: Suppliers },
   { path: '/components/articles/:id', name: 'Article', component: Article },
   { path: '/components/articles', name: 'Articles', component: Articles },
+  { path: '/components/about-us', name: 'AboutUs', component: AboutUs },
   { path: '/components/platform', name: 'Platform', component: Platform },
   { path: '/dashboard', name: 'Dashboard', component: Dashboard },
   { path: '/theme', name: 'Theme', component: Colors, exact: true },
@@ -232,7 +238,7 @@ const routes = [
   { path: '/users/:id', exact: true, name: 'User Details', component: UserEx },
   { path: '/apps/email/inbox', exact: true, name: 'Inbox' },
   { path: '/apps/email/compose', exact: true, name: 'Compose' },
-  { path: '/apps/email/message', exact: true, name: 'Message' }
+  { path: '/apps/email/messages/:id', name: 'Message' },    // exact: true
 ]
 
 export default routes;

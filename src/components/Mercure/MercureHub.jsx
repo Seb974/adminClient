@@ -13,12 +13,14 @@ const MercureHub = ({ children }) => {
     const { products, setProducts } = useContext(ProductsContext);
     const { updatedOrders, setUpdatedOrders, updatedProducts, setUpdatedProducts, updatedCategories, setUpdatedCategories } = useContext(MercureContext);
     const { updatedUsers, setUpdatedUsers, updatedProvisions, setUpdatedProvisions, updatedContainers, setUpdatedContainers } = useContext(MercureContext);
+    const { updatedMessages, setUpdatedMessages } = useContext(MercureContext);
     const { currentUser, eventSource, setEventSource } = useContext(AuthContext);
     const { packages, setPackages, tourings, setTourings } = useContext(DeliveryContext);
 
     useEffect(() => {
         closeIfExists();
         url.searchParams.append('topic', api.API_DOMAIN + '/api/products/{id}');
+        url.searchParams.append('topic', api.API_DOMAIN + '/api/messages/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/stocks/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/provisions/{id}');
         url.searchParams.append('topic', api.API_DOMAIN + '/api/categories/{id}');
@@ -44,6 +46,9 @@ const MercureHub = ({ children }) => {
 
         if (data['@id'].includes('containers') || data['@id'].includes('catalog_prices'))
             setUpdatedContainers([...updatedContainers, data]);
+
+        if (data['@id'].includes('messages'))
+            setUpdatedMessages([...updatedMessages, data]);
 
         if (data['@id'].includes('provisions'))
             setUpdatedProvisions([...updatedProvisions, data]);
