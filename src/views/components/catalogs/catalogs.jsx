@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 const Catalogs = (props) => {
 
     const itemsPerPage = 15;
-    const fields = ['name', 'code', ' '];
+    const fields = ['nom', 'code', 'etat', ' '];
     const [catalogs, setCatalogs] = useState([]);
 
     useEffect(() => {
@@ -47,11 +47,14 @@ const Catalogs = (props) => {
               itemsPerPage={ itemsPerPage }
               pagination
               scopedSlots = {{
-                'name':
+                'nom':
                   item => <td><Link to={ "/components/catalogs/" + item.id }>{ item.name }</Link></td>
                 ,
                 'code':
                   item => <td><Link to={ "/components/catalogs/" + item.id }>{ item.code }</Link></td>
+                ,
+                'etat':
+                  item => <td>{ item.isActive ? "Actif" : "-" }</td>
                 ,
                 ' ':
                   item =><td><CButton block color="danger" onClick={ () => handleDelete(item.id) }>Supprimer</CButton></td>
