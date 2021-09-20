@@ -1,6 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
+import 'src/assets/css/select-multiple.css';
 
 const animatedComponents = makeAnimated();
 

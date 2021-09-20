@@ -10,22 +10,27 @@ import Select from 'src/components/forms/Select';
 import { useContext } from 'react';
 import ProductsContext from 'src/contexts/ProductsContext';
 import { SwatchesPicker } from 'react-color';
+import CatalogContext from 'src/contexts/CatalogContext';
+import SelectMultiple from 'src/components/forms/SelectMultiple';
 
 const Banner = ({ match, history }) => {
 
-    const { id = "new" } = match.params;
     const maxBanners = 4;
-    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", isMain: "", bannerNumber: "", textColor: "", titleColor: "", textShadow: "" };
+    const { id = "new" } = match.params;
+    const { catalogs } = useContext(CatalogContext);
+    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", isMain: "", bannerNumber: "", textColor: "", titleColor: "", textShadow: "", catalogs: "" };
     const { products } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
-    const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, isMain: false, bannerNumber: 1, textColor: '#fff', titleColor: '#fff', textShadow: true });
+    const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, isMain: false, bannerNumber: 1, textColor: '#fff', titleColor: '#fff', textShadow: true, catalogs: [] });
     const [homepages, setHomepages] = useState([]);
     const [errors, setErrors] = useState(defaultError);
     const [numberSelect, setNumberSelect] = useState(Array.from(Array(maxBanners).keys()).filter(i => i > 0));
+    const [formattedCatalogs, setFormattedCatalogs] = useState([]);
 
     useEffect(() => {
         fetchHomepages();
         fetchBanner(id);
+        getFormattedCatalogs();
     }, []);
 
     useEffect(() => fetchBanner(id), [id]);
@@ -64,8 +69,11 @@ const Banner = ({ match, history }) => {
             setEditing(true);
             BannerActions.find(id)
                 .then( response => {
-                    console.log(response);
-                    setBanner(response);
+                    let dbCatalogs = [];
+                    if (isDefinedAndNotVoid(response.catalogs)) {
+                        dbCatalogs = response.catalogs.map(c => ({...c, value: c.id, label: c.name, isFixed: false}));
+                    }
+                    setBanner({...response, catalogs: dbCatalogs});
                     setNumberSelect(Array.from(Array(response.homepage.bannersNumber).keys()).filter(i => i > 0));
                 })
                 .catch(error => {
@@ -87,6 +95,12 @@ const Banner = ({ match, history }) => {
             });
     };
 
+    const getFormattedCatalogs = () => {
+        const catalogsToShow = catalogs.map(catalog => ({...catalog, value: catalog.id, label: catalog.name, isFixed: false}));
+        setFormattedCatalogs(catalogsToShow);
+    };
+
+    const handleCatalogsChange = catalogs => setBanner(banner => ({...banner, catalogs}));
     const handleTitleColorChange = (color, event) => setBanner({...banner, titleColor: color.hex});
     const handleTextColorChange = (color, event) => setBanner({...banner, textColor: color.hex});
     const handleTextShadowChange = ({ currentTarget }) => setBanner({...banner, textShadow: !banner.textShadow});
@@ -100,8 +114,8 @@ const Banner = ({ match, history }) => {
             image: typeof bannerWithImage.image === 'string' ? bannerWithImage.image : bannerWithImage.image['@id'], 
             homepage: typeof bannerWithImage.homepage === 'string' ? bannerWithImage.homepage : bannerWithImage.homepage['@id'],
             product: isDefined(bannerWithImage.product) ? bannerWithImage.product['@id'] : null,
+            catalogs: banner.catalogs.map(c => c['@id']),
         };
-        console.log(bannerToWrite);
         const request = !editing ? BannerActions.create(bannerToWrite) : BannerActions.update(id, bannerToWrite);
         request.then(response => {
                     setErrors(defaultError);
@@ -123,7 +137,6 @@ const Banner = ({ match, history }) => {
 
     const getBannerWithImage = async () => {
         let bannerWithImage = {...banner};
-        console.log(bannerWithImage);
         if (banner.image && !banner.image.filePath) {
             const image = await BannerActions.createImage(banner.image, banner.homepage.name, banner.bannerNumber, banner.isMain);
             bannerWithImage = {...bannerWithImage, image: image['@id']}
@@ -154,6 +167,11 @@ const Banner = ({ match, history }) => {
                                         </Select>
                                         <CInvalidFeedback>{ errors.bannersNumber }</CInvalidFeedback>
                                     </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow className="mt-2">
+                                <CCol xs="12" sm="12">
+                                    <SelectMultiple name="catalogs" label="Disponible sur les catalogues" value={ banner.catalogs } error={ errors.catalogs } onChange={ handleCatalogsChange } data={ formattedCatalogs }/>
                                 </CCol>
                             </CRow>
                             <CRow>

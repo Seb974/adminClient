@@ -10,20 +10,25 @@ import Select from 'src/components/forms/Select';
 import { useContext } from 'react';
 import ProductsContext from 'src/contexts/ProductsContext';
 import { SwatchesPicker } from 'react-color';
+import CatalogContext from 'src/contexts/CatalogContext';
+import SelectMultiple from 'src/components/forms/SelectMultiple';
 
 const Hero = ({ match, history }) => {
 
     const { id = "new" } = match.params;
-    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", textColor: "", titleColor: "", textShadow: "" };
+    const { catalogs } = useContext(CatalogContext);
+    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", textColor: "", titleColor: "", textShadow: "", catalogs: "" };
     const { products } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
-    const [hero, setHero] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, textColor: '#fff', titleColor: '#fff', textShadow: true });
+    const [hero, setHero] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, textColor: '#fff', titleColor: '#fff', textShadow: true, catalogs: [] });
     const [homepages, setHomepages] = useState([]);
     const [errors, setErrors] = useState(defaultError);
+    const [formattedCatalogs, setFormattedCatalogs] = useState([]);
 
     useEffect(() => {
         fetchHomepages();
         fetchHero(id);
+        getFormattedCatalogs();
     }, []);
 
     useEffect(() => fetchHero(id), [id]);
@@ -49,7 +54,13 @@ const Hero = ({ match, history }) => {
         if (id !== "new") {
             setEditing(true);
             HeroActions.find(id)
-                .then( response => setHero(response))
+                .then( response => {
+                    let dbCatalogs = [];
+                    if (isDefinedAndNotVoid(response.catalogs)) {
+                        dbCatalogs = response.catalogs.map(c => ({...c, value: c.id, label: c.name, isFixed: false}));
+                    }
+                    setHero({...response, catalogs: dbCatalogs});
+                })
                 .catch(error => {
                     console.log(error);
                     // TODO : Notification flash d'une erreur
@@ -69,6 +80,12 @@ const Hero = ({ match, history }) => {
             });
     };
 
+    const getFormattedCatalogs = () => {
+        const catalogsToShow = catalogs.map(catalog => ({...catalog, value: catalog.id, label: catalog.name, isFixed: false}));
+        setFormattedCatalogs(catalogsToShow);
+    };
+
+    const handleCatalogsChange = catalogs => setHero(hero => ({...hero, catalogs}));
     const handleTitleColorChange = (color, event) => setHero({...hero, titleColor: color.hex});
     const handleTextColorChange = (color, event) => setHero({...hero, textColor: color.hex});
     const handleTextShadowChange = ({ currentTarget }) => setHero({...hero, textShadow: !hero.textShadow});
@@ -76,14 +93,13 @@ const Hero = ({ match, history }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const heroWithImage = await getHeroWithImage();
-        console.log(heroWithImage);
         const heroToWrite = {
             ...heroWithImage, 
             image: typeof heroWithImage.image === 'string' ? heroWithImage.image : heroWithImage.image['@id'], 
             homepage: typeof heroWithImage.homepage === 'string' ? heroWithImage.homepage : heroWithImage.homepage['@id'],
-            product: isDefined(heroWithImage.product) ? heroWithImage.product['@id'] : null
+            product: isDefined(heroWithImage.product) ? heroWithImage.product['@id'] : null,
+            catalogs: hero.catalogs.map(c => c['@id']),
         };
-        console.log(heroToWrite);
         const request = !editing ? HeroActions.create(heroToWrite) : HeroActions.update(id, heroToWrite);
         request.then(response => {
                     setErrors(defaultError);
@@ -133,6 +149,11 @@ const Hero = ({ match, history }) => {
                                         <option value={ -1 }>Aucun</option>
                                         { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
                                     </Select>
+                                </CCol>
+                            </CRow>
+                            <CRow className="mt-2">
+                                <CCol xs="12" sm="12">
+                                    <SelectMultiple name="catalogs" label="Disponible sur les catalogues" value={ hero.catalogs } error={ errors.catalogs } onChange={ handleCatalogsChange } data={ formattedCatalogs }/>
                                 </CCol>
                             </CRow>
                             <CRow>

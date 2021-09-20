@@ -1,9 +1,15 @@
 import React from 'react';
 import { CCol, CFormGroup, CInputFile, CLabel } from '@coreui/react';
+import { isDefined } from 'src/helpers/utils';
 
-const Image = ({ entity, setEntity, isLandscape = false, sizes = "", imageName = "image", tip = "", onClick }) => {
+const Image = ({ entity, setEntity, isLandscape = false, sizes = "", imageName = "image", tip = "", handleChange = null, iteration = null }) => {
 
-    const handleImageChange = ({ currentTarget }) => setEntity({...entity, [imageName]: currentTarget.files[0]});
+    const handleImageChange = ({ currentTarget }) => {
+        if (!isDefined(handleChange))
+            setEntity({...entity, [imageName]: currentTarget.files[0]});
+        else
+            handleChange(currentTarget.files[0], iteration);
+    };
 
     return (
         <>
@@ -13,7 +19,7 @@ const Image = ({ entity, setEntity, isLandscape = false, sizes = "", imageName =
             <CFormGroup row className="ml-1 mr-1 mt-0 mb-3">
                 <CCol xs="12" md="12">
                     {/* <CLabel>Image</CLabel> */}
-                    <CInputFile name={ imageName } custom id="custom-file-input" onChange={ handleImageChange } onClick={ () => console.log(imageName) }/>
+                    <CInputFile name={ imageName } custom id="custom-file-input" onChange={ handleImageChange } />
                     <CLabel htmlFor="custom-file-input" variant="custom-file">
                         { entity[imageName] === null || entity[imageName] === undefined ?
                             "Choose file..." :
