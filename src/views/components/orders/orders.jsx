@@ -218,6 +218,9 @@ const Orders = (props) => {
                                     ' ':
                                         item => (
                                             <td className="mb-3 mb-xl-0 text-center" style={{color: item.status === "WAITING" ? "dimgray" : "black"}}>
+                                                { !["ON_PAYMENT", "ABORTED", "WAITING", "PRE-PREPARED"].includes(item.status) && 
+                                                    <CButton color="light" href={"#/components/delivery/" + item.id} target="_blank" className="mx-1 my-1"><i className="fas fa-clipboard-list"></i></CButton>
+                                                }
                                                 <CButton color="warning" disabled={ !isAdmin } href={ "#/components/orders/" + item.id } className="mx-1 my-1"><i className="fas fa-pen"></i></CButton>
                                                 <CButton color="danger" disabled={ !isAdmin } onClick={ () => handleDelete(item) } className="mx-1 my-1"><i className="fas fa-trash"></i></CButton>
                                             </td>

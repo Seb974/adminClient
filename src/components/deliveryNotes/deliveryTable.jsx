@@ -1,6 +1,7 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, PDFViewer } from '@react-pdf/renderer';
-import { isDefined } from 'src/helpers/utils';
+import { Text, View, StyleSheet } from '@react-pdf/renderer';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getContainerPrice, getTotalHT, getTotalTax, getTotalTTC } from 'src/helpers/orders';
 
 const styles = StyleSheet.create({
     table: {
@@ -66,8 +67,11 @@ const DeliveryTable = ({ order, items }) => {
 
     const getProductName = item => {
         const { variation, size, product } = item;
-        const variantName = isDefined(variation) && isDefined(size) ? getVariantName(variation.color, size.name) : "";
-        return product.name + (isDefined(variantName) && variantName.length > 0 ? " - " + variantName : " ");
+        if (isDefined(product)) {
+            const variantName = isDefined(variation) && isDefined(size) ? getVariantName(variation.color, size.name) : "";
+            return product.name + (isDefined(variantName) && variantName.length > 0 ? " - " + variantName : " ");
+        }
+        return "";
     };
 
     const getVariantName = (variantName, sizeName) => {
@@ -81,44 +85,71 @@ const DeliveryTable = ({ order, items }) => {
             {/* TableHeader */} 
             <View style={styles.tableRow}> 
                 <View style={styles.productCol}> 
-                    <Text style={styles.tableCell}>Produit</Text> 
+                    <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Produit</Text> 
                 </View> 
                 <View style={styles.tableCol}> 
-                    <Text style={styles.tableCell}>Commandé</Text> 
+                    <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Commandé</Text> 
                 </View> 
                 <View style={styles.tableCol}> 
-                    <Text style={styles.tableCell}>Livré</Text>
+                    <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Livré</Text>
                 </View> 
                 <View style={styles.tableCol}> 
-                    <Text style={styles.tableCell}>Prix U HT</Text> 
+                    <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Prix U HT</Text> 
                 </View>
                 <View style={styles.tableCol}> 
-                    <Text style={styles.tableCell}>Prix</Text> 
+                    <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Prix</Text> 
                 </View> 
             </View>
             {/* TableContent */}
             { items.map(item => {
-                return (
-                    <View style={styles.tableRow}>
-                        <View style={styles.productCol}>
-                            <Text style={styles.tableCell}>{ getProductName(item) }</Text> 
+                if (!item.isPackage) {
+                    const invoicedQty = !isDefined(order.user) || isDefined(order.paymentId) ? item.orderedQty : item.preparedQty;
+                    return (
+                        <View style={styles.tableRow}>
+                            <View style={styles.productCol}>
+                                <Text style={styles.tableCell}>{ getProductName(item) }</Text> 
+                            </View> 
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ item.orderedQty }</Text>
+                            </View>
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ invoicedQty }</Text>
+                            </View> 
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ item.price + ' €' }</Text> 
+                            </View>
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ (Math.round(invoicedQty * item.price * 100) / 100).toFixed(2) + ' €' }</Text> 
+                            </View>
                         </View> 
-                        <View style={styles.tableCol}> 
-                            <Text style={styles.tableCell}>{ item.orderedQty }</Text>
-                        </View>
-                        <View style={styles.tableCol}> 
-                            <Text style={styles.tableCell}>{ item.preparedQty }</Text>
+                    )
+                } 
+                else {
+                    const containerPrice = getContainerPrice(item.container, order.catalog);
+                    return (
+                        <View style={styles.tableRow}>
+                            <View style={styles.productCol}>
+                                <Text style={styles.tableCell}>{ item.container.name }</Text> 
+                            </View> 
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ item.quantity }</Text>
+                            </View>
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ item.quantity }</Text>
+                            </View> 
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ containerPrice + ' €' }</Text> 
+                            </View>
+                            <View style={styles.tableCol}> 
+                                <Text style={styles.tableCell}>{ (Math.round(item.quantity * containerPrice * 100) / 100).toFixed(2) + ' €' }</Text> 
+                            </View>
                         </View> 
-                        <View style={styles.tableCol}> 
-                            <Text style={styles.tableCell}>{ item.price + ' €' }</Text> 
-                        </View>
-                        <View style={styles.tableCol}> 
-                            <Text style={styles.tableCell}>{ (item.preparedQty * item.price).toFixed(2) + ' €' }</Text> 
-                        </View>
-                    </View> 
-                )})
-            }
-            { order.items[order.items.length - 1].id === items[items.length - 1].id &&
+                    )
+                }
+              }
+            )}
+            { ((!isDefinedAndNotVoid(order.packages) && order.items[order.items.length - 1].id === items[items.length - 1].id) ||
+              (isDefinedAndNotVoid(order.packages) && order.packages[order.packages.length - 1].id === items[items.length - 1].id)) &&
                 <>
                     <View style={styles.tableRow}> 
                         <View style={styles.productFooterCol}> 
@@ -134,7 +165,7 @@ const DeliveryTable = ({ order, items }) => {
                             <Text style={styles.tableCell}>TOTAL HT</Text> 
                         </View>
                         <View style={styles.footerCol}> 
-                            <Text style={styles.tableCell}>{ order.totalHT.toFixed(2) + " €" }</Text> 
+                            <Text style={styles.tableCell}>{ (getTotalHT(order)).toFixed(2) + " €" }</Text>
                         </View> 
                     </View>
                     <View style={styles.tableRow}> 
@@ -151,7 +182,7 @@ const DeliveryTable = ({ order, items }) => {
                             <Text style={styles.tableCell}>TVA</Text> 
                         </View>
                         <View style={styles.footerCol}> 
-                            <Text style={styles.tableCell}>{(order.totalTTC - order.totalHT).toFixed(2) + " €"}</Text> 
+                            <Text style={styles.tableCell}>{ (getTotalTax(order)).toFixed(2) + " €" }</Text>
                         </View> 
                     </View>
                     <View style={styles.tableRow}> 
@@ -168,7 +199,7 @@ const DeliveryTable = ({ order, items }) => {
                             <Text style={styles.tableCell}>TOTAL TTC</Text> 
                         </View>
                         <View style={styles.footerCol}> 
-                            <Text style={styles.tableCell}>{order.totalTTC.toFixed(2) + " €"}</Text> 
+                            <Text style={styles.tableCell}>{ (getTotalTTC(order)).toFixed(2) + " €" }</Text> 
                         </View> 
                     </View>
                 </>

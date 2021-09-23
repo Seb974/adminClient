@@ -242,7 +242,7 @@ const Profitability = (props) => {
     const getIdealPrice = (product, price) => {
         const cost = valuation === "LAST" ? getCostWithLastCost(product) : getCost(product);
         const group = priceGroups.find(group => group.id === price.priceGroup.id);
-        const idealPrice = Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100;
+        const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100 : 0;
         return isNaN(cost) ? "-" : idealPrice + " €";
     };
 

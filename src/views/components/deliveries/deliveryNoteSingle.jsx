@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Document, StyleSheet, PDFViewer } from '@react-pdf/renderer';
-import TouringActions from 'src/services/TouringActions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import DeliveryInformations from 'src/components/deliveryNotes/deliveryInformations';
+import OrderActions from 'src/services/OrderActions';
 
 const styles = StyleSheet.create({
     viewer: {
@@ -79,38 +79,42 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: 'left',
-        // color: 'grey'
     }
 });
 
-const DeliveryNote = ({ match }) => {
+const DeliveryNoteSingle = ({ match }) => {
 
     const { id = "new" } = match.params;
     const maxPerPage = 4;
-    const [orders, setOrders] = useState([]);
+    const [order, setOrder] = useState([]);
 
     useEffect(() => {
         if (id !== "new")
-            fetchTouring(id);
+            fetchOrder(id);
     }, []);
+
+    useEffect(() => {
+        if (id !== "new")
+            fetchOrder(id);
+    }, [id]);
     
-    const fetchTouring = id => {
-        TouringActions
+    const fetchOrder = id => {
+        OrderActions
             .find(id)
             .then(response => {
-                setOrders(response.orderEntities);
-                console.log(response.orderEntities);
+                console.log(response);
+                setOrder(response);
             })
             .catch(error => console.log(error));
     };
 
-    return !isDefinedAndNotVoid(orders) ? <></> : (
+    return !isDefined(order) || !isDefinedAndNotVoid(order.items) ? <></> : (
         <PDFViewer id="deliveryViewer" style={ styles.viewer }>
             <Document style={ styles.viewer }>
-                { orders.map(order => <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 }/> )}
+                <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 }/>
             </Document>
         </PDFViewer>
     );
 }
 
-export default DeliveryNote;
+export default DeliveryNoteSingle;
