@@ -21,7 +21,7 @@ import api from 'src/config/api';
 const Preparations = (props) => {
 
     const itemsPerPage = 30;
-    const fields = ['name', 'date', 'total', ' '];
+    const fields = ['name', 'date', 'total', 'préparateur', ' '];
     const { currentUser, seller, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
     const [mercureOpering, setMercureOpering] = useState(false);
@@ -173,8 +173,38 @@ const Preparations = (props) => {
                         window.open(fileURL, '_blank');
                     });
             })
+            .catch(error => {
+                console.log(error);
+                setLabelLoading(false);
+            });
+    };
+
+    const handleSetPreparator = (order) => {
+        const formattedOrder = getOrderWithPreparator(order);
+        OrderActions
+            .update(order.id, formattedOrder)
+            .then(response => {
+                console.log(response.data);
+                const newOrders = orders.map(o => o.id === order.id ? response.data : o);
+                setOrders(newOrders);
+            })
             .catch(error => console.log(error));
+    };
+
+    const getOrderWithPreparator = order => {
+        const { appliedCondition, catalog, items, metas, packages, user } = order;
+        return {
+            ...order, 
+            appliedCondition: isDefined(appliedCondition) && typeof appliedCondition === 'object' ? appliedCondition['@id'] : typeof appliedCondition === 'string' ? appliedCondition : null,
+            catalog: isDefined(catalog) && typeof catalog === 'object' ? catalog['@id'] : typeof catalog === 'string' ? catalog : null,
+            items: isDefinedAndNotVoid(items) ? items.map(i => i['@id']) : [],
+            metas: isDefined(metas) && typeof metas === 'object' ? metas['@id'] : typeof metas === 'string' ? metas : null,
+            packages: isDefinedAndNotVoid(packages) ? packages.map(i => i['@id']) : [],
+            user: isDefined(user) && typeof user === 'object' ? user['@id'] : typeof user === 'string' ? user : null,
+            preparator: '/api/users/' + currentUser.id
+        };
     }
+
     return (
         <CRow>
         <CCol xs="12" lg="12">
@@ -263,6 +293,14 @@ const Preparations = (props) => {
                             ,
                             'total':
                                 item => <td>{ isDefined(item.totalHT) ? item.totalHT.toFixed(2) + " €" : " "}</td>
+                            ,
+                            'préparateur': 
+                               item => <td>
+                                            { isDefined(item.preparator) ? 
+                                                <span className="mx-1 my-1">{ item.preparator.name }</span> : 
+                                                <CButton color="success" onClick={ () => handleSetPreparator(item) } className="mx-1 my-1"><i className="fas fa-check mr-2"></i>Prendre</CButton>
+                                            }
+                                        </td>
                             ,
                             ' ':
                                 item => (

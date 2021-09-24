@@ -9,7 +9,7 @@ function findAll() {
 function find(id) {
     return api
         .get('/api/agents/' + id)
-        .then(response => response.data['hydra:member']);
+        .then(response => response.data);
 }
 
 function deleteAgent(id) {

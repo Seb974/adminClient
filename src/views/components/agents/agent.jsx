@@ -25,7 +25,11 @@ const Agent = ({ match, history }) => {
         if (id !== "new") {
             setEditing(true);
             AgentActions.find(id)
-                .then( response => setAgent(response))
+                .then(response => {
+                    console.log("ici");
+                    console.log(response);
+                    setAgent(response);
+                })
                 .catch(error => {
                     console.log(error);
                     // TODO : Notification flash d'une erreur
@@ -71,7 +75,7 @@ const Agent = ({ match, history }) => {
         }
     };
 
-    return (
+    return !isDefined(agent) ? <></> : (
         <CRow>
             <CCol xs="12" sm="12">
                 <CCard>

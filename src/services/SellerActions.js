@@ -24,10 +24,19 @@ function create(seller) {
     return api.post('/api/sellers', {...seller});
 }
 
+function createImage(image) {
+    let formData = new FormData();
+    formData.append('file', image);
+    formData.append('instance', "SELLER-LOGO");
+    return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
+              .then(response => response.data);
+}
+
 export default {
     findAll,
     delete: deleteSeller,
     find,
     update,
-    create
+    create,
+    createImage
 }

@@ -81,7 +81,6 @@ const Article = ({ match, history }) => {
     const getArticleWithImage = async () => {
         let articleWithImage = {...article};
         if (article.image && !article.image.filePath) {
-            console.log("in condition to create image");
             const image = await ArticleActions.createImage(article.image);
             console.log(image);
             articleWithImage = {...articleWithImage, image: image['@id']}
