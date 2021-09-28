@@ -18,10 +18,10 @@ const Banner = ({ match, history }) => {
     const maxBanners = 4;
     const { id = "new" } = match.params;
     const { catalogs } = useContext(CatalogContext);
-    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", isMain: "", bannerNumber: "", textColor: "", titleColor: "", textShadow: "", catalogs: "" };
-    const { products } = useContext(ProductsContext);
+    const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", category: "", isMain: "", bannerNumber: "", textColor: "", titleColor: "", textShadow: "", catalogs: "" };
+    const { products, categories } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
-    const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, isMain: false, bannerNumber: 1, textColor: '#fff', titleColor: '#fff', textShadow: true, catalogs: [] });
+    const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, category: null, isMain: false, bannerNumber: 1, textColor: '#fff', titleColor: '#fff', textShadow: true, catalogs: [] });
     const [homepages, setHomepages] = useState([]);
     const [errors, setErrors] = useState(defaultError);
     const [numberSelect, setNumberSelect] = useState(Array.from(Array(maxBanners).keys()).filter(i => i > 0));
@@ -59,6 +59,16 @@ const Banner = ({ match, history }) => {
             setBanner({...banner, product: selectedProduct });
         } else {
             setBanner({...banner, product: null})
+        }
+    };
+
+    const handleCategoryChange = ({ currentTarget }) => {
+        const selectedId = parseInt(currentTarget.value);
+        if (selectedId > -1) {
+            const selectedCategory = categories.find(h => h.id === selectedId);
+            setBanner({...banner, category: selectedCategory });
+        } else {
+            setBanner({...banner, category: null})
         }
     };
 
@@ -114,6 +124,7 @@ const Banner = ({ match, history }) => {
             image: typeof bannerWithImage.image === 'string' ? bannerWithImage.image : bannerWithImage.image['@id'], 
             homepage: typeof bannerWithImage.homepage === 'string' ? bannerWithImage.homepage : bannerWithImage.homepage['@id'],
             product: isDefined(bannerWithImage.product) ? bannerWithImage.product['@id'] : null,
+            category: isDefined(bannerWithImage.category) ? bannerWithImage.category['@id'] : null,
             catalogs: banner.catalogs.map(c => c['@id']),
         };
         const request = !editing ? BannerActions.create(bannerToWrite) : BannerActions.update(id, bannerToWrite);
@@ -137,13 +148,16 @@ const Banner = ({ match, history }) => {
 
     const getBannerWithImage = async () => {
         let bannerWithImage = {...banner};
-        if (banner.image && !banner.image.filePath) {
-            const image = await BannerActions.createImage(banner.image, banner.homepage.name, banner.bannerNumber, banner.isMain);
-            bannerWithImage = {...bannerWithImage, image: image['@id']}
+        if (banner.image) {
+            if (!banner.image.filePath) {
+                const image = await BannerActions.createImage(banner.image, banner.homepage.name, banner.bannerNumber, banner.isMain);
+                bannerWithImage = {...bannerWithImage, image: image['@id']}
+            } else {
+                bannerWithImage = {...bannerWithImage, image: typeof banner.image === "string" ? banner.image : banner.image['@id']}
+            }
         }
         return bannerWithImage;
     };
-
 
     return (
         <CRow>
@@ -205,13 +219,21 @@ const Banner = ({ match, history }) => {
                                 </CCol>
                             </CRow>
                             <CRow>
-                                <CCol xs="12" sm="6" md="6">
+                                <CCol xs="12" sm="12" md="12">
                                     <Image entity={ banner } setEntity={ setBanner } isLandscape={ true }/>
                                 </CCol>
+                            </CRow>
+                            <CRow>
                                 <CCol xs="12" sm="6" md="6" className="mt-4">
                                     <Select className="mr-2" name="product" label="Produit associé" onChange={ handleProductChange } value={ isDefined(banner.product) ? banner.product.id : -1 }>
                                         <option value={ -1 }>Aucun</option>
                                         { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
+                                    </Select>
+                                </CCol>
+                                <CCol xs="12" sm="6" md="6" className="mt-4">
+                                    <Select className="mr-2" name="product" label="Catégorie associée" onChange={ handleCategoryChange } value={ isDefined(banner.category) ? banner.category.id : -1 }>
+                                        <option value={ -1 }>Aucune</option>
+                                        { categories.map(category => <option key={ category.id } value={ category.id }>{ category.name }</option>) }
                                     </Select>
                                 </CCol>
                             </CRow>

@@ -12,6 +12,7 @@ import { updateStatusBetween } from 'src/data/dataProvider/eventHandlers/orderEv
 import MercureContext from 'src/contexts/MercureContext';
 import { getDeliveredStatus } from 'src/helpers/orders';
 import UserActions from 'src/services/UserActions';
+import Select from 'src/components/forms/Select';
 
 const Accounting = (props) => {
 
@@ -27,6 +28,8 @@ const Accounting = (props) => {
     const [billingLoading, setBillingLoading] = useState(false);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [selectAll, setSelectAll] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(-1);
 
     useEffect(() => {
         const isUserAdmin = Roles.hasAdminPrivileges(currentUser);
@@ -51,13 +54,26 @@ const Accounting = (props) => {
         OrderActions.findStatusBetween(UTCDates, deliveredStatus, currentUser)
                 .then(response =>{
                     setOrders(response.map(data => ({...data, selected: false})));
+                    getUsers(response);
                     setLoading(false);
                 })
                 .catch(error => {
                     console.log(error);
                     setLoading(false);
                 });
-    }
+    };
+
+    const getUsers = orders => {
+        let finalUsers = [];
+        orders.map(o => {
+            if (finalUsers.find(u => u.email === o.email) === undefined) {
+                finalUsers = [...finalUsers, { name: o.name, email: o.email }];
+            }
+        });
+        setUsers(finalUsers);
+    };
+
+    const handleUserChange = ({ currentTarget }) => setSelectedUser(currentTarget.value);
 
     const handleDelete = item => {
         const originalOrders = [...orders];
@@ -177,6 +193,14 @@ const Accounting = (props) => {
                                 </CFormGroup>
                             </CCol>
                         </CRow>
+                        <CRow>
+                            <CCol xs="12" lg="12" className="my-2">
+                                <Select className="mr-2" name="priceGroup" label="Client" value={ selectedUser } onChange={ handleUserChange }>         {/* onChange={ handleInputChange } */}
+                                    <option value="-1">Tous</option>
+                                    { users.map(p => <option key={ p.email } value={ p.email }>{ p.name }</option>)}
+                                </Select>
+                            </CCol>
+                        </CRow>
                         { loading ? 
                             <CRow>
                                 <CCol xs="12" lg="12" className="text-center">
@@ -185,7 +209,7 @@ const Accounting = (props) => {
                             </CRow>
                             :
                             <CDataTable
-                                items={ orders }
+                                items={ selectedUser == -1 ? orders : orders.filter(o => o.email === selectedUser) }
                                 fields={ fields }
                                 bordered
                                 itemsPerPage={ itemsPerPage }

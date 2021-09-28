@@ -5,7 +5,7 @@ const Select = ({ name, id, value, error = "", label, onChange, children, requir
     return (
         <CFormGroup>
             <CLabel htmlFor={ name }>{ label }</CLabel>
-            <CSelect custom name={ name } id={ id || name } value={ value } onChange={ onChange } invalid={ error.length > 0 } valid={ valid } required={ required } disabled={ disabled } multiple={ multiple }style={ style } >
+            <CSelect custom name={ name } id={ id || name } value={ value } onChange={ onChange } invalid={ error.length > 0 } valid={ valid } required={ required } disabled={ disabled } multiple={ multiple } style={ style } >
                 { children }
             </CSelect>
             <CInvalidFeedback>{ error }</CInvalidFeedback>

@@ -33,7 +33,6 @@ const Article = ({ match, history }) => {
             setEditing(true);
             ArticleActions.find(id)
                 .then(response => {
-                    console.log(response);
                     setArticle(response);
                     setText(response.content);
                 })
@@ -82,7 +81,6 @@ const Article = ({ match, history }) => {
         let articleWithImage = {...article};
         if (article.image && !article.image.filePath) {
             const image = await ArticleActions.createImage(article.image);
-            console.log(image);
             articleWithImage = {...articleWithImage, image: image['@id']}
         }
         return articleWithImage;

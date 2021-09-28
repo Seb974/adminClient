@@ -18,9 +18,18 @@ function create(platform) {
     return api.post('/api/platforms', {...platform});
 }
 
+function createImage(image) {
+    let formData = new FormData();
+    formData.append('file', image);
+    formData.append('instance', 'Platform');
+    return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
+              .then(response => response.data);
+}
+
 export default {
     find, 
     delete: deletePlatform,
     update,
-    create
+    create,
+    createImage
 }
