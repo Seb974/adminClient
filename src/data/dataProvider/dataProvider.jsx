@@ -93,8 +93,6 @@ const DataProvider = ({ children }) => {
         }
     }, [catalogs, country]);
 
-    // useEffect(() => console.log(messages), [messages]);
-
     return (
         <PlatformContext.Provider value={ {platform, setPlatform} }>
         <MessageContext.Provider value={ {messages, setMessages} }>

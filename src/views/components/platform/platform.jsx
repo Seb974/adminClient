@@ -21,14 +21,16 @@ const Platform = ({ history, match }) => {
     const { currentUser } = useContext(AuthContext);
     const initialPosition = AddressPanel.getInitialInformations();
     const initialInformations = {...initialPosition};
-    const [platform, setPlatform] = useState({name: ""});
-    const initialErrors = {name: "", ...initialInformations};
+    const defaultSocial = {name: "", link: "", icon: "", count: 0};
+    const [platform, setPlatform] = useState({name: "", email: ""});
+    const initialErrors = {name: "", email: "", ...initialInformations};
     const [informations, setInformations] = useState(initialInformations);
     const [errors, setErrors] = useState(initialErrors);
     const [pickers, setPickers] = useState([]);
     const [isAdmin, setIsAdmin] = useState([]);
     const [terms, setTerms] = useState("");
     const [notices, setNotices] = useState("");
+    const [socials, setSocials] = useState([defaultSocial]);
     
     useEffect(() => {
         fetchPlatform();
@@ -47,7 +49,7 @@ const Platform = ({ history, match }) => {
         PlatformActions
             .find()
             .then(response => {
-                const {metas, pickers, terms, notices, ...mainPlatform} = response;
+                const {metas, pickers, terms, notices, socials, ...mainPlatform} = response;
                 setPlatform(mainPlatform);
                 if (isDefinedAndNotVoid(metas))
                     setInformations(metas);
@@ -57,6 +59,8 @@ const Platform = ({ history, match }) => {
                     setTerms(terms)
                 if (isDefined(notices))
                     setNotices(notices);
+                if (isDefinedAndNotVoid(socials))
+                    setSocials(socials.map((s, i) => ({...s, count: i})))
             })
             .catch(error => {
                 console.log(error);
@@ -68,7 +72,6 @@ const Platform = ({ history, match }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const platformToWrite = getPlatformToWrite();
-        console.log(platformToWrite);
         const request = !isDefined(platform['@id']) ? PlatformActions.create(platformToWrite) : PlatformActions.update(platform.id, platformToWrite);
         request.then(response => {
                     setErrors(initialErrors);
@@ -96,7 +99,8 @@ const Platform = ({ history, match }) => {
             metas: {...informations},
             pickers: pickers.map(picker => picker['@id']),
             terms,
-            notices
+            notices,
+            socials
         };
     };
 
@@ -128,6 +132,15 @@ const Platform = ({ history, match }) => {
         };
     };
 
+    const handleAddSocial = () => setSocials([...socials, {...defaultSocial, count: socials[socials.length - 1].count + 1}]);
+    const handleDeleteSocial = ({ currentTarget }) => setSocials(socials.filter(s => s.count !== parseInt(currentTarget.name)));
+
+    const handleSocialChange = ({ currentTarget }) => {
+        const updated = socials.find(s => s.count === parseInt(currentTarget.name));
+        if (isDefined(updated)) {
+            setSocials(socials.map(s => s.count === updated.count ? {...updated, [currentTarget.id]: currentTarget.value} : s));
+        }
+    };
 
     const termsModules = useMemo(() => ({ toolbar: { container: CONTAINER, handlers: { image: termsImageHandler } }}), []);
     const noticesModules = useMemo(() => ({ toolbar: { container: CONTAINER, handlers: { image: noticesImageHandler } }}), []);
@@ -144,7 +157,7 @@ const Platform = ({ history, match }) => {
                                         <Tabs defaultActiveKey="home" id="uncontrolled-tab-example" className="mb-3">
                                             <Tab eventKey="home" title="Informations générales">
                                                 <CRow className="mb-3">
-                                                    <CCol xs="12" sm="12" md="6">
+                                                    <CCol xs="12" sm="12" md="4">
                                                         <CFormGroup>
                                                             <CLabel htmlFor="name">Nom</CLabel>
                                                             <CInput
@@ -158,7 +171,7 @@ const Platform = ({ history, match }) => {
                                                             <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                                         </CFormGroup>
                                                     </CCol>
-                                                    <CCol xs="12" sm="12" md="6">
+                                                    <CCol xs="12" sm="12" md="4">
                                                         <CFormGroup>
                                                             <CLabel htmlFor="phone">N° Téléphone</CLabel>
                                                             <CInput
@@ -173,8 +186,89 @@ const Platform = ({ history, match }) => {
                                                             <CInvalidFeedback>{ errors.phone }</CInvalidFeedback>
                                                         </CFormGroup>
                                                     </CCol>
+                                                    <CCol xs="12" sm="12" md="4">
+                                                        <CFormGroup>
+                                                            <CLabel htmlFor="name">Adresse email</CLabel>
+                                                            <CInput
+                                                                id="email"
+                                                                name="email"
+                                                                type="email"
+                                                                value={ platform.email }
+                                                                onChange={ handleChange }
+                                                                placeholder="adresse email de contact"
+                                                                invalid={ errors.email.length > 0 } 
+                                                            />
+                                                            <CInvalidFeedback>{ errors.email }</CInvalidFeedback>
+                                                        </CFormGroup>
+                                                    </CCol>
                                                 </CRow>
                                                 <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
+                                                <hr/>
+                                                <CRow className="mb-3">
+                                                    <CCol xs="6" sm="6" md="6">
+                                                        <CLabel htmlFor="name">Réseaux sociaux</CLabel>
+                                                    </CCol>
+                                                    <CCol xs="6" sm="6" md="6" className="text-right">
+                                                        <CButton size="sm" color="warning" onClick={ handleAddSocial }><CIcon name="cil-plus"/> Ajouter</CButton> 
+                                                    </CCol>
+                                                </CRow>
+                                                { socials.map((s, i) => {
+                                                        return (
+                                                            <CRow key={ i }>
+                                                                <CCol xs="12" sm="12" md="4">
+                                                                    <CFormGroup>
+                                                                        <CLabel htmlFor="name">Nom</CLabel>
+                                                                        <CInput
+                                                                            id="name"
+                                                                            name={ s.count }
+                                                                            value={ s.name }
+                                                                            onChange={ handleSocialChange }
+                                                                            placeholder="Nom du réseau social"
+                                                                        />
+                                                                    </CFormGroup>
+                                                                </CCol>
+                                                                <CCol xs="12" sm="12" md="4">
+                                                                    <CFormGroup>
+                                                                        <CLabel htmlFor="phone">Lien</CLabel>
+                                                                        <CInput
+                                                                            id="link"
+                                                                            name={ s.count }
+                                                                            value={ s.link }
+                                                                            onChange={ handleSocialChange }
+                                                                            placeholder="Lien vers votre profil"
+                                                                        />
+                                                                    </CFormGroup>
+                                                                </CCol>
+                                                                <CCol xs="12" sm="12" md="2">
+                                                                    <CFormGroup>
+                                                                        <CLabel htmlFor="name">
+                                                                            <a href="https://fontawesome.com/v5.15/icons?d=gallery&p=2" target="_blank">
+                                                                                Icone <small className="mr-4"><i> - Choisir</i></small>
+                                                                            </a>
+                                                                            </CLabel>
+                                                                        <CInput
+                                                                            id="icon"
+                                                                            name={ s.count }
+                                                                            value={ s.icon }
+                                                                            onChange={ handleSocialChange }
+                                                                            placeholder="Icone du réseau social"
+                                                                        />
+                                                                    </CFormGroup>
+                                                                </CCol>
+                                                                <CCol xs="12" sm="12" md="2" className= "d-flex justify-content-center align-items-center">
+                                                                <CButton 
+                                                                    name={ s.count }
+                                                                    size="sm" 
+                                                                    color="danger" 
+                                                                    onClick={ handleDeleteSocial }
+                                                                >
+                                                                    <CIcon name="cil-trash"/>
+                                                                </CButton>
+                                                                </CCol>
+                                                            </CRow>
+                                                        )
+                                                  })
+                                                }
                                                 <UserSearchMultiple users={ pickers } setUsers={ setPickers }/>
                                             </Tab>
                                             <Tab eventKey="profile" title="Mentions légales">
