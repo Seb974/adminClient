@@ -68,11 +68,12 @@ export const getOrderToWrite = (order, user, informations, productCart, date, ob
         isRemains: false,
         status: !isDefined(order.status) ? "WAITING" : order.status,
         packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        preparator: isDefined(order.preparator) ? (typeof order.preparator === 'object' ? isDefined(order.preparator['@id']) ? order.preparator['@id'] : null : typeof order.preparator === 'string' ? order.preparator : null) : null,
     };
 };
 
 export const setOrderStatus = (order, status) => {
-    const { user, metas, catalog, appliedCondition, promotion, items } = order;
+    const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
     return {
         ...order,
         status,
@@ -83,16 +84,18 @@ export const setOrderStatus = (order, status) => {
         promotion: isDefined(promotion) ? (typeof promotion === 'object' ? promotion['@id'] : promotion) : null,
         items: items.map(item => item['@id']),
         packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        preparator: isDefined(preparator) ? (typeof preparator === 'object' ? isDefined(preparator['@id']) ? preparator['@id'] : null : typeof preparator === 'string' ? preparator : null) : null,
     }
 };
 
 export const getPreparedOrder = (order, currentUser) => {
-    const { user, metas, catalog, appliedCondition, promotion, items } = order;
+    const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
     return {
         ...order,
         user: isDefined(user) ? (typeof user === 'object' ? user['@id'] : user) : null,
         metas: isDefined(metas) ? (typeof metas === 'object' ? metas['@id'] : metas) : null,
         catalog: isDefined(catalog) ? (typeof catalog === 'object' ? catalog['@id'] : catalog) : null,
+        preparator: isDefined(preparator) ? (typeof preparator === 'object' ? isDefined(preparator['@id']) ? preparator['@id'] : null : typeof preparator === 'string' ? preparator : null) : null,
         appliedCondition: isDefined(appliedCondition) ? (typeof appliedCondition === 'object' ? appliedCondition['@id'] : appliedCondition) : null,
         promotion: isDefined(promotion) ? (typeof promotion === 'object' ? promotion['@id'] : promotion) : null,
         items: items.map(item => {
@@ -113,7 +116,7 @@ export const getPreparedOrder = (order, currentUser) => {
 }
 
 export const getDeliveredOrder = order => {
-    const { user, metas, catalog, appliedCondition, promotion, items } = order;
+    const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
     return {
         ...order,
         user: isDefined(user) ? (typeof user === 'object' ? user['@id'] : user) : null,
@@ -129,7 +132,8 @@ export const getDeliveredOrder = order => {
             deliveredQty: getFloat(item.deliveredQty),
         })),
         packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
-        status: isDefined(metas.isRelaypoint) && metas.isRelaypoint ? "COLLECTABLE" : "DELIVERED"
+        status: isDefined(metas.isRelaypoint) && metas.isRelaypoint ? "COLLECTABLE" : "DELIVERED",
+        preparator: isDefined(preparator) ? (typeof preparator === 'object' ? isDefined(preparator['@id']) ? preparator['@id'] : null : typeof preparator === 'string' ? preparator : null) : null,
     };
 }
 

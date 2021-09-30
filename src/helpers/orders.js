@@ -96,7 +96,6 @@ export const getProductsTotalTax = (order, catalog) => {
     const { user, paymentId } = order;
     return order.items.reduce((sum, current) => {
         const { product, price, orderedQty, preparedQty } = current;
-        console.log(product);
         const quantity = !isDefined(user) || isDefined(paymentId) ? orderedQty : preparedQty;
         const tax = getProductTax(product, catalog);
         return sum += (quantity * price * tax);

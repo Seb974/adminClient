@@ -41,7 +41,6 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
     };
 
     const onSubmit = () => {
-        console.log(getPreparedOrder(viewedOrder, currentUser));
         OrderActions
             .update(viewedOrder.id, getPreparedOrder(viewedOrder, currentUser))
             .then(response => {
@@ -52,30 +51,32 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
 
     return (
         <>
-            { !isDefined(viewedOrder) ? <></> : viewedOrder.items.map((item, index) => {
-                if (isAdmin || Roles.isPicker(currentUser) || Roles.isSupervisor(currentUser) || (!isAdmin && item.product.seller.users.find(user => user.id == currentUser.id) !== undefined)) {
-                    return(
-                        <CCardBody key={ item.id }>
-                            <CRow className="text-center mt-0">
-                                <CCol md="1">{""}</CCol>
-                            </CRow>
-                            <CRow>
-                                <CCol md="1">{""}</CCol>
-                                <CCol md="10">
-                                    <OrderDetailsItem
-                                        item={ item }
-                                        order={ viewedOrder }
-                                        setOrder={ onOrderChange } 
-                                        total={ order.items.length } 
-                                        index={ index }
-                                        isDelivery={ isDelivery }
-                                    />
-                                </CCol>
-                            </CRow>
-                        </CCardBody>
-                    );
-                } else return <></>
-            })}
+            { !isDefined(viewedOrder) ? <></> : 
+                viewedOrder.items.map((item, index) => {
+                    if (isAdmin || Roles.isPicker(currentUser) || Roles.isSupervisor(currentUser) || (!isAdmin && item.product.seller.users.find(user => user.id == currentUser.id) !== undefined)) {
+                        return(
+                            <CCardBody key={ item.id }>
+                                <CRow className="text-center mt-0">
+                                    <CCol md="1">{""}</CCol>
+                                </CRow>
+                                <CRow>
+                                    <CCol md="1">{""}</CCol>
+                                    <CCol md="10">
+                                        <OrderDetailsItem
+                                            item={ item }
+                                            order={ viewedOrder }
+                                            setOrder={ onOrderChange } 
+                                            total={ order.items.length } 
+                                            index={ index }
+                                            isDelivery={ isDelivery }
+                                        />
+                                    </CCol>
+                                </CRow>
+                            </CCardBody>
+                        );
+                    } else return <></>
+                })
+            }
             { !isDefined(viewedOrder) || !isDefinedAndNotVoid(viewedOrder.packages) ? <></> : viewedOrder.packages.map((_pack, i) => {
                 if (isAdmin || Roles.isPicker(currentUser) || Roles.isSupervisor(currentUser)) {
                     return(
@@ -96,6 +97,19 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
             <CRow className="text-center mt-0">
                 <CCol md="1">{""}</CCol>
             </CRow>
+            { isDefined(viewedOrder) && isDefined(viewedOrder.message) && viewedOrder.message.length > 0 && 
+                <CCardBody>
+                    <CRow className="text-center mt-0">
+                        <CCol md="1">{""}</CCol>
+                    </CRow>
+                    <CRow>
+                        <CCol md="1">{""}</CCol>
+                        <CCol md="10">
+                            <p style={{ color: 'darkslategrey'}}><b>Message du client :</b><br/>{ viewedOrder.message }</p>
+                        </CCol>
+                    </CRow>
+                </CCardBody>
+            }
             { !isDelivery &&
                 <CRow className="mt-2 mb-5 d-flex justify-content-center">
                     <CButton size="sm" color="success" onClick={ onSubmit }><CIcon name="cil-plus"/>Terminer</CButton>
