@@ -7,6 +7,7 @@ import axios from 'axios';
 
 const ENV = ( !process.env.NODE_ENV || process.env.NODE_ENV === "development") ? "development" : "production" ;
 const API_DOMAIN = ENV === "development" ? "http://localhost:8000" : "https://api.clikeat.fr";
+const CLIENT_DOMAIN = ENV === "development" ? "http://localhost:3001" : "https://clikeat.fr";
 const MERCURE_DOMAIN = ENV === "development" ? "http://localhost:3000" : "https://api.clikeat.fr:3001";
 
 function get(route) {
@@ -31,6 +32,7 @@ function patch(route, entity) {
 
 export default {
     API_DOMAIN,
+    CLIENT_DOMAIN,
     MERCURE_DOMAIN,
     get,
     post,

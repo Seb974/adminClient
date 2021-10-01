@@ -5,10 +5,14 @@ import CIcon from '@coreui/icons-react'
 import AuthContext from 'src/contexts/AuthContext'
 import AuthActions from 'src/services/AuthActions'
 import { useTranslation } from 'react-i18next'
+import PlatformContext from 'src/contexts/PlatformContext'
+import { isDefined } from 'src/helpers/utils'
+import api from 'src/config/api'
 
 const Login = ({ history }) => {
 
   const { setIsAuthenticated } = useContext(AuthContext);
+  const { platform } = useContext(PlatformContext);
   const [credentials, setCredentials] = useState({username: '', password: ''});
   const [error, setError] = useState("");
   const { t, i18n } = useTranslation()
@@ -40,9 +44,12 @@ const Login = ({ history }) => {
               <CCard className="p-4">
                 <CCardBody>
                   <CForm onSubmit={ handleSubmit }>
-                    <h1>{ t("login.title.label") }</h1>
-                    <p className="text-muted">{ t("login.text-muted.label") }</p>
-                    <CFormGroup>
+                    <h1 className="text-center mb-0">
+                      {/* { t("login.title.label") } */}
+                      <img src="assets/img/logo/logo_fp_4.png" alt={ isDefined(platform) ? platform.name : "" } width={ 150 }/>
+                    </h1>
+                    <p className="text-muted mt-0 text-center">{ t("login.text-muted.label") }</p>
+                    <CFormGroup className="mt-4">
                       <CInputGroup className="mb-3">
                         <CInputGroupPrepend>
                           <CInputGroupText>@
@@ -63,7 +70,7 @@ const Login = ({ history }) => {
                       </CInputGroup>
                       <CInvalidFeedback>{ error }</CInvalidFeedback>
                     </CFormGroup>
-                    <CFormGroup>
+                    <CFormGroup className="mt-4">
                       <CInputGroup className="mb-4">
                         <CInputGroupPrepend>
                           <CInputGroupText>
@@ -83,25 +90,26 @@ const Login = ({ history }) => {
                       </CInputGroup>
                     </CFormGroup>
                     <CRow>
-                      <CCol xs="6">
-                        <CButton type="submit" color="primary" className="px-4">{ t("login.button.label") }</CButton>
+                      <CCol xs="6" className="mt-4">
+                        <CButton type="submit" color="success" className="px-4">{ t("login.button.label") }</CButton>
                       </CCol>
-                      <CCol xs="6" className="text-right">
-                        <CButton color="link" className="px-0">{ t("login.forgot-pwd.label") }</CButton>
+                      <CCol xs="6" className="text-right mt-4">
+                        <CButton color="link" className="px-0" style={{ color: "#2a2b36" }}>{ t("login.forgot-pwd.label") }</CButton>
                       </CCol>
                     </CRow>
                   </CForm>
                 </CCardBody>
               </CCard>
-              <CCard className="text-white bg-primary py-5 d-md-down-none" style={{ width: '44%' }}>
+              <CCard className="text-white py-5 d-md-down-none" style={{ width: '44%', backgroundColor: "#2a2b36"}}>  
+              {/* bg-dark */}
                 <CCardBody className="text-center">
                   <div>
-                    <h2>Sign up</h2>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-                      labore et dolore magna aliqua.</p>
-                    <Link to="/register">
-                      <CButton color="primary" className="mt-3" active tabIndex={-1}>Register Now!</CButton>
-                    </Link>
+                    {/* <h2>{ isDefined(platform) ? platform.name : "" }</h2> */}
+                    <img src="assets/img/logo/logo_fp_2.png" alt={ isDefined(platform) ? platform.name : "" } width={ 300 }/>
+                    <p className="my-3">Accès réservé aux administrateurs.</p>
+                    <a href={ api.CLIENT_DOMAIN } target="_blank">
+                      <CButton color="success" className="mt-3" active tabIndex={-1}>Aller au site public</CButton>
+                    </a>
                   </div>
                 </CCardBody>
               </CCard>

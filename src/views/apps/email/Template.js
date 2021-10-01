@@ -14,10 +14,10 @@ const EmailNav = ({children}) => {
       <CSidebar
         unfoldable
         fixed={true} 
-        colorScheme="light"
+        colorScheme="primary"    // light
       >
         <CSidebarBrand className="d-md-down-none" to="/apps/email">
-          <CIcon
+          {/* <CIcon
             className="c-sidebar-brand-full"
             name="logo-negative"
             height={35}
@@ -26,7 +26,9 @@ const EmailNav = ({children}) => {
             className="c-sidebar-brand-minimized"
             name="sygnet"
             height={35}
-          />
+          /> */}
+          <img src="assets/img/logo/logo_navbar_full.png" height={30} alt="logo" className="c-sidebar-brand-full" name="logo-negative"/>
+          <img src="assets/img/logo/logo_fp_7.png" height={32} alt="logo" className="c-sidebar-brand-minimized" name="sygnet"/>
         </CSidebarBrand>
         <CSidebarNav>
           <CSidebarNavItem 
@@ -77,7 +79,7 @@ const EmailNav = ({children}) => {
             className="mt-auto"
             icon="cil-speedometer"
             name="Dashboard"
-            badge={{ text: 'NEW', color: 'info' }}
+            // badge={{ text: 'NEW', color: 'info' }}
           />
         </CSidebarNav>
         <CSidebarMinimizer/>

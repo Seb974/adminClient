@@ -23,10 +23,10 @@ function getNav(translation, currentUser)
       name: 'Dashboard',
       to: '/dashboard',
       icon: <CIcon name="cil-speedometer" customClasses="c-sidebar-nav-icon"/>,
-      badge: {
-        color: 'info',
-        text: 'NEW',
-      }
+      // badge: {
+      //   color: 'info',
+      //   text: 'NEW',
+      // }
     },
     !["ADMIN"].includes(mainRole) ? voidValue : 
       {
