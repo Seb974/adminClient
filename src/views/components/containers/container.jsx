@@ -35,6 +35,8 @@ const Container = ({ match, history }) => {
     }, [taxes, container]);
 
     useEffect(() => {
+        // console.log(catalogs);
+        // console.log(container);
         if (isDefinedAndNotVoid(catalogs)) {
             let newCatalogOptions = [...catalogOptions];
             let defaultOption = catalogOptions.findIndex(option => option.id === -1);
@@ -44,6 +46,8 @@ const Container = ({ match, history }) => {
             }
         }
     }, [catalogs, container]);
+
+    useEffect(() => console.log(catalogOptions), [catalogOptions]);
 
     const handleChange = ({ currentTarget }) => setContainer({...container, [currentTarget.name]: currentTarget.value});
     const handleCheckBoxes = ({ currentTarget }) => setContainer({...container, [currentTarget.name]: !container[currentTarget.name]});
@@ -97,7 +101,6 @@ const Container = ({ match, history }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const containerToWrite = getContainerToWrite();
-        console.log(containerToWrite);
         const request = !editing ? ContainerActions.create(containerToWrite) : ContainerActions.update(id, containerToWrite);
         request.then(response => {
                     setErrors(defaultErrors);
