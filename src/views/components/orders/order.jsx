@@ -36,7 +36,7 @@ const Order = ({ match, history }) => {
     const { containers } = useContext(ContainerContext);
     const { currentUser, selectedCatalog, setSettings, settings, supervisor } = useContext(AuthContext);
     const { setCities, condition, relaypoints, setCondition } = useContext(DeliveryContext);
-    const [order, setOrder] = useState({ name: "", email: "", deliveryDate: new Date() });
+    const [order, setOrder] = useState({ name: "", email: "", deliveryDate: new Date(), notification: "No" });
     const defaultErrors = { name: "", email: "", deliveryDate: "", phone: "", address: "" };
     const [informations, setInformations] = useState({ phone: '', address: '', address2: '', zipcode: '', city: '', position: isDefined(selectedCatalog) ? selectedCatalog.center : [0, 0]});
     const [errors, setErrors] = useState(defaultErrors);
@@ -101,7 +101,7 @@ const Order = ({ match, history }) => {
             setEditing(true);
             OrderActions.find(id)
                 .then(response => {
-                    setOrder({...response, name: response.name, email: response.email, deliveryDate: new Date(response.deliveryDate)});
+                    setOrder({...response, name: response.name, email: response.email, deliveryDate: new Date(response.deliveryDate), notification: isDefined(response.notification) ? response.notification : "No"});
                     setItems(response.items.map((item, key) => ({...item, product: products.find(product => item.product.id === product.id), count: key})));
                     setInformations(response.metas);
                     setCondition(response.appliedCondition);
@@ -169,6 +169,11 @@ const Order = ({ match, history }) => {
     const handleCatalogChange = ({ currentTarget }) => {
         const newCatalog = catalogs.find(c => c.id === parseInt(currentTarget.value));
         setCatalog(newCatalog);
+    };
+
+    const handleNotificationChange = ({ currentTarget }) => {
+        if ((currentTarget.value.includes("SMS") && informations.phone.length >= 10) || (currentTarget.value.includes("Email") && order.email.length > 0) || currentTarget.value === "No")
+            setOrder({...order, notification: currentTarget.value});
     };
 
     const handleSubmit = () => {
@@ -288,6 +293,18 @@ const Order = ({ match, history }) => {
                             {/* } */}
                         </Tabs>
                         <hr className="mt-5 mb-5"/>
+                        { id === "new" && 
+                            <CRow>
+                                <CCol xs="12" sm="12" md="12" className="my-4">
+                                    <Select className="mr-2" name="catalog" label="Prévenir le client" onChange={ handleNotificationChange } value={ order.notification }>
+                                        <option value={ "No" }>{ "Non" }</option>
+                                        <option value={ "Email" }>{ "Email" }</option>
+                                        <option value={ "SMS" }>{ "SMS" }</option>
+                                        <option value={ "Email & SMS" }>{ "Email & SMS" }</option>
+                                    </Select>
+                                </CCol>
+                            </CRow>
+                        }
                         <CRow className="mt-4 d-flex justify-content-center">
                             <CButton onClick={ handleSubmit } size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
                         </CRow>
