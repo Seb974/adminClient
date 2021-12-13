@@ -65,7 +65,7 @@ export const getProductToWrite = (product, type, categories, variations, adapted
         userGroups: userGroups.map(userGroup => userGroup['@id']),
         catalogs: catalogs.map(catalog => catalog['@id']),
         productGroup: type === "mixed" ? null : product.productGroup,
-        tax: product.tax['@id'],
+        tax: typeof product.tax === 'string' ? product.tax : product.tax['@id'],
         seller: noImgProduct.seller['@id'],
         discount: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? getFloat(product.discount) : null,
         offerEnd: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? product.offerEnd : null,

@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 18,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     footer: {
         position: 'absolute',

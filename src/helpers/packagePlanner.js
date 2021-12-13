@@ -12,7 +12,8 @@ export const getPackagesPlan = order => {
                     packages[j] = addItemInPackages(items[i], packages[j], items[i].orderedQty);
                     items[i] = getUnpackedPartItem(items[i], items[i].orderedQty);
                     break;
-                } else if (items[i].unit === "U" && items[i].orderedQty > 1) {
+                // } else if (items[i].unit === "U" && items[i].orderedQty > 1) {
+                } else if (["U", "L"].includes(items[i].unit) && items[i].orderedQty > 1) {
                     for (let index = items[i].orderedQty - 1; index > 0; index--) {
                         if (index * items[i].product.weight <= packages[j].capacity) {
                             packages[j] = addItemInPackages(items[i], packages[j], index);
@@ -20,7 +21,8 @@ export const getPackagesPlan = order => {
                             break;
                         }
                     }
-                } else if (items[i].unit !== "U") {
+                // } else if (items[i].unit !== "U") {
+                } else if (!["U", "L"].includes(items[i].unit)) {
                     const capacity = packages[j].capacity;
                     packages[j] = addItemInPackages(items[i], packages[j], capacity);
                     items[i] = getUnpackedPartItem(items[i], capacity);
