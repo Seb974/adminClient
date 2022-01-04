@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { CHeader, CToggler, CHeaderBrand, CHeaderNav } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
@@ -8,7 +8,7 @@ import AuthContext from 'src/contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import '../assets/css/header.css'
 
-const TheHeader = () => {
+const TheHeader = (props) => {
   const dispatch = useDispatch()
   // const asideShow = useSelector(state => state.asideShow)
   const darkMode = useSelector(state => state.darkMode)
@@ -41,7 +41,11 @@ const TheHeader = () => {
       <CToggler inHeader className="ml-md-3 d-lg-none" onClick={toggleSidebarMobile} />
       <CToggler inHeader className="ml-3 d-md-down-none" onClick={toggleSidebar} />
       <CHeaderBrand className="mx-auto d-lg-none" to="/">
-        <CIcon name="logo" height="48" alt="Logo"/>
+        {/* <CIcon name="logo" height="48" alt="Logo"/> */}
+        { darkMode ?
+          <img src="assets/img/logo/logo_fp_5.png" height={54} alt="logo" className="c-sidebar-brand-full" name="logo-negative"/> :
+          <img src="assets/img/logo/logo_fp_4.png" height={54} alt="logo" className="c-sidebar-brand-full" name="logo-positive"/>
+        }
       </CHeaderBrand>
 
       <CHeaderNav className="d-md-down-none mr-auto"></CHeaderNav>
