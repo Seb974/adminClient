@@ -65,7 +65,8 @@ const DayOff = ({ match, history }) => {
             .then(response => {
                 const filteredGroups = response.filter(group => group.dayOff === null || group.dayOff === undefined);
                 setGroups(filteredGroups.map(group => ({...group, isFixed: false})));
-            });
+            })
+            .catch(error => history.replace("/components/days_off"));
     };
 
     const numberOfDays = (from, to) => {
@@ -94,7 +95,6 @@ const DayOff = ({ match, history }) => {
         } else {
             const {openedFor, limit, ...settings} = dayOff;
             const formattedDayOff = {...settings, openedFor: formattedOpenedFor};
-            console.log(formattedDayOff);
             const request = !editing ? DayOffActions.create(formattedDayOff) : DayOffActions.update(id, formattedDayOff);
             request.then(response => {
                         setErrors({name: "", date: "", openedFor: ""});

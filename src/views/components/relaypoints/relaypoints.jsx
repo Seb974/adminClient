@@ -7,18 +7,36 @@ import { isDefined } from 'src/helpers/utils';
 
 const Relaypoints = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 10;
     const fields = ['name', 'city', ' '];
     const [relaypoints, setRelaypoints] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        RelaypointActions.findAll()
-            .then(response => {
-                console.log(response);
-                setRelaypoints(response);
-            })
-            .catch(error => console.log(error));
-    }, []);
+    useEffect(() => getDisplayedRelaypoints(), []);
+    useEffect(() => getDisplayedRelaypoints(), [search]);
+    useEffect(() => getDisplayedRelaypoints(currentPage), [currentPage]);
+
+    const getDisplayedRelaypoints = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedRelaypoints(search, page) : await getRelaypoints(page);
+        if (isDefined(response)) {
+            setRelaypoints(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getRelaypoints = (page = 1) => page >=1 ? RelaypointActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedRelaypoints = (word, page = 1) => RelaypointActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     RelaypointActions.findAll()
+    //         .then(response => {
+    //             console.log(response);
+    //             setRelaypoints(response);
+    //         })
+    //         .catch(error => console.log(error));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalRelaypoints = [...relaypoints];
@@ -46,7 +64,16 @@ const Relaypoints = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/relaypoints/" + item.id }>{ item.name }</Link></td>

@@ -6,6 +6,20 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.name > b.name) ? -1 : 1));
 }
 
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/catalogs?order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/catalogs?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
 function deleteCatalog(id) {
     return api.delete('/api/catalogs/' + id);
 }
@@ -26,6 +40,8 @@ function create(catalog) {
 
 export default {
     findAll,
+    findAllPaginated,
+    findWord,
     delete: deleteCatalog,
     find,
     update,

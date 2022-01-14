@@ -9,23 +9,40 @@ import Roles from 'src/config/Roles';
 
 const Deliverers = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 2;
     const { currentUser } = useContext(AuthContext);
     const fields = ['name', 'totalToPay', ' '];
     const [deliverers, setDeliverers] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
+    useEffect(() => getDisplayedDeliverers(), []);
+    useEffect(() => getDisplayedDeliverers(), [search]);
+    useEffect(() => getDisplayedDeliverers(currentPage), [currentPage]);
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => {
-        DelivererActions.findAll()
-            .then(response => {
-                console.log(response);
-                setDeliverers(response);
-            })
-            .catch(error => console.log(error));
-    }, []);
+    const getDisplayedDeliverers = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedDeliverers(search, page) : await getDeliverers(page);
+        if (isDefined(response)) {
+            setDeliverers(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getDeliverers = (page = 1) => page >=1 ? DelivererActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedDeliverers = (word, page = 1) => DelivererActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     DelivererActions.findAll()
+    //         .then(response => {
+    //             console.log(response);
+    //             setDeliverers(response);
+    //         })
+    //         .catch(error => console.log(error));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalDeliverers = [...deliverers];
@@ -56,7 +73,16 @@ const Deliverers = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/deliverers/" + item.id }>{ item.name }</Link></td>

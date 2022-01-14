@@ -56,7 +56,8 @@ const Zone = ({ match, history }) => {
     const fetchCities = () => {
         CityActions
             .findAll()
-            .then(response => setCities(response));
+            .then(response => setCities(response))
+            .catch(error => console.log(error));
     };
 
     const handleSubmit = (e) => {

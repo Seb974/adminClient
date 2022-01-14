@@ -61,7 +61,8 @@ const SellerAccount = (props) => {
     const fetchSellers = () => {
         SellerActions
             .findAll()
-            .then(response => setSellers(response));
+            .then(response => setSellers(response))
+            .catch(error => console.log(error));
     };
 
     const handleSellerChange = ({ currentTarget }) => {
@@ -94,7 +95,6 @@ const SellerAccount = (props) => {
                 touring: realOrder.touring['@id']
             };
         });
-        console.log(newOrders);
         updateOrders(newOrders)
             .then(response => {
                 const newRegisteredOrders = viewedOrders.map(order => {
@@ -102,7 +102,8 @@ const SellerAccount = (props) => {
                     return index !== -1 ? response[index].data : order;
                 });
                 setViewedOrders(getFilteredResults(newRegisteredOrders));
-            });
+            })
+            .catch(error => console.log(error));
     };
 
     const handleSelect = item => {

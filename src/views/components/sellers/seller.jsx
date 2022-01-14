@@ -57,8 +57,6 @@ const Seller = ({ match, history }) => {
         e.preventDefault();
         if (!seller.needsRecovery || (seller.needsRecovery && delaysConsistency())) {
             const sellerToWrite = await getSellerWithImage();
-            // const sellerToWrite = getSellerToWrite();
-            console.log(sellerToWrite);
             const request = !editing ? SellerActions.create(sellerToWrite) : SellerActions.update(id, sellerToWrite);
             request.then(response => {
                         setErrors(defaultSeller);
@@ -114,7 +112,6 @@ const Seller = ({ match, history }) => {
     };
 
     const getSellerWithImage = async () => {
-        // let sellerWithImage = {...seller};
         let sellerWithImage = getSellerToWrite();
         if (seller.image) {
              if (!seller.image.filePath) {
@@ -125,7 +122,6 @@ const Seller = ({ match, history }) => {
                 sellerWithImage = {...sellerWithImage, image: sellerWithImage.image['@id']};
             }
         }
-        console.log(sellerWithImage);
         return sellerWithImage;
     };
 

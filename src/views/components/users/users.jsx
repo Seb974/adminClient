@@ -3,25 +3,38 @@ import UserActions from '../../../services/UserActions'
 import Roles from '../../../config/Roles'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Users = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 3;
     const fields = ['name', 'email', 'roles', ' '];
     const [users, setUsers] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
+
+    useEffect(() => getDisplayedUsers(), []);
+    useEffect(() => getDisplayedUsers(), [search]);
+    useEffect(() => getDisplayedUsers(currentPage), [currentPage]);
+
+    const getDisplayedUsers = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedUsers(search, page) : await getUsers(page);
+        if (isDefined(response)) {
+            setUsers(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getUsers = (page = 1) => page >=1 ? UserActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedUsers = (word, page = 1) => UserActions.findWord(word, page, itemsPerPage);
 
     const getBadge = role => {
       const name = role.toUpperCase();
       return name.includes('ADMIN') ? 'danger' :
              name.includes('VIP') ? 'warning' :
              name.includes('USER') ? 'secondary' : 'success';
-    }
-
-    useEffect(() => {
-        UserActions.findAll()
-                   .then(response => setUsers(response))
-                   .catch(error => console.log(error.response));
-    }, []);
+    };
 
     const handleDelete = (id) => {
       const originalUsers = [...users];
@@ -31,7 +44,7 @@ const Users = (props) => {
                       setUsers(originalUsers);
                       console.log(error.response);
                  });
-  }
+    };
 
     return (
         <CRow>
@@ -46,7 +59,16 @@ const Users = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={"/components/users/" + item.id}>{ item.name }</Link></td>
@@ -70,5 +92,5 @@ const Users = (props) => {
       </CRow>
     );
 }
- 
+
 export default Users;

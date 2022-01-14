@@ -7,13 +7,14 @@ import AuthActions from 'src/services/AuthActions'
 import AuthContext from 'src/contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import '../assets/css/header.css'
+import Roles from 'src/config/Roles'
 
 const TheHeader = (props) => {
   const dispatch = useDispatch()
   // const asideShow = useSelector(state => state.asideShow)
   const darkMode = useSelector(state => state.darkMode)
   const sidebarShow = useSelector(state => state.sidebarShow)
-  const { setIsAuthenticated, setCurrentUser, setSupervisor, setSeller } = useContext(AuthContext);
+  const { currentUser, supervisor, seller, setIsAuthenticated, setCurrentUser, setSupervisor, setSeller } = useContext(AuthContext);
 
   const toggleSidebar = () => {
     const val = [true, 'responsive'].includes(sidebarShow) ? false : 'responsive'
@@ -27,12 +28,18 @@ const TheHeader = (props) => {
 
   const handleLogout = e => {
     e.preventDefault();
+    const previousSeller = seller;
+    const previousSupervisor = supervisor;
+    setIsAuthenticated(false);
+    setCurrentUser(AuthActions.getDefaultUser());
+    setSupervisor(null);
+    setSeller(null);
     AuthActions.logout()
-               .then(response => {
-                   setIsAuthenticated(false);
-                   setCurrentUser(AuthActions.getCurrentUser());
-                   setSupervisor(null);
-                   setSeller(null);
+               .catch(error => {
+                    setIsAuthenticated(true);
+                    setCurrentUser(AuthActions.getCurrentUser());
+                    setSupervisor(previousSupervisor);
+                    setSeller(previousSeller);
                });
   }
 
@@ -51,7 +58,7 @@ const TheHeader = (props) => {
       <CHeaderNav className="d-md-down-none mr-auto"></CHeaderNav>
 
       <CHeaderNav className="px-3">
-        <TheHeaderDropdownMssg/>
+        { Roles.hasAdminPrivileges(currentUser) && <TheHeaderDropdownMssg/> }
         <CToggler
           inHeader
           className="ml-3 d-md-down-none c-d-legacy-none mb-1"

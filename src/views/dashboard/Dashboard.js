@@ -43,7 +43,8 @@ const Dashboard = () => {
                                       response.map(o => ({...o, items: o.items.filter(i => i.product.seller.id === seller.id)})) :
                                       response ;
                       setSales(ownSales.filter(o => isDefinedAndNotVoid(o.items)));
-                });
+                })
+                .catch(error => console.log(error));
         }
     };
 

@@ -4,18 +4,37 @@ import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton 
 import { DocsLink } from 'src/reusable';
 import { Link } from 'react-router-dom';
 import CityActions from 'src/services/CityActions';
+import { isDefined } from 'src/helpers/utils';
 
 const Zones = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 3;
     const fields = ['name', ' '];
     const [zones, setZones] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        ZoneActions.findAll()
-            .then(response => setZones(response))
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedZones(), []);
+    useEffect(() => getDisplayedZones(), [search]);
+    useEffect(() => getDisplayedZones(currentPage), [currentPage]);
+
+    const getDisplayedZones = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedZones(search, page) : await getZones(page);
+        if (isDefined(response)) {
+            setZones(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getZones = (page = 1) => page >=1 ? ZoneActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedZones = (word, page = 1) => ZoneActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     ZoneActions.findAll()
+    //         .then(response => setZones(response))
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (zoneToDelete) => {
 
@@ -55,7 +74,16 @@ const Zones = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/zones/" + item.id }>{ item.name }</Link></td>

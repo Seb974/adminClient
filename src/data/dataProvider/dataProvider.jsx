@@ -24,7 +24,7 @@ const DataProvider = ({ children }) => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(AuthActions.isAuthenticated());
     const [currentUser, setCurrentUser] = useState(AuthActions.getCurrentUser());
-    const [country, setCountry] = useState("RE");
+    // const [country, setCountry] = useState("RE");
     const [products, setProducts] = useState([]);
     const [settings, setSettings] = useState(null);
     const [eventSource, setEventSource] = useState({});
@@ -46,20 +46,20 @@ const DataProvider = ({ children }) => {
 
     useEffect(() => {
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
-        AuthActions.getGeolocation()
-                   .then(response => setCountry(response));
+        // AuthActions.getGeolocation()
+        //            .then(response => setCountry(response));
         PlatformActions.find()
                        .then(response => setPlatform(response));
         ProductActions.findAll()
                       .then(response => setProducts(response));
-        ContainerActions.findAll()
-                        .then(response => setContainers(response));
-        CatalogActions.findAll()
-                      .then(response => setCatalogs(response));
-        RelaypointActions.findAll()
-                         .then(response => setRelaypoints(response));
-        CategoryActions.findAll()
-                       .then(response => setCategories(response));
+        // ContainerActions.findAll()
+        //                 .then(response => setContainers(response));
+        // CatalogActions.findAll()
+        //               .then(response => setCatalogs(response));
+        // RelaypointActions.findAll()
+        //                  .then(response => setRelaypoints(response));
+        // CategoryActions.findAll()
+        //                .then(response => setCategories(response));
     },[]);
 
     useEffect(() => {
@@ -79,19 +79,18 @@ const DataProvider = ({ children }) => {
             SupervisorActions
                 .getSupervisor(currentUser)
                 .then(response => setSupervisor(response));
-
-        if (isAuthenticated)
+        else if (Roles.hasAdminPrivileges(currentUser))
             MessageActions.findAll()
-                        .then(response => setMessages(response));
+                          .then(response => setMessages(response));
     },[currentUser]);
 
-    useEffect(() => {
-        if (isDefinedAndNotVoid(catalogs) && isDefined(country)) {
-            const catalog = catalogs.find(catalogOption => catalogOption.code === country);
-            const selection = isDefined(catalog) ? catalog : catalogs.filter(country => country.isDefault);
-            setSelectedCatalog(selection);
-        }
-    }, [catalogs, country]);
+    // useEffect(() => {
+    //     if (isDefinedAndNotVoid(catalogs) && isDefined(country)) {
+    //         const catalog = catalogs.find(catalogOption => catalogOption.code === country);
+    //         const selection = isDefined(catalog) ? catalog : catalogs.filter(country => country.isDefault);
+    //         setSelectedCatalog(selection);
+    //     }
+    // }, [catalogs, country]);
 
     return (
         <PlatformContext.Provider value={ {platform, setPlatform} }>

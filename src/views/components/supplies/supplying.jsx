@@ -79,9 +79,10 @@ const Supplying = (props) => {
         SupplierActions
             .findAll()
             .then(response => {
-                    setSuppliers(response);
-                    setSelectedSupplier(response[0]);
-                });
+                setSuppliers(response);
+                setSelectedSupplier(response[0]);
+            })
+            .catch(error => console.log(error));
     };
 
     const fetchSellers = () => {
@@ -90,7 +91,8 @@ const Supplying = (props) => {
             .then(response => {
                 setSellers(response);
                 setSelectedSeller(response[0]);
-            });
+            })
+            .catch(error => console.log(error));
     };
 
     const handleGroupChange = productGroups => setProductGroups(productGroups);
@@ -461,7 +463,7 @@ const Supplying = (props) => {
                                         </Select>
                                     </CCol>
                                     <CCol className="mt-4">
-                                        <SimpleDatePicker selectedDate={ deliveryDate } minDate={ minDate } onDateChange={ handleDeliveryDateChange } label="Date de livraison souhaitée"/>
+                                        <SimpleDatePicker selectedDate={ [deliveryDate] } minDate={ minDate } onDateChange={ handleDeliveryDateChange } label="Date de livraison souhaitée"/>
                                     </CCol>
                                     <CCol xs="12" lg="2" className="mt-4 d-flex justify-content-center">
                                         <CButton color="success" className="mt-4" onClick={ handleSubmit } style={{width: '180px', height: '35px'}} disabled={ displayedProducts.findIndex(p => p.selected) === -1 }>

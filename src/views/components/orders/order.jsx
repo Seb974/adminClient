@@ -123,19 +123,22 @@ const Order = ({ match, history }) => {
     const fetchCities = () => {
         CityActions
             .findAll()
-            .then(response => setCities(response));
+            .then(response => setCities(response))
+            .catch(error => console.log(error));
     }
 
     const fetchGroups = () => {
         GroupActions
             .findAll()
-            .then(response => setGroups(response));
+            .then(response => setGroups(response))
+            .catch(error => console.log(error));
     }
 
     const fetchUser = user => {
         UserActions
             .find(user.id)
-            .then(response => setUser(response));
+            .then(response => setUser(response))
+            .catch(error => console.log(error));
     }
 
     const setUserInformations = () => {

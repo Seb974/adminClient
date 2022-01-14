@@ -7,18 +7,35 @@ import { isDefined } from 'src/helpers/utils';
 
 const Suppliers = (props) => {
 
-    const itemsPerPage = 15;
-    const fields = ['Vendeur', 'Nom', ' '];
+    const itemsPerPage = 3;
+    const fields = ['seller', 'name', ' '];
     const [suppliers, setSuppliers] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        SupplierActions.findAll()
-            .then(response => {
-              console.log(response);
-              setSuppliers(response);
-            })
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedSuppliers(), []);
+    useEffect(() => getDisplayedSuppliers(), [search]);
+    useEffect(() => getDisplayedSuppliers(currentPage), [currentPage]);
+
+    const getDisplayedSuppliers = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedSuppliers(search, page) : await getSuppliers(page);
+        if (isDefined(response)) {
+            setSuppliers(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getSuppliers = (page = 1) => page >=1 ? SupplierActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedSuppliers = (word, page = 1) => SupplierActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     SupplierActions.findAll()
+    //         .then(response => {
+    //           setSuppliers(response);
+    //         })
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalSuppliers = [...suppliers];
@@ -46,12 +63,21 @@ const Suppliers = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
-                'Vendeur':
+                'seller':
                   item => <td>{ isDefined(item.seller) && isDefined(item.seller.name) ? item.seller.name : "-" }</td>
                 ,
-                'Nom':
+                'name':
                   item => <td><Link to={ "/components/suppliers/" + item.id }>{ item.name }</Link></td>
                 ,
                 ' ':

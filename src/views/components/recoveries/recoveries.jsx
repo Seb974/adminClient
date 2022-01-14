@@ -93,13 +93,15 @@ const Recoveries = (props) => {
     const fetchDaysOff = () => {
         DayOffActions
             .findActives()
-            .then(closedDays => setDaysOff(closedDays));
+            .then(closedDays => setDaysOff(closedDays))
+            .catch(error => console.log(error));
     };
 
     const fetchSellers = () => {
         SellerActions
             .findAll()
-            .then(response => setSellers(response));
+            .then(response => setSellers(response))
+            .catch(error => console.log(error));
     };
 
     const handleDelete = (item) => {

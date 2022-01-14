@@ -58,18 +58,20 @@ function isDefaultUser(user) {
 function setErrorHandler(setCurrentUser, setIsAuthenticated) {
     axios.defaults.withCredentials = true
     axios.interceptors.response.use(response => response, error => {
+
         if (error.response !== undefined) {
             if (error.response.status === 401) {
-                logout().then(res => {
-                    setIsAuthenticated(false);
-                    setCurrentUser(getCurrentUser());
-                    return ;
-                })
+                logout()
+                    .then(res => {
+                        setIsAuthenticated(false);
+                        setCurrentUser(getCurrentUser());
+                        return ;
+                    })
             }
         } else {
             console.log(error);
         }
-        return Promise.reject(error);
+        return ; // Promise.reject(error);
     });
 }
 
@@ -106,6 +108,7 @@ export default {
     isAuthenticated,
     getCurrentUser,
     isDefaultUser,
+    getDefaultUser,
     setErrorHandler,
     getUserSettings,
     getGeolocation

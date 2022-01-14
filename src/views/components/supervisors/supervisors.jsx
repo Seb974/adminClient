@@ -3,18 +3,32 @@ import SupervisorActions from '../../../services/SupervisorActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Supervisors = (props) => {
 
     const itemsPerPage = 15;
     const fields = ['supervisor', ' '];
     const [supervisors, setSupervisors] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    useEffect(() => {
-        SupervisorActions.findAll()
-            .then(response => setSupervisors(response))
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedSupervisors(), []);
+    useEffect(() => getDisplayedSupervisors(currentPage), [currentPage]);
+
+    const getDisplayedSupervisors = async (page = 1) => {
+      const response = page >=1 ? await SupervisorActions.findAllPaginated(page, itemsPerPage) : undefined;
+      if (isDefined(response)) {
+          setSupervisors(response['hydra:member']);
+          setTotalItems(response['hydra:totalItems']);
+      }
+  };
+
+    // useEffect(() => {
+    //     SupervisorActions.findAll()
+    //         .then(response => setSupervisors(response))
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalSupervisors = [...supervisors];
@@ -42,7 +56,14 @@ const Supervisors = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
               scopedSlots = {{
                 'supervisor':
                   item => <td><Link to={ "/components/supervisors/" + item.id }>

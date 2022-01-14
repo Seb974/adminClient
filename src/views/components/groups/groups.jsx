@@ -3,21 +3,40 @@ import GroupActions from '../../../services/GroupActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Groups = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 5;
     const fields = ['label', ' '];
     const [groups, setGroups] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        GroupActions.findAll()
-            .then(response => {
-              console.log(response);
-              setGroups(response);
-            })
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedGroups(), []);
+    useEffect(() => getDisplayedGroups(), [search]);
+    useEffect(() => getDisplayedGroups(currentPage), [currentPage]);
+
+    const getDisplayedGroups = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedGroups(search, page) : await getGroups(page);
+        if (isDefined(response)) {
+            setGroups(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getGroups = (page = 1) => page >=1 ? GroupActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedGroups = (word, page = 1) => GroupActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     GroupActions.findAll()
+    //         .then(response => {
+    //           console.log(response);
+    //           setGroups(response);
+    //         })
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalGroups = [...groups];
@@ -45,7 +64,16 @@ const Groups = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'label':
                   item => <td><Link to={ "/components/groups/" + item.id }>{ item.label }</Link></td>

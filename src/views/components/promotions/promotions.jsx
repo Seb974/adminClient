@@ -7,22 +7,40 @@ import { isDefined } from 'src/helpers/utils';
 
 const Promotions = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 3;
     const fields = ['name', 'usage', 'validity', ' '];
     const [promotions, setPromotions] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        PromotionActions.findAll()
-            .then(response => {
-                console.log(response);
-                setPromotions(response.filter(promotion => promotion.code !== "relaypoint"));
-            })
-            .catch(error => console.log(error));
-    }, []);
+    useEffect(() => getDisplayedPromotions(), []);
+    useEffect(() => getDisplayedPromotions(), [search]);
+    useEffect(() => getDisplayedPromotions(currentPage), [currentPage]);
+
+    const getDisplayedPromotions = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedPromotions(search, page) : await getPromotions(page);
+        if (isDefined(response)) {
+            setPromotions(response['hydra:member'].filter(p => p.code !== "relaypoint"));
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getPromotions = (page = 1) => page >=1 ? PromotionActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedPromotions = (word, page = 1) => PromotionActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     PromotionActions.findAll()
+    //         .then(response => {
+    //             console.log(response);
+    //             setPromotions(response.filter(promotion => promotion.code !== "relaypoint"));
+    //         })
+    //         .catch(error => console.log(error));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalPromotions = [...promotions];
-        setPromotions(promotions.filter(city => city.id !== id));
+        setPromotions(promotions.filter(p => p.id !== id));
         PromotionActions
             .delete(id)
             .catch(error => {
@@ -47,7 +65,16 @@ const Promotions = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                  'pages': Math.ceil(totalItems / itemsPerPage),
+                  'activePage': currentPage,
+                  'onActivePageChange': page => setCurrentPage(page),
+                  'align': 'center',
+                  'dots': true,
+                  'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/promotions/" + item.id }>{ item.code }</Link></td>

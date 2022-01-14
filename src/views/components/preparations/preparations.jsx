@@ -31,7 +31,8 @@ const Preparations = (props) => {
     const [labelLoading, setLabelLoading] = useState(false);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [daysOff, setDaysOff] = useState([]);
-    const [details, setDetails] = useState([])
+    const [details, setDetails] = useState([]);
+    const [idTreating, setIdTreating] = useState(0);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
@@ -70,7 +71,8 @@ const Preparations = (props) => {
     const fetchDaysOff = () => {
         DayOffActions
             .findActives()
-            .then(closedDays => setDaysOff(closedDays));
+            .then(closedDays => setDaysOff(closedDays))
+            .catch(error => console.log(error));
     };
 
     const handleDelete = item => {
@@ -160,6 +162,7 @@ const Preparations = (props) => {
     }
 
     const handleLabel = id => {
+        setIdTreating(id);
         setLabelLoading(true);
         OrderActions
             .getZPLLabel(id)
@@ -168,6 +171,7 @@ const Preparations = (props) => {
                     .getPrintableLabel(response.data)
                     .then(response => {
                         setLabelLoading(false);
+                        setIdTreating(0);
                         const file = new Blob([response.data], {type: 'application/pdf'});
                         const fileURL = URL.createObjectURL(file);
                         window.open(fileURL, '_blank');
@@ -176,6 +180,7 @@ const Preparations = (props) => {
             .catch(error => {
                 console.log(error);
                 setLabelLoading(false);
+                setIdTreating(0);
             });
     };
 
@@ -308,12 +313,12 @@ const Preparations = (props) => {
                                         { isDefinedAndNotVoid(item.packages) && <CButton color="light" href={"#/components/parcels/" + item.id} target="_blank" className="mx-1 my-1"><i className="fas fa-list-ul"></i></CButton> }
                                         { isDefinedAndNotVoid(item.reservationNumber) && 
                                             <CButton color="light" onClick={ () => handleLabel(item.id) } className="mx-1 my-1">
-                                                {!labelLoading ? 
-                                                    <i className="fas fa-barcode" style={{ fontSize: '1.2em'}}></i> :
+                                                {labelLoading && item.id === idTreating ? 
                                                     <>
                                                         <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
                                                         <span className="sr-only">Loading...</span>
                                                     </>
+                                                    : <i className="fas fa-barcode" style={{ fontSize: '1.2em'}}></i>
                                                 }
                                             </CButton>
                                         }

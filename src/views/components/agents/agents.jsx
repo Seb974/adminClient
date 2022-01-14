@@ -3,18 +3,37 @@ import AgentActions from '../../../services/AgentActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Agents = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 5;
     const fields = ['name', 'role', ' '];
     const [agents, setAgents] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        AgentActions.findAll()
-            .then(response => setAgents(response))
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedAgents(), []);
+    useEffect(() => getDisplayedAgents(), [search]);
+    useEffect(() => getDisplayedAgents(currentPage), [currentPage]);
+
+    const getDisplayedAgents = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedAgents(search, page) : await getAgents(page);
+        if (isDefined(response)) {
+            setAgents(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getAgents = (page = 1) => page >=1 ? AgentActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedAgents = (word, page = 1) => AgentActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     AgentActions.findAll()
+    //         .then(response => setAgents(response))
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalAgents = [...agents];
@@ -43,7 +62,16 @@ const Agents = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/agents/" + item.id }>{ item.name }</Link></td>

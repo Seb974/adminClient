@@ -8,8 +8,20 @@ function register(user) {
 
 function findAll() {
     return api
-        .get('/api/users')
+        .get(`/api/users?pagination=false`)
         .then(response => response.data['hydra:member']);
+}
+
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/users?order[name]=asc&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/users?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 }
 
 function deleteUser(id) {
@@ -51,6 +63,8 @@ function getAccountingId(order) {
 export default {
     register,
     findAll,
+    findAllPaginated,
+    findWord,
     delete: deleteUser,
     find, 
     update, 

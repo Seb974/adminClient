@@ -82,13 +82,15 @@ const Provisions = (props) => {
     const fetchSuppliers = () => {
         SupplierActions
             .findAll()
-            .then(response => setSuppliers(response));
+            .then(response => setSuppliers(response))
+            .catch(error => console.log(error));
     };
 
     const fetchSellers = () => {
         SellerActions
             .findAll()
-            .then(response => setSellers(response));
+            .then(response => setSellers(response))
+            .catch(error => console.log(error));
     };
 
     const handleDelete = item => {

@@ -66,7 +66,8 @@ const DelivererAccount = (props) => {
     const fetchDeliverers = () => {
         DelivererActions
             .findAll()
-            .then(response => setDeliverers(response.filter(d => !d.isIntern)));
+            .then(response => setDeliverers(response.filter(d => !d.isIntern)))
+            .catch(error => console.log(error));
     };
 
     const handleDelivererChange = ({ currentTarget }) => {

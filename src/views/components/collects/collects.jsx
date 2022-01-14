@@ -79,7 +79,8 @@ const Collects = (props) => {
     const fetchRelaypoints = () => {
         RelaypointActions
             .findAll()
-            .then(response => setRelaypoints(response));
+            .then(response => setRelaypoints(response))
+            .catch(error => console.log(error));
     };
 
     const handleDelete = item => {

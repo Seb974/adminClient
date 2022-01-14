@@ -10,31 +10,33 @@ import Select from 'src/components/forms/Select';
 const Heroes = ({ match, history }) => {
 
     const itemsPerPage = 15;
-    const fields = ['name', ' '];
+    const fields = ['title', ' '];
     const [heroes, setHeroes] = useState([]);
     const [homepages, setHomepages] = useState([]);
     const [selectedHomepage, setSelectedHomepage] = useState(null);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
+
+    useEffect(() => fetchHomepages(), []);
+    useEffect(() => getDisplayedHeroes(), [selectedHomepage, search]);
+    useEffect(() => getDisplayedHeroes(currentPage), [currentPage]);
 
     useEffect(() => {
-        fetchHomepages();
-        fetchHeroes();
-    }, []);
-
-    useEffect(() => {
-        if (isDefinedAndNotVoid(homepages) && !isDefined(selectedHomepage))
-            setSelectedHomepage(homepages.find(h => h.selected));
+          if (isDefinedAndNotVoid(homepages) && !isDefined(selectedHomepage))
+             setSelectedHomepage(homepages.find(h => h.selected));
     }, [homepages]);
 
-    useEffect(() => fetchHeroes(), [selectedHomepage]);
-
-    const fetchHeroes = () => {
-        HeroActions.findAll()
-          .then(response => {
-              const associatedHeroes = isDefined(selectedHomepage) ? response.filter(h => h.homepage.id === selectedHomepage.id) : response;
-              setHeroes(associatedHeroes);
-          })
-          .catch(error => console.log(error.response));
+    const getDisplayedHeroes = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedHeroes(search, page) : isDefined(selectedHomepage) ? await getHeroes(selectedHomepage['@id'], page) : undefined;
+        if (isDefined(response)) {
+            setHeroes(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
     };
+
+    const getHeroes = (homepage, page = 1) => page >=1 ? HeroActions.findAllPaginated(homepage, page, itemsPerPage) : undefined;
+    const getSearchedHeroes = (word, page = 1) => page >=1 ? HeroActions.findWord(word, page, itemsPerPage) : undefined;
 
     const fetchHomepages = () => {
         HomepageActions
@@ -48,6 +50,7 @@ const Heroes = ({ match, history }) => {
     };
 
     const handleHomepageChange = ({ currentTarget }) => {
+        setCurrentPage(1);
         const newSelection = homepages.find(h => h.id === parseInt(currentTarget.value));
         setSelectedHomepage(newSelection);
     };
@@ -86,9 +89,18 @@ const Heroes = ({ match, history }) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
-                'name':
+                'title':
                   item => <td><Link to={ "/components/heroes/" + item.id }>{ item.title }</Link></td>
                 ,
                 ' ':

@@ -78,7 +78,8 @@ const Deliveries = (props) => {
             .then(response => {
                     setDeliverers(response);
                     setSelectedDeliverer(response[0]);
-                });
+                })
+            .catch(error => console.log(error));
     };
 
     const handleDelete = item => {

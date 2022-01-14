@@ -65,7 +65,8 @@ const Prices = (props) => {
     const fetchPriceGroup = () => {
         PriceGroupActions
             .findAll()
-            .then(response => setPriceGroups(response));
+            .then(response => setPriceGroups(response))
+            .catch(error => console.log(error));
     };
 
     const handlePriceGroupChange = ({ currentTarget }) => {

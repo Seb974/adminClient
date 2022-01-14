@@ -85,7 +85,8 @@ const Promotion = ({ match, history }) => {
 
     const getPromotionToWrite = () => {
         return {
-            ...promotion, 
+            ...promotion,
+            name: promotion.code,
             discount: getFloat(promotion.discount),
             maxUsage: getFloat(promotion.maxUsage),
         };

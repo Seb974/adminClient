@@ -3,21 +3,40 @@ import CatalogActions from '../../../services/CatalogActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Catalogs = (props) => {
 
-    const itemsPerPage = 15;
-    const fields = ['nom', 'code', 'etat', ' '];
+    const itemsPerPage = 5;
+    const fields = ['name', 'code', 'etat', ' '];
     const [catalogs, setCatalogs] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        CatalogActions.findAll()
-            .then(response => {
-              console.log(response);
-              setCatalogs(response);
-            })
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedCatalogs(), []);
+    useEffect(() => getDisplayedCatalogs(), [search]);
+    useEffect(() => getDisplayedCatalogs(currentPage), [currentPage]);
+
+    const getDisplayedCatalogs = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedCatalogs(search, page) : await getCatalogs(page);
+        if (isDefined(response)) {
+            setCatalogs(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getCatalogs = (page = 1) => page >=1 ? CatalogActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedCatalogs = (word, page = 1) => CatalogActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     CatalogActions.findAll()
+    //         .then(response => {
+    //           console.log(response);
+    //           setCatalogs(response);
+    //         })
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalCatalogs = [...catalogs];
@@ -45,9 +64,18 @@ const Catalogs = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
-                'nom':
+                'name':
                   item => <td><Link to={ "/components/catalogs/" + item.id }>{ item.name }</Link></td>
                 ,
                 'code':

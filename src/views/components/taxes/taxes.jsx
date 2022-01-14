@@ -3,23 +3,41 @@ import TaxActions from '../../../services/TaxActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Taxes = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 2;
     const fields = ['name', ' '];
     const [taxes, setTaxes] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        TaxActions.findAll()
-            .then(response => setTaxes(response))
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedTaxes(), []);
+    useEffect(() => getDisplayedTaxes(), [search]);
+    useEffect(() => getDisplayedTaxes(currentPage), [currentPage]);
+
+    const getDisplayedTaxes = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedTaxes(search, page) : await getTaxes(page);
+        if (isDefined(response)) {
+            setTaxes(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getTaxes = (page = 1) => page >=1 ? TaxActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedTaxes = (word, page = 1) => TaxActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     TaxActions.findAll()
+    //         .then(response => setTaxes(response))
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalTaxes = [...taxes];
         setTaxes(taxes.filter(tax => tax.id !== id));
-        console.log("Supprimé");
         TaxActions.delete(id)
                        .catch(error => {
                             setTaxes(originalTaxes);
@@ -43,7 +61,16 @@ const Taxes = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/taxes/" + item.id }>{ item.name }</Link></td>

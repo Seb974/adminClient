@@ -9,33 +9,34 @@ import Select from 'src/components/forms/Select';
 
 const Banners = ({ match, history }) => {
 
-    const itemsPerPage = 15;
-    const fields = ['name', 'espace', ' '];
+    const itemsPerPage = 3;
+    const fields = ['title', 'espace', ' '];
     const [banners, setBanners] = useState([]);
     const [homepages, setHomepages] = useState([]);
     const [selectedHomepage, setSelectedHomepage] = useState(null);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
+
+    useEffect(() => fetchHomepages(), []);
+    useEffect(() => getDisplayedBanners(), [selectedHomepage, search]);
+    useEffect(() => getDisplayedBanners(currentPage), [currentPage]);
 
     useEffect(() => {
-        fetchHomepages();
-        fetchBanners();
-    }, []);
-
-    useEffect(() => {
-        if (isDefinedAndNotVoid(homepages) && !isDefined(selectedHomepage))
-            setSelectedHomepage(homepages.find(h => h.selected));
+          if (isDefinedAndNotVoid(homepages) && !isDefined(selectedHomepage))
+             setSelectedHomepage(homepages.find(h => h.selected));
     }, [homepages]);
 
-    useEffect(() => fetchBanners(), [selectedHomepage]);
-
-    const fetchBanners = () => {
-        BannerActions.findAll()
-          .then(response => {
-              const associatedHeroes = isDefined(selectedHomepage) ? response.filter(h => h.homepage.id === selectedHomepage.id) : response;
-              console.log(associatedHeroes);
-              setBanners(associatedHeroes);
-          })
-          .catch(error => console.log(error.response));
+    const getDisplayedBanners = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedBanners(search, page) : isDefined(selectedHomepage) ? await getBanners(selectedHomepage['@id'], page) : undefined;
+        if (isDefined(response)) {
+            setBanners(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
     };
+
+    const getBanners = (homepage, page = 1) => page >=1 ? BannerActions.findAllPaginated(homepage, page, itemsPerPage) : undefined;
+    const getSearchedBanners = (word, page = 1) => page >=1 ? BannerActions.findWord(word, page, itemsPerPage) : undefined;
 
     const fetchHomepages = () => {
         HomepageActions
@@ -49,6 +50,7 @@ const Banners = ({ match, history }) => {
     };
 
     const handleHomepageChange = ({ currentTarget }) => {
+        setCurrentPage(1);
         const newSelection = homepages.find(h => h.id === parseInt(currentTarget.value));
         setSelectedHomepage(newSelection);
     };
@@ -87,9 +89,18 @@ const Banners = ({ match, history }) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
-                'name':
+                'title':
                   item => <td><Link to={ "/components/banners/" + item.id }>{ item.title }</Link></td>
                 ,
                 'espace':

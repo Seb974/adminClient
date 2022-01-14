@@ -83,6 +83,7 @@ const Stocks = (props) => {
                         setStocks(newStocks);
                     }
                 })
+                .catch(error => console.log(error));
         })
     };
 

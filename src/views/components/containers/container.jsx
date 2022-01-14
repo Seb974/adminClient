@@ -35,8 +35,6 @@ const Container = ({ match, history }) => {
     }, [taxes, container]);
 
     useEffect(() => {
-        // console.log(catalogs);
-        // console.log(container);
         if (isDefinedAndNotVoid(catalogs)) {
             let newCatalogOptions = [...catalogOptions];
             let defaultOption = catalogOptions.findIndex(option => option.id === -1);
@@ -75,7 +73,8 @@ const Container = ({ match, history }) => {
 
     const fetchCatalogs = () => {
         CatalogActions.findAll()
-            .then(response => setCatalogs(response));       // .filter(catalog => catalog.needsParcel)
+            .then(response => setCatalogs(response))
+            .catch(error => history.replace("/components/containers"));
     };
 
     const fetchTaxes = () => {

@@ -6,6 +6,20 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.homepage.name > b.homepage.name) ? 1 : -1));
 }
 
+function findAllPaginated(homepage, page = 1, items = 30) {
+    return api
+        .get(`/api/banners?homepage=${ homepage }&order[title]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/banners?title=${ word }&order[title]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
 function deleteBanner(id) {
     return api.delete('/api/banners/' + id);
 }
@@ -34,6 +48,8 @@ function createImage(image, homepageName, bannerNumber, main) {
 
 export default { 
     findAll,
+    findAllPaginated,
+    findWord,
     delete: deleteBanner,
     find,
     update,

@@ -87,19 +87,22 @@ const Profitability = (props) => {
     const fetchProducts = () => {
         ProductActions
             .findAll()
-            .then(response => setProducts(response));
+            .then(response => setProducts(response))
+            .catch(error => console.log(error));
     };
 
     const fetchSellers = () => {
         SellerActions
             .findAll()
-            .then(response => setSellers(response));
+            .then(response => setSellers(response))
+            .catch(error => console.log(error));
     };
 
     const fetchPriceGroup = () => {
         PriceGroupActions
             .findAll()
-            .then(response => setPriceGroups(response));
+            .then(response => setPriceGroups(response))
+            .catch(error => console.log(error));
     };
 
     const handleDateChange = datetime => {

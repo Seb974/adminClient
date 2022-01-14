@@ -64,7 +64,6 @@ const Supplier = ({ match, history }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formattedSupplier = {...supplier, seller: supplier.seller['@id']};
-        console.log(formattedSupplier);
         const request = !editing ? SupplierActions.create(formattedSupplier) : SupplierActions.update(id, formattedSupplier);
         request.then(response => {
                     setErrors({ name: "", seller: "", email: "", phone: "" });

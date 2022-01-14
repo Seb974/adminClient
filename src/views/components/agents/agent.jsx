@@ -41,7 +41,6 @@ const Agent = ({ match, history }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formattedAgent = await getAgentWithImage();
-        console.log(formattedAgent);
         const request = !editing ? AgentActions.create(formattedAgent) : AgentActions.update(id, formattedAgent);
         request.then(response => {
                     setErrors({ name: "", role: "", image: "" });

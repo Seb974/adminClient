@@ -14,7 +14,7 @@ const SimpleDatePicker = ({selectedDate, minDate = new Date(), onDateChange, lab
                 onChange={ onDateChange }
                 className={`form-control ${ className }`}
                 options={{
-                    mode: "simple",
+                    // mode: "simple",
                     minDate: minDate,
                     dateFormat: "d/m/Y",
                     locale: French,

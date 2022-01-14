@@ -48,7 +48,6 @@ const Homepage = ({ match, history }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(countdowns);
         const countdownsToWrite = await getFormattedCountdowns();
         const homepageToEdit = {
             ...homepage,

@@ -6,6 +6,20 @@ function findAll() {
         .then(response => response.data['hydra:member']);
 }
 
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/agents?order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/agents?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
 function find(id) {
     return api
         .get('/api/agents/' + id)
@@ -34,6 +48,8 @@ function createImage(image) {
 
 export default {
     findAll,
+    findAllPaginated,
+    findWord,
     find,
     delete: deleteAgent,
     update,

@@ -6,6 +6,13 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.name > b.name) ? 1 : -1));
 }
 
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/supervisors?pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
 function deleteSupervisor(id) {
     return api.delete('/api/supervisors/' + id);
 }
@@ -31,6 +38,7 @@ function getSupervisor(user) {
 
 export default { 
     findAll,
+    findAllPaginated,
     delete: deleteSupervisor,
     find, 
     update, 
