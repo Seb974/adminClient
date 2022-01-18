@@ -1,3 +1,7 @@
-.basic-multi-select {
-    z-index: 999;
+.select__control {
+    z-index: 100!important;
+}
+
+.select__menu {
+    z-index: 150!important;
 }

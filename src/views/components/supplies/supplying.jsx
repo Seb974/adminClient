@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupText, CCardFooter, CLabel } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
@@ -16,6 +16,7 @@ import SimpleDatePicker from 'src/components/forms/SimpleDatePicker';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import SellerActions from 'src/services/SellerActions';
 import ProvisionActions from 'src/services/ProvisionActions';
+import CIcon from '@coreui/icons-react';
 
 const Supplying = (props) => {
 
@@ -28,6 +29,7 @@ const Supplying = (props) => {
     const { currentUser } = useContext(AuthContext);
     const { products } = useContext(ProductsContext);
     const [orders, setOrders] = useState([]);
+    const [sendingMode, setSendingMode] = useState("email");
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
@@ -59,7 +61,7 @@ const Supplying = (props) => {
             setDisplayedProducts(productsToDisplay);
             setSelectAll(false);
         }
-    }, [orders, products, productGroups, evolution, selectedSeller, supplied]);
+    }, [orders, products, productGroups, evolution, selectedSeller, supplied, selectedSupplier]);
 
     const getOrders = () => {
         setLoading(true);
@@ -152,6 +154,7 @@ const Supplying = (props) => {
 
     const handleSubmit = () => {
         const provision = getNewProvision();
+        console.log(provision);
         ProvisionActions
             .create(provision)
             .then(response => {
@@ -190,8 +193,10 @@ const Supplying = (props) => {
         const goods = getGoods();
         return {
             seller: selectedSeller['@id'], 
-            supplier: selectedSupplier['@id'], 
+            // supplier: selectedSupplier['@id'],
+            supplier: selectedSupplier,
             provisionDate: new Date(deliveryDate), 
+            sendingMode,
             goods
         };
     };
@@ -230,7 +235,9 @@ const Supplying = (props) => {
     const getProductsArray = groups => {
         let productsList = [];
         const sellerProducts = groups.filter(p => p.seller.id === selectedSeller.id);
-        sellerProducts.map(product => {
+        sellerProducts
+            .filter(p => isDefinedAndNotVoid(p.suppliers) && isDefined(selectedSupplier) && p.suppliers.findIndex(s => s.id === selectedSupplier.id) !== -1 )
+            .map(product => {
             if (isDefinedAndNotVoid(product.variations))
                 product.variations.map(variation => {
                     if (isDefinedAndNotVoid(variation.sizes))
@@ -340,6 +347,11 @@ const Supplying = (props) => {
         );
     };
 
+    const handleSendingModeChange = ({ currentTarget }) => setSendingMode(currentTarget.value);
+    const handleSupplierInfosChange = ({ currentTarget }) => {
+        setSelectedSupplier({...selectedSupplier, [currentTarget.name]: currentTarget.value })
+    };
+
     return (
         <CRow>
             <CCol xs="12" lg="12">
@@ -369,6 +381,45 @@ const Supplying = (props) => {
                                 />
                             </CCol>
                         </CRow>
+                        <hr/>
+                        <CRow>
+                            <CCol xs="12" lg="12" className="mt-4">
+                                <Select className="mr-2" name="supplier" label="Fournisseur" value={ isDefined(selectedSupplier) ? selectedSupplier.id : 0 } onChange={ handleSupplierChange }>
+                                    { suppliers.map(supplier => <option key={ supplier.id } value={ supplier.id }>{ supplier.name }</option>) }
+                                </Select>
+                            </CCol>
+                        </CRow>
+                        <CRow className="mb-4">
+                            <CCol xs="12" lg="6">
+                                <CLabel>Téléphone</CLabel>
+                                <CInputGroup>
+                                    <CInputGroupPrepend>
+                                        <CInputGroupText style={{ minWidth: '43px'}}><CIcon name="cil-phone"/></CInputGroupText>
+                                    </CInputGroupPrepend>
+                                    <CInput
+                                        name="phone"
+                                        value={ isDefined(selectedSupplier) && isDefined(selectedSupplier.phone) && selectedSupplier.phone.length > 0 ? (parseInt(selectedSupplier.id) !== -1 ? selectedSupplier.phone : '-') : "" }
+                                        onChange={ handleSupplierInfosChange }
+                                        // disabled={ !isDefined(selectedSupplier) || parseInt(selectedSupplier.id) === parseInt(allSuppliers.id) }
+                                    />
+                                </CInputGroup>
+                            </CCol>
+                            <CCol xs="12" lg="6" >
+                                <CLabel>Email(s) <small className="ml-3"><i>séparation par ";"</i></small></CLabel>
+                                <CInputGroup>
+                                    <CInputGroupPrepend>
+                                        <CInputGroupText style={{ minWidth: '43px'}}>@</CInputGroupText>
+                                    </CInputGroupPrepend>
+                                    <CInput
+                                        name="email"
+                                        value={ isDefined(selectedSupplier) && isDefined(selectedSupplier.email) ? (parseInt(selectedSupplier.id) !== -1 ? selectedSupplier.email : "-") : "" }
+                                        onChange={ handleSupplierInfosChange }
+                                        // disabled={ !isDefined(selectedSupplier) || parseInt(selectedSupplier.id) === parseInt(allSuppliers.id) }
+                                    />
+                                </CInputGroup>
+                            </CCol>
+                        </CRow>
+                        <hr/>
                         <CRow className="mb-4">
                             <CCol xs="12" lg="5" className="mt-4">
                                 <SelectMultiple name="productGroups" label="Groupes de produits" value={ productGroups } onChange={ handleGroupChange } data={ getProductGroups() }/>
@@ -457,14 +508,21 @@ const Supplying = (props) => {
                                     </CCol>
                                 </CRow>
                                 <CRow>
-                                    <CCol xs="12" lg="5" className="mt-4">
+                                    {/* <CCol xs="12" lg="5" className="mt-4">
                                         <Select className="mr-2" name="supplier" label="Fournisseur" value={ isDefined(selectedSupplier) ? selectedSupplier.id : 0 } onChange={ handleSupplierChange }>
                                             { suppliers.map(supplier => <option key={ supplier.id } value={ supplier.id }>{ supplier.name }</option>) }
                                         </Select>
-                                    </CCol>
+                                    </CCol> */}
                                     <CCol className="mt-4">
                                         <SimpleDatePicker selectedDate={ [deliveryDate] } minDate={ minDate } onDateChange={ handleDeliveryDateChange } label="Date de livraison souhaitée"/>
                                     </CCol>
+                                    <CCol xs="12" lg="4" className="mt-4">
+                                    <Select className="mr-2" name="sendMode" label="Mode d'envoi" value={ sendingMode } onChange={ handleSendingModeChange }>
+                                        <option value={"email"}>{"Email"}</option>
+                                        <option value={"sms"}>{"SMS"}</option>
+                                        <option value={"email & sms"}>{"Email & SMS"}</option>
+                                    </Select>
+                                </CCol>
                                     <CCol xs="12" lg="2" className="mt-4 d-flex justify-content-center">
                                         <CButton color="success" className="mt-4" onClick={ handleSubmit } style={{width: '180px', height: '35px'}} disabled={ displayedProducts.findIndex(p => p.selected) === -1 }>
                                             Commander

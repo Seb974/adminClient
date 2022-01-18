@@ -9,6 +9,7 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import SellerActions from 'src/services/SellerActions';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
+import Suppliers from './Suppliers';
 
 const Characteristics = ({ product, categories, type, setProduct, errors, history}) => {
 
@@ -122,6 +123,7 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                     </Select>
                 </CCol>
             </CRow>
+            <Suppliers product={ product } setProduct={ setProduct } />
             <CRow className="mb-3">
                 <CCol xs="12" sm="6">
                     <SelectMultiple name="categories" label="Catégories" value={ product.categories } error={ errors.categories } onChange={ handleCategoriesChange } data={ categories.map(category => ({value: category.id, label: category.name, isFixed: false})) }/>

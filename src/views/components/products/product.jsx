@@ -14,6 +14,7 @@ import Type from 'src/components/productPages/type';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import { getDateFrom } from 'src/helpers/utils';
+import Suppliers from 'src/components/productPages/Suppliers';
 
 const ProductPage = ({ match, history }) => {
 
@@ -55,6 +56,7 @@ const ProductPage = ({ match, history }) => {
             let request = ProductActions.find(id);
             request
                 .then(response => {
+                    console.log(response);
                     const formattedProduct = formatProduct(response, defaultStock);
                     setProduct(formattedProduct)
                     setType(defineType(response));
