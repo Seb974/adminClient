@@ -1,7 +1,18 @@
-.select__control {
+.basic-multi-select > .select__control {
     z-index: 100!important;
 }
 
-.select__menu {
+.basic-multi-select > .select__menu {
     z-index: 150!important;
 }
+
+.basic-multi-select-darkMode > .select__control {
+    background-color: #2F303A!important;
+    color: #000000!important;
+}
+
+.basic-multi-select-darkMode > .select__menu {
+    background-color: #2F303A!important;
+    color: #000000!important;
+}
+

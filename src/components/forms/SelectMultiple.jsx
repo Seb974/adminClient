@@ -1,4 +1,6 @@
 import React from 'react';
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
 import 'src/assets/css/select-multiple.css';
@@ -21,6 +23,10 @@ const animatedComponents = makeAnimated();
 
 const SelectMultiple = ({ name, value, error = "", label, onChange, data }) => {
 
+    const darkMode = useSelector(state => state.darkMode);
+
+    useEffect(() => console.log(darkMode), [darkMode]);
+
     const handleChange = (value, { action, removedValue }) => {
         switch (action) {
             case 'remove-value':
@@ -40,7 +46,7 @@ const SelectMultiple = ({ name, value, error = "", label, onChange, data }) => {
             <label htmlFor={ name }>{ label }</label>
             <Select
                 name={ name }
-                className="basic-multi-select"
+                className={ darkMode ? " basic-multi-select-darkMode" : "basic-multi-select" }
                 classNamePrefix="select"
                 closeMenuOnSelect={ false }
                 components={ animatedComponents }

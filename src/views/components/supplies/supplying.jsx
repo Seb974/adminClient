@@ -400,7 +400,6 @@ const Supplying = (props) => {
                                         name="phone"
                                         value={ isDefined(selectedSupplier) && isDefined(selectedSupplier.phone) && selectedSupplier.phone.length > 0 ? (parseInt(selectedSupplier.id) !== -1 ? selectedSupplier.phone : '-') : "" }
                                         onChange={ handleSupplierInfosChange }
-                                        // disabled={ !isDefined(selectedSupplier) || parseInt(selectedSupplier.id) === parseInt(allSuppliers.id) }
                                     />
                                 </CInputGroup>
                             </CCol>
@@ -414,7 +413,6 @@ const Supplying = (props) => {
                                         name="email"
                                         value={ isDefined(selectedSupplier) && isDefined(selectedSupplier.email) ? (parseInt(selectedSupplier.id) !== -1 ? selectedSupplier.email : "-") : "" }
                                         onChange={ handleSupplierInfosChange }
-                                        // disabled={ !isDefined(selectedSupplier) || parseInt(selectedSupplier.id) === parseInt(allSuppliers.id) }
                                     />
                                 </CInputGroup>
                             </CCol>
