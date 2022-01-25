@@ -131,7 +131,9 @@ const Container = ({ match, history }) => {
             width: getFloat(container.width),
             height: getFloat(container.height),
             stock: {
-                ...container.stock, 
+                ...container.stock,
+                name: container.name,
+                unit: "U",
                 quantity: getFloat(container.stock.quantity),
                 alert: getFloat(container.stock.alert),
                 security: getFloat(container.stock.security),

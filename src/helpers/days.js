@@ -35,6 +35,8 @@ export const getTwoDigits = number => {
 
 export const isSameDate = (date1, date2) => date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
 
+export const isSameTime = (date1, date2) => date1.getHours() === date2.getHours() && date1.getMinutes() === date2.getMinutes() && date1.getSeconds() === date2.getSeconds();
+
 export const isBetween = (date, start, end) => {
     return new Date(date) >= new Date(start) && new Date(date) <= new Date(end);
 };
@@ -44,3 +46,10 @@ export const getDateFrom = (date, nbDaysToAdd = 0, hour = 9) => {
 };
 
 export const getDayName = date => dayNames.find(d => d.value === date.getDay()).label;
+
+export const isPastHour = date => {
+    const now = new Date();
+    const originalDate = new Date(date);
+    const compare = new Date(now.getFullYear(), now.getMonth(), now.getDate(), originalDate.getHours(), originalDate.getMinutes(), 0);
+    return compare.getTime() < now.getTime();
+};

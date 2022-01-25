@@ -53,5 +53,7 @@
     "heroes.label": "Heroes",
     "banners.label": "Banners",
     "aboutUs.label": "About us",
-    "agents.label": "Team"
+    "agents.label": "Team",
+    "stores.label": "Stores",
+    "costs.label": "Costs"
 }

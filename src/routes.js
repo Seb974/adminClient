@@ -18,6 +18,7 @@ const Sellers = React.lazy(() => import('./views/components/sellers/sellers'));
 const Seller = React.lazy(() => import('./views/components/sellers/seller'));
 const Profitability = React.lazy(() => import('./views/components/prices/profitability'));
 const Prices = React.lazy(() => import('./views/components/prices/prices'));
+const Costs = React.lazy(() => import('./views/components/costs/costs'));
 const SellerAccount = React.lazy(() => import('./views/components/sellers/sellerAccount'));
 const DelivererAccount = React.lazy(() => import('./views/components/deliverers/delivererAccount'));
 const Deliverers = React.lazy(() => import('./views/components/deliverers/deliverers'));
@@ -38,6 +39,8 @@ const Banners = React.lazy(() => import('./views/components/banners/banners'));
 const Banner = React.lazy(() => import('./views/components/banners/banner'));
 const Relaypoints = React.lazy(() => import('./views/components/relaypoints/relaypoints'));
 const Relaypoint = React.lazy(() => import('./views/components/relaypoints/relaypoint'));
+const Stores = React.lazy(() => import('./views/components/stores/stores'));
+const Store = React.lazy(() => import('./views/components/stores/store'));
 const Preparations = React.lazy(() => import('./views/components/preparations/preparations'));
 const Recoveries = React.lazy(() => import('./views/components/recoveries/recoveries'));
 const Deliveries = React.lazy(() => import('./views/components/deliveries/deliveries'));
@@ -135,6 +138,7 @@ const routes = [
   { path: '/components/sellers', name: 'Sellers', component: Sellers },
   { path: '/components/profitability', name: 'Profitability', component: Profitability },
   { path: '/components/prices', name: 'Prices', component: Prices },
+  { path: '/components/costs', name: 'Costs', component: Costs },
   { path: '/components/account/sellers', name: 'Sellers', component: SellerAccount },
   { path: '/components/account/deliverers', name: 'Sellers', component: DelivererAccount },
   { path: '/components/deliverers/:id', name: 'Deliverer', component: Deliverer },
@@ -155,6 +159,8 @@ const routes = [
   { path: '/components/banners', name: 'Banners', component: Banners },
   { path: '/components/relaypoints/:id', name: 'Relaypoint', component: Relaypoint },
   { path: '/components/relaypoints', name: 'Relaypoints', component: Relaypoints },
+  { path: '/components/stores/:id', name: 'Store', component: Store },
+  { path: '/components/stores', name: 'Stores', component: Stores },
   { path: '/components/orders/:id', name: 'Order', component: Order },
   { path: '/components/orders', name: 'Orders', component: Orders },
   { path: '/components/provisions/:id', name: 'Provision', component: Provision },

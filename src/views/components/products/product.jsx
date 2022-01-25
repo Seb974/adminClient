@@ -33,8 +33,8 @@ const ProductPage = ({ match, history }) => {
     const defaultComponent = {...defaultProduct, count: 0, quantity: ""};
     const defaultStock = {quantity: 0, alert: "", security:""};
     const defaultVariation = {count: 0, name: "", image: null, sizes: [defaultSize]};
-    const [product, setProduct] = useState({name: "", weight:"", contentWeight:"", seller: {id: -1, name: ""}, userGroups: [], catalogs: [], image: null, unit: "Kg", productGroup: "J + 1", fullDescription: "", stock: defaultStock, stockManaged: true, tax: "-1", uniquePrice: true, prices: [], available: true, requireLegalAge: false, requireDeclaration: true, new: true, isMixed: false, categories: [], discount: "", offerEnd: today});
-    const [errors, setErrors] = useState({name: "", weight: "", contentWeight:"", seller: "", userGroups: "", catalogs: [], image: "", unit: "", productGroup: "", fullDescription: "", stock: {alert: "", security:""}, stockManaged: "", tax: "", uniquePrice: "", prices: [{name: 'BASE', price:""}, {name: 'USER_VIP', price:""}, {name: 'PRO_CHR', price:""}, {name: 'PRO_GC', price:""}, {name: 'PRO_VIP', price:""}], available: "", requireLegalAge: "", new: "", isMixed: "", categories: "", discount: "", offerEnd: ""});
+    const [product, setProduct] = useState({name: "", weight:"", contentWeight:"", seller: {id: -1, name: ""}, userGroups: [], catalogs: [], image: null, unit: "Kg", productGroup: "J + 1", fullDescription: "", stock: defaultStock, stockManaged: true, tax: "-1", uniquePrice: true, prices: [], available: true, storeAvailable: true, requireLegalAge: false, requireDeclaration: true, new: true, isMixed: false, categories: [], discount: "", offerEnd: today});
+    const [errors, setErrors] = useState({name: "", weight: "", contentWeight:"", seller: "", userGroups: "", catalogs: [], image: "", unit: "", productGroup: "", fullDescription: "", stock: {alert: "", security:""}, stockManaged: "", tax: "", uniquePrice: "", prices: [{name: 'BASE', price:""}, {name: 'USER_VIP', price:""}, {name: 'PRO_CHR', price:""}, {name: 'PRO_GC', price:""}, {name: 'PRO_VIP', price:""}], available: "", storeAvailable: "", requireLegalAge: "", new: "", isMixed: "", categories: "", discount: "", offerEnd: ""});
     const [variations, setVariations] = useState([defaultVariation]);
     const [components, setComponents] = useState([defaultComponent]);
     const [type, setType] = useState("simple");
@@ -48,7 +48,7 @@ const ProductPage = ({ match, history }) => {
     useEffect(() => fetchProduct(id), [id]);
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => setProduct({...product, available: isAdmin }), [isAdmin]);
+    useEffect(() => setProduct({...product, available: isAdmin, storeAvailable: isAdmin }), [isAdmin]);
 
     const fetchProduct = id => {
         if (id !== "new") {

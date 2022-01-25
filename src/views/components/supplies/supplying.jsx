@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
-import { getEvolutionPoints, getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getEvolutionPoints, getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Spinner from 'react-bootstrap/Spinner'
 import Select from 'src/components/forms/Select';
 import SupplierActions from 'src/services/SupplierActions';
@@ -17,6 +17,12 @@ import useWindowDimensions from 'src/helpers/screenDimensions';
 import SellerActions from 'src/services/SellerActions';
 import ProvisionActions from 'src/services/ProvisionActions';
 import CIcon from '@coreui/icons-react';
+import UpdateCost from 'src/components/supplyingPages/UpdateCost';
+
+import 'flatpickr/dist/themes/material_blue.css';
+import { French } from "flatpickr/dist/l10n/fr.js";
+import Flatpickr from 'react-flatpickr';
+import { getDateFrom, isSameDate, isSameTime } from 'src/helpers/days';
 
 const Supplying = (props) => {
 
@@ -24,8 +30,8 @@ const Supplying = (props) => {
     const itemsPerPage = 30;
     const rates = getEvolutionPoints();
     const { height, width } = useWindowDimensions();
-    const minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 1);
-    const fields = ['Produit', 'Sécurité', 'Stock', 'Besoin', 'Commande', 'Sélection'];
+    const [minDate, setMinDate] = useState(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 1));
+    const fields = ['Produit', 'Coût', 'Stock', 'Besoin', 'Commande', 'Sélection'];
     const { currentUser } = useContext(AuthContext);
     const { products } = useContext(ProductsContext);
     const [orders, setOrders] = useState([]);
@@ -44,6 +50,14 @@ const Supplying = (props) => {
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [deliveryDate, setDeliveryDate] = useState(today);
     const [supplied, setSupplied] = useState([]);
+
+    useEffect(() => {
+        if (isDefined(selectedSupplier) && isDefined(selectedSeller)) {
+            const newMinDate = getFirstDeliverableDay();
+            setMinDate(newMinDate);
+            setDeliveryDate(newMinDate);
+        }
+    }, [selectedSupplier, selectedSeller]);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
@@ -253,7 +267,7 @@ const Supplying = (props) => {
 
     const getSimpleProduct = product => {
         return {
-            product: { id: product.id, name: product.name },
+            product: { id: product.id, name: product.name, costs: product.costs },
             variation: null,
             size: null,
             stock: product.stock,
@@ -264,7 +278,7 @@ const Supplying = (props) => {
 
     const getVariantProduct = (product, variation, size) => {
         return {
-            product: { id: product.id, name: product.name },
+            product: { id: product.id, name: product.name, costs: product.costs },
             variation: { id: variation.id, name: variation.color },
             size: { id: size.id, name: size.name },
             stock: size.stock,
@@ -350,6 +364,66 @@ const Supplying = (props) => {
     const handleSendingModeChange = ({ currentTarget }) => setSendingMode(currentTarget.value);
     const handleSupplierInfosChange = ({ currentTarget }) => {
         setSelectedSupplier({...selectedSupplier, [currentTarget.name]: currentTarget.value })
+    };
+
+    const getCheapestSupplier = (costs, parameter = "name") => {
+        const cheapest = !isDefinedAndNotVoid(costs) ? null : costs.reduce((less, curr) => {
+            return less = !isDefined(less) || curr.value < less.value ? curr :
+                          curr.value > less.value ? less : 
+                          curr.supplier.id === selectedSupplier.id ? curr : less
+        }, null);
+        return parameter !== "name" ? (!isDefined(cheapest) ? 0 : cheapest.value) : 
+            !isDefined(cheapest) || cheapest.value === 0 ? <></> : 
+                cheapest.supplier.id === selectedSupplier.id ? 
+                    <span className="text-success"><i className="fas fa-piggy-bank mr-1"></i>Meilleure offre</span> :
+                    <span className="text-danger"><i className="fas fa-exclamation-triangle mr-1"></i>{ cheapest.supplier.name } est - cher</span>;     // Moins cher chez 
+    };
+
+    const getSubTotalCost = (costs, quantity) => {
+        return getSubTotal(costs, quantity) > 0 ? getSubTotal(costs, quantity).toFixed(2) + " €" : ""
+    };
+
+    const getSubTotal = (costs, quantity) => {
+        const costObject = costs.find(c => c.supplier.id === selectedSupplier.id);
+        const cost = isDefined(costObject) ? costObject.value : 0;
+        return quantity * cost <= 0 ? 0 : Math.round(quantity * cost * 100) / 100;
+    }
+
+    const getTotal = () => {
+        return displayedProducts.filter(p => p.selected && p.quantity > 0).reduce((sum, curr) => {
+            return sum += getSubTotal(curr.product.costs, curr.quantity);
+        }, 0).toFixed(2);
+    };
+
+    const getSupplierCost = product => {
+        const cost = isDefinedAndNotVoid(product.costs) ? product.costs.find(c => c.supplier.id === selectedSupplier.id) : null;
+        return !isDefined(cost) || cost.value.length === 0 || cost.value === 0 ? "Non renseigné" : getFloat(cost.value).toFixed(2) + " €";
+    };
+
+    const getDisabledDays = date => isDisabledDay(date);
+
+    const isDisabledDay = date => {
+        if (isDefined(selectedSupplier)) {
+            const now = new Date();
+            const max = isDefined(selectedSupplier.maxHour) ? new Date(selectedSupplier.maxHour) : now;
+            const deliveryDays = isDefinedAndNotVoid(selectedSupplier.days) ? selectedSupplier.days.map(d => getInt(d.value)) : [1, 2, 3, 4, 5, 6];
+            const minimalDate = selectedSupplier.dayInterval || 0;
+            const isMaxHourPassed = isSameDate(max, now) && isSameTime(max, now) ? false : getDateFrom(now, 0, max.getHours(), max.getMinutes()) < now;
+            const dayLag = minimalDate + (isMaxHourPassed ? 1 : 0);
+            return date <= getDateFrom(now, dayLag, max.getHours(), max.getMinutes()) || !deliveryDays.includes(getInt(date.getDay()));
+        }
+        return true;
+    };
+
+    const getFirstDeliverableDay = () => {
+        let i = 0;
+        const start = new Date();
+        let openDay = start;
+        while (isDisabledDay(openDay)) {
+            i++;
+            openDay = getDateFrom(start, i);
+        }
+        return openDay;
     };
 
     return (
@@ -449,6 +523,7 @@ const Supplying = (props) => {
                                 </CCol>
                             </CRow>
                             :
+                            <>
                             <CDataTable
                                 items={ displayedProducts }
                                 fields={ width < 576 ? ['Produit', 'Commande', 'Sélection'] : fields }
@@ -457,30 +532,55 @@ const Supplying = (props) => {
                                 pagination
                                 scopedSlots = {{
                                     'Produit':
-                                        item => <td style={{width: '25%'}}>{ getSignPostName(item) }</td>
+                                        item => <td style={{width: '25%'}}>
+                                                    <UpdateCost 
+                                                        name={ getSignPostName(item) } 
+                                                        product={ item.product } 
+                                                        supplier={ selectedSupplier }
+                                                        items= { displayedProducts }
+                                                        setItems={ setDisplayedProducts }
+                                                    />
+                                                    <br/>
+                                                    <span className="font-italic" style={{ fontSize: "0.7em"}}>
+                                                        { getCheapestSupplier(item.product.costs, 'name') }
+                                                    </span>
+                                                </td>
                                     ,
-                                    'Sécurité':
-                                        item => <td style={{width: '15%'}}>{ item.stock.security + " " + item.unit }</td>
+                                    'Coût':
+                                        item => <td style={{width: '15%'}}>
+                                                    {/* { item.stock.security + " " + item.unit } */}
+                                                    { getSupplierCost(item.product) }
+                                                </td>
                                     ,
                                      'Stock':
-                                        item => <td style={{width: '15%'}}>{ item.stock.quantity + " " + item.unit }</td>
+                                        item => <td style={{width: '15%'}}>
+                                                    { item.stock.quantity + " " + item.unit }<br/>
+                                                    <span className="font-italic" style={{ fontSize: "0.7em"}}>
+                                                        { "Sécurité : " + item.stock.security + " " + item.unit }
+                                                    </span>
+                                                </td>
                                     ,
                                     'Besoin':
                                         item => <td style={{width: '15%'}}>{ item.sales + " " + item.unit }</td>
                                     ,
                                     'Commande':
                                         item => <td style={{width: '20%'}}>
-                                                    <CInputGroup>
-                                                        <CInput
-                                                            type="number"
-                                                            name={ item.id }
-                                                            value={ item.quantity }
-                                                            onChange={ e => handleCommandChange(e, item) }
-                                                        />
-                                                        <CInputGroupAppend>
-                                                            <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-                                                        </CInputGroupAppend>
-                                                    </CInputGroup>
+                                                    <CFormGroup>
+                                                        <CInputGroup>
+                                                            <CInput
+                                                                type="number"
+                                                                name={ item.id }
+                                                                value={ item.quantity }
+                                                                onChange={ e => handleCommandChange(e, item) }
+                                                            />
+                                                            <CInputGroupAppend>
+                                                                <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                                            </CInputGroupAppend>
+                                                            <CValidFeedback style={{ display: 'block', color: 'black', textAlign: 'end' }}>
+                                                                { getSubTotalCost(item.product.costs, item.quantity) }
+                                                            </CValidFeedback>
+                                                        </CInputGroup>
+                                                    </CFormGroup>
                                                 </td>
                                     ,
                                     'Sélection':
@@ -497,6 +597,12 @@ const Supplying = (props) => {
                                                 </td>
                                 }}
                             />
+                            <CRow className="mb-4" style={{ display: displayedProducts.length === 0 && 'none'}}>
+                                <CCol xs="12" lg="12">
+                                    <p style={{ textAlign: "end", fontWeight: "bold" }}>Total : { getTotal() } €</p>
+                                </CCol>
+                            </CRow>
+                            </>
                         }
                         { displayedProducts.length > 0 &&
                             <CCardFooter>
@@ -512,7 +618,27 @@ const Supplying = (props) => {
                                         </Select>
                                     </CCol> */}
                                     <CCol className="mt-4">
-                                        <SimpleDatePicker selectedDate={ [deliveryDate] } minDate={ minDate } onDateChange={ handleDeliveryDateChange } label="Date de livraison souhaitée"/>
+                                        {/* <SimpleDatePicker selectedDate={ [deliveryDate] } minDate={ minDate } onDateChange={ handleDeliveryDateChange } label="Date de livraison souhaitée"/> */}
+                                        <CFormGroup>
+                                            <CLabel htmlFor="deliveryDate">Date de livraison souhaitée</CLabel>
+                                            <CInputGroup>
+                                                <Flatpickr
+                                                    name="date"
+                                                    value={ [deliveryDate] }
+                                                    onChange={ handleDeliveryDateChange }
+                                                    className={`form-control`}
+                                                    options={{
+                                                        minDate: minDate,
+                                                        dateFormat: "d/m/Y",
+                                                        locale: French,
+                                                        disable: [ date => getDisabledDays(date) ]
+                                                    }}
+                                                />
+                                                <CInputGroupAppend>
+                                                    <CInputGroupText style={{ minWidth: '43px'}}><CIcon name="cil-alarm"/></CInputGroupText>
+                                                </CInputGroupAppend>
+                                            </CInputGroup>
+                                        </CFormGroup>
                                     </CCol>
                                     <CCol xs="12" lg="4" className="mt-4">
                                     <Select className="mr-2" name="sendMode" label="Mode d'envoi" value={ sendingMode } onChange={ handleSendingModeChange }>

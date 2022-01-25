@@ -12,25 +12,32 @@ import ProductsContext from 'src/contexts/ProductsContext';
 
 const Stocks = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 4;
     const { currentUser } = useContext(AuthContext);
-    const { products, setProducts } = useContext(ProductsContext);
-    const fields = ['Nom', 'Sécurité', 'Alerte', 'Niveau'];
+    const fields = ['name', 'Sécurité', 'Alerte', 'Niveau'];
     const [stocks, setStocks] = useState([]);
     const { height, width } = useWindowDimensions();
+    const [displayedProducts, setDisplayedProducts] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => fetchProducts(), []);
+    useEffect(() => getDisplayedProducts(), []);
+    useEffect(() => getDisplayedProducts(), [search]);
+    useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
 
-    useEffect(() => setStocks(defineStocks(products)), [products]);
-
-    const fetchProducts = () => {
-        ProductActions.findAll()
-            .then(response => {
-                const currentStocks = defineStocks(response);
-                setStocks(currentStocks);
-            })
-            .catch(error => console.log(error));
+    const getDisplayedProducts = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedProducts(search, page) : await getProducts(page);
+        if (isDefined(response)) {
+            setDisplayedProducts(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
     };
+
+    const getProducts = (page = 1) => page >=1 ? ProductActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedProducts = (word, page = 1) => ProductActions.findWord(word, page, itemsPerPage);
+
+    useEffect(() => setStocks(defineStocks(displayedProducts)), [displayedProducts]);
 
     const defineStocks = products => {
         let newStocks = [];
@@ -109,12 +116,21 @@ const Stocks = (props) => {
             <CCardBody>
             <CDataTable
               items={ stocks }
-              fields={ width < 576 ? ['Nom', 'Niveau'] : fields }
+              fields={ width < 576 ? ['name', 'Niveau'] : fields }
               bordered
-              itemsPerPage={ itemsPerPage }
-              pagination
+              itemsPerPage={ stocks.length }
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
-                'Nom':
+                'name':
                   item => <td style={{ width: '25%'}}>{ getSignPostName(item) }</td>
                 ,
                 'Sécurité':

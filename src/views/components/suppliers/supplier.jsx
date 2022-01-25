@@ -6,19 +6,28 @@ import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CForm
 import CIcon from '@coreui/icons-react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
-import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getDateFrom, getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Select from 'src/components/forms/Select';
+import 'flatpickr/dist/themes/material_blue.css';
+import { French } from "flatpickr/dist/l10n/fr.js";
+import Flatpickr from 'react-flatpickr';
+import SelectMultiple from 'src/components/forms/SelectMultiple';
+import { getWeekDays } from 'src/helpers/days';
 
 
 const Supplier = ({ match, history }) => {
 
+    const now = new Date();
     const { id = "new" } = match.params;
     const [isAdmin, setIsAdmin] = useState([]);
     const [editing, setEditing] = useState(false);
     const { currentUser } = useContext(AuthContext);
-    const [supplier, setSupplier] = useState({ name: "", seller: null, email: "", phone: "" });
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const  defaultDays = getWeekDays().filter(day => day.value !== 0);
+    const defaultErrors = { name: "", seller: "", email: "", phone: "", provisionMin: "", deliveryMin: "", dayInterval: "", maxHour: "", days: "" };
+    const [supplier, setSupplier] = useState({ name: "", seller: null, email: "", phone: "", provisionMin: 0, deliveryMin: 0, dayInterval: 1, maxHour: getDateFrom(now, 0, 12, 0), days: defaultDays});
     const [sellers, setSellers] = useState([]);
-    const [errors, setErrors] = useState({ name: "", seller: "", email: "", phone: "" });
+    const [errors, setErrors] = useState(defaultErrors);
 
     useEffect(() => {
         fetchSellers();
@@ -35,13 +44,15 @@ const Supplier = ({ match, history }) => {
         }
     }, [sellers, supplier]);
 
-    const handleChange = ({ currentTarget }) => setSupplier({...supplier, [currentTarget.name]: currentTarget.value});
-
     const fetchSupplier = id => {
         if (id !== "new") {
             setEditing(true);
             SupplierActions.find(id)
-                .then(response => setSupplier(response))
+                .then(response => {
+                    
+                    console.log(new Date(response.maxHour).toLocaleString('fr-FR', { timeZone: timezone}));
+                    setSupplier({...response, maxHour: isDefined(response.maxHour) ? new Date(response.maxHour) : supplier.maxHour });        // maxHour: isDefined(response.maxHour) ? getDateFrom(now, 1, response.maxHour.getHours(), response.maxHour.getMinutes()) : supplier.maxHour  .toUTCString()
+                })
                 .catch(error => {
                     console.log(error);
                     // TODO : Notification flash d'une erreur
@@ -56,6 +67,12 @@ const Supplier = ({ match, history }) => {
             .catch(error => console.log(error));
     };
 
+    const handleChange = ({ currentTarget }) => setSupplier({...supplier, [currentTarget.name]: currentTarget.value});
+
+    const onHourChange = hour => setSupplier({...supplier, maxHour: hour});
+
+    const handleDaysChange = days => setSupplier({...supplier, days});
+
     const handleSellerChange = ({ currentTarget }) => {
         const newSeller = sellers.find(seller => seller.id === parseInt(currentTarget.value));
         setSupplier({...supplier, seller: newSeller });
@@ -63,10 +80,11 @@ const Supplier = ({ match, history }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const formattedSupplier = {...supplier, seller: supplier.seller['@id']};
+        const formattedSupplier = getFormattedSupplier();
+        console.log(formattedSupplier);
         const request = !editing ? SupplierActions.create(formattedSupplier) : SupplierActions.update(id, formattedSupplier);
         request.then(response => {
-                    setErrors({ name: "", seller: "", email: "", phone: "" });
+                    setErrors(defaultErrors);
                     //TODO : Flash notification de succès
                     history.replace("/components/suppliers");
                 })
@@ -86,6 +104,17 @@ const Supplier = ({ match, history }) => {
                         console.log(error);
                });
     }
+
+    const getFormattedSupplier = () => {
+        return {
+            ...supplier, 
+            seller: supplier.seller['@id'], 
+            provisionMin: getFloat(supplier.provisionMin), 
+            deliveryMin: getFloat(supplier.deliveryMin), 
+            dayInterval: getInt(supplier.dayInterval),
+            maxHour: new Date(supplier.maxHour[0]).toLocaleString('en-EN', { timeZone: timezone})
+        };
+    };
 
     return (
         <CRow>
@@ -148,6 +177,99 @@ const Supplier = ({ match, history }) => {
                                         />
                                         <CInvalidFeedback>{ errors.phone }</CInvalidFeedback>
                                     </CFormGroup>
+                                </CCol>
+                            </CRow>
+
+                            <hr className="mx-2"/>
+                            <CRow>
+                                <CCol xs="12" sm="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="provisionMin">Minimum de commande</CLabel>
+                                        <CInputGroup>
+                                            <CInput
+                                                id="provisionMin"
+                                                name="provisionMin"
+                                                value={ supplier.provisionMin }
+                                                onChange={ handleChange }
+                                                placeholder="Coût minimum de commande"
+                                                invalid={ errors.provisionMin.length > 0 } 
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                        <CInvalidFeedback>{ errors.provisionMin }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" sm="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="deliveryMin">Minimum pour livraison</CLabel>
+                                        <CInputGroup>
+                                            <CInput
+                                                id="deliveryMin"
+                                                name="deliveryMin"
+                                                value={ supplier.deliveryMin }
+                                                onChange={ handleChange }
+                                                placeholder="Coût minimum pour livraison"
+                                                invalid={ errors.deliveryMin.length > 0 } 
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                        <CInvalidFeedback>{ errors.deliveryMin }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="provisionMin">Heure limite de commande</CLabel>
+                                        <CInputGroup>
+                                                <Flatpickr
+                                                    name="maxHour"
+                                                    value={ supplier.maxHour }
+                                                    onChange={ onHourChange }
+                                                    className={`form-control`}
+                                                    options={{
+                                                        enableTime: true,
+                                                        noCalendar: true,
+                                                        dateFormat: "H:i",
+                                                        time_24hr: true,
+                                                        locale: French,
+                                                        defaultDate: "12:00"
+                                                    }}
+                                                />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}><CIcon name="cil-alarm"/></CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                        <CInvalidFeedback>{ errors.provisionMin }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" sm="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="dayInterval">Jour(s) de préparation</CLabel>
+                                        <CInputGroup>
+                                            <CInput
+                                                id="dayInterval"
+                                                name="dayInterval"
+                                                value={ supplier.dayInterval }
+                                                onChange={ handleChange }
+                                                placeholder="Coût minimum pour livraison"
+                                                invalid={ errors.dayInterval.length > 0 } 
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                        <CInvalidFeedback>{ errors.dayInterval }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="12" className="mx-0">
+                                    <SelectMultiple name="openedFor" label="Jours désservis" value={ supplier.days } error={ errors.days } onChange={ handleDaysChange } data={ getWeekDays() }/>
                                 </CCol>
                             </CRow>
                             <CRow className="mt-4 d-flex justify-content-center">

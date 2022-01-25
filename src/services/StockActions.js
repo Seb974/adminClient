@@ -6,6 +6,20 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.id > b.id) ? 1 : -1));
 }
 
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/stocks?&order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/stocks?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
 function deleteStock(id) {
     return api.delete('/api/stocks/' + id);
 }
@@ -32,6 +46,8 @@ function updateFromMercure(stocks, stock) {
 
 export default { 
     findAll,
+    findAllPaginated,
+    findWord,
     delete: deleteStock,
     find, 
     update, 

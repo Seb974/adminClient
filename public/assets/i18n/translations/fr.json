@@ -53,5 +53,7 @@
     "heroes.label": "Héros",
     "banners.label": "Publicités",
     "aboutUs.label": "A propos",
-    "agents.label": "Equipe"
+    "agents.label": "Equipe",
+    "stores.label": "Boutiques",
+    "costs.label": "Coûts"
 }
