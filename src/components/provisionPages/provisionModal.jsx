@@ -7,7 +7,7 @@ import ProvisionActions from 'src/services/ProvisionActions';
 const ProvisionModal = ({ item, provisions, setProvisions }) => {
 
     const [modalShow, setModalShow] = useState(false);
-    const [receivedProvision, setReceivedProvision] = useState({...item, goods: item.goods.map(g => ({...g, received: g.quantity, price: ""}))});
+    const [receivedProvision, setReceivedProvision] = useState({...item, goods: item.goods.map(g => ({...g, received: g.quantity}))});      // , price: ""
 
     const getProductName = (product, variation, size) => {
         const variationName = exists(variation, 'color') ? " - " + variation.color : "";

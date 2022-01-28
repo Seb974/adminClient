@@ -33,6 +33,15 @@ function findBetween(dates, sellers) {
         });
 };
 
+function findSellerInProgress(seller) {
+    return api
+        .get(`/api/provisions?seller[]=${ seller['@id'] }&status[]=ORDERED`)        // &pagination=true&itemsPerPage=${ items }&page=${ page }
+        .then(response => response.data['hydra:member']);
+        // .then(response => {
+        //     return response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
+        // });
+}
+
 
 function deleteProvision(id) {
     return api.delete('/api/provisions/' + id);
@@ -86,6 +95,7 @@ export default {
     findAll,
     findBetween,
     findSuppliersBetween,
+    findSellerInProgress,
     delete: deleteProvision,
     find,
     update,

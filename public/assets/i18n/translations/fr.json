@@ -55,5 +55,6 @@
     "aboutUs.label": "A propos",
     "agents.label": "Equipe",
     "stores.label": "Boutiques",
-    "costs.label": "Coûts"
+    "costs.label": "Coûts",
+    "in-progress.label": "En cours"
 }

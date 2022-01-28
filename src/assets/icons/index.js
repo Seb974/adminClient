@@ -44,6 +44,7 @@ import {
 } from '@coreui/icons'
 import {
   cilApple,
+  cilFindInPage,
   cilAlarm,
   cilHouse,
   cilClock,
@@ -177,6 +178,7 @@ export const icons = Object.assign({}, {
   logoNegative
 }, {
   cilApple,
+  cilFindInPage,
   cilAlarm,
   cilHouse,
   cilClock,

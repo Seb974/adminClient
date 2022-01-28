@@ -152,6 +152,13 @@ function getNav(translation, currentUser)
     !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue :  
       {
         _tag: 'CSidebarNavItem',
+        name: translation("in-progress.label"),
+        to: '/components/supplies/in-progress',
+        icon: <CIcon name="cil-find-in-page" customClasses="c-sidebar-nav-icon"/>,
+      },
+    !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue :  
+      {
+        _tag: 'CSidebarNavItem',
         name: translation("provisions.label"),
         to: '/components/provisions',
         icon: <CIcon name="cib-azure-artifacts" customClasses="c-sidebar-nav-icon"/>,

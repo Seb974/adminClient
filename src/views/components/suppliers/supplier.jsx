@@ -49,9 +49,8 @@ const Supplier = ({ match, history }) => {
             setEditing(true);
             SupplierActions.find(id)
                 .then(response => {
-                    
-                    console.log(new Date(response.maxHour).toLocaleString('fr-FR', { timeZone: timezone}));
-                    setSupplier({...response, maxHour: isDefined(response.maxHour) ? new Date(response.maxHour) : supplier.maxHour });        // maxHour: isDefined(response.maxHour) ? getDateFrom(now, 1, response.maxHour.getHours(), response.maxHour.getMinutes()) : supplier.maxHour  .toUTCString()
+                    const supplierToUpdate = getSupplierToUpdate(response);
+                    setSupplier(supplierToUpdate);
                 })
                 .catch(error => {
                     console.log(error);
@@ -81,7 +80,6 @@ const Supplier = ({ match, history }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formattedSupplier = getFormattedSupplier();
-        console.log(formattedSupplier);
         const request = !editing ? SupplierActions.create(formattedSupplier) : SupplierActions.update(id, formattedSupplier);
         request.then(response => {
                     setErrors(defaultErrors);
@@ -112,7 +110,18 @@ const Supplier = ({ match, history }) => {
             provisionMin: getFloat(supplier.provisionMin), 
             deliveryMin: getFloat(supplier.deliveryMin), 
             dayInterval: getInt(supplier.dayInterval),
-            maxHour: new Date(supplier.maxHour[0]).toLocaleString('en-EN', { timeZone: timezone})
+            maxHour: new Date(Array.isArray(supplier.maxHour) ? supplier.maxHour[0] : supplier.maxHour).toLocaleString('en-EN', { timeZone: timezone})
+        };
+    };
+
+    const getSupplierToUpdate = newSupplier => {
+        return {
+            ...newSupplier,
+            maxHour: isDefined(newSupplier.maxHour) ? new Date(newSupplier.maxHour) : supplier.maxHour,
+            provisionMin: isDefined(newSupplier.provisionMin) ? newSupplier.provisionMin : supplier.provisionMin, 
+            deliveryMin: isDefined(newSupplier.deliveryMin) ? newSupplier.deliveryMin : supplier.deliveryMin, 
+            dayInterval: isDefined(newSupplier.dayInterval) ? newSupplier.dayInterval : supplier.dayInterval, 
+            days: isDefined(newSupplier.days) ? newSupplier.days : supplier.days,
         };
     };
 
@@ -244,7 +253,7 @@ const Supplier = ({ match, history }) => {
                                                 <CInputGroupText style={{ minWidth: '43px'}}><CIcon name="cil-alarm"/></CInputGroupText>
                                             </CInputGroupAppend>
                                         </CInputGroup>
-                                        <CInvalidFeedback>{ errors.provisionMin }</CInvalidFeedback>
+                                        <CInvalidFeedback>{ errors.maxHour }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
                                 <CCol xs="12" sm="6">

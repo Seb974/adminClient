@@ -55,5 +55,6 @@
     "aboutUs.label": "About us",
     "agents.label": "Team",
     "stores.label": "Stores",
-    "costs.label": "Costs"
+    "costs.label": "Costs",
+    "in-progress.label": "In progress"
 }

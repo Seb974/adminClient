@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback,  CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
@@ -36,6 +36,7 @@ const Supplying = (props) => {
     const { products } = useContext(ProductsContext);
     const [orders, setOrders] = useState([]);
     const [sendingMode, setSendingMode] = useState("email");
+    const [receiveMode, setReceiveMode] = useState("livraison");
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
@@ -50,6 +51,18 @@ const Supplying = (props) => {
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [deliveryDate, setDeliveryDate] = useState(today);
     const [supplied, setSupplied] = useState([]);
+
+    const [toasts, setToasts] = useState([]);
+    const voidMessage = "Aucun produit n'est sélectionné.";
+    const successMessage = "La commande a bien été envoyée.";
+    const minMessage = "Le montant de la commande est inférieur au minimum fixé par le fournisseur.";
+    const deliveryMinMessage = "Le montant de la commande n'est pas suffisant pour prétendre à la livraison.";
+    const failMessage = "Un problème est survenu lors de l'envoi de la commande au fournisseur.\n";
+    const voidToast = { position: 'top-right', autohide: 4000, closeButton: true, fade: true, color: 'warning', messsage: voidMessage, title: 'Sélection vide' };
+    const minToast = { position: 'top-right', autohide: 4000, closeButton: true, fade: true, color: 'warning', messsage: minMessage, title: 'Minimum de commande non atteint' };
+    const deliveryMinToast = { position: 'top-right', autohide: 4000, closeButton: true, fade: true, color: 'warning', messsage: deliveryMinMessage, title: 'Minimum pour livraison non atteint' };
+    const successToast = { position: 'top-right', autohide: 3000, closeButton: true, fade: true, color: 'success', messsage: successMessage, title: 'Succès' };
+    const failToast = { position: 'top-right', autohide: 7000, closeButton: true, fade: true, color: 'warning', messsage: failMessage, title: 'Notification non envoyée' };
 
     useEffect(() => {
         if (isDefined(selectedSupplier) && isDefined(selectedSeller)) {
@@ -167,28 +180,23 @@ const Supplying = (props) => {
     };
 
     const handleSubmit = () => {
-        const provision = getNewProvision();
-        console.log(provision);
-        ProvisionActions
-            .create(provision)
-            .then(response => {
-                setToSupplies(provision.goods);
-                setSelectAll(false);
-                // setDisplayedProducts(displayedProducts.filter(p => !p.selected))
-                //TODO : Flash notification de succès
-                // history.replace("/components/provisions");
-            })
-            .catch( ({ response }) => {
-                // const { violations } = response.data;
-                // if (violations) {
-                //     const apiErrors = {};
-                //     violations.forEach(({propertyPath, message}) => {
-                //         apiErrors[propertyPath] = message;
-                //     });
-                //     // setErrors(apiErrors);
-                // }
-                //TODO : Flash notification d'erreur
-            });
+        if (displayedProducts.findIndex(p => p.selected) === -1) {
+            addToast(voidToast);
+        } else if (isDefined(selectedSupplier.provisionMin) && getFloat(getTotal()) < selectedSupplier.provisionMin) {
+            addToast(minToast);
+        } else if (isDefined(selectedSupplier.deliveryMin) && receiveMode === "livraison" && getFloat(getTotal()) < selectedSupplier.deliveryMin) {
+            addToast(deliveryMinToast);
+        } else {
+            const provision = getNewProvision();
+            ProvisionActions
+                .create(provision)
+                .then(response => {
+                    setToSupplies(provision.goods);
+                    setSelectAll(false);
+                    addToast(successToast);
+                })
+                .catch(error => addToast(failToast));
+        }
     };
 
     const setToSupplies = goods => {
@@ -207,10 +215,10 @@ const Supplying = (props) => {
         const goods = getGoods();
         return {
             seller: selectedSeller['@id'], 
-            // supplier: selectedSupplier['@id'],
             supplier: selectedSupplier,
             provisionDate: new Date(deliveryDate), 
             sendingMode,
+            receiveMode,
             goods
         };
     };
@@ -224,7 +232,8 @@ const Supplying = (props) => {
                 size: isDefined(p.size) ? '/api/sizes/' + p.size.id : null,
                 quantity: getFloat(p.quantity),
                 unit: p.unit,
-                stock: p.stock
+                stock: p.stock,
+                price: getSupplierCostValue(p.product)
             }))
     };
 
@@ -362,9 +371,8 @@ const Supplying = (props) => {
     };
 
     const handleSendingModeChange = ({ currentTarget }) => setSendingMode(currentTarget.value);
-    const handleSupplierInfosChange = ({ currentTarget }) => {
-        setSelectedSupplier({...selectedSupplier, [currentTarget.name]: currentTarget.value })
-    };
+    const handleReceiveModeChange = ({ currentTarget }) => setReceiveMode(currentTarget.value);
+    const handleSupplierInfosChange = ({ currentTarget }) => setSelectedSupplier({...selectedSupplier, [currentTarget.name]: currentTarget.value });
 
     const getCheapestSupplier = (costs, parameter = "name") => {
         const cheapest = !isDefinedAndNotVoid(costs) ? null : costs.reduce((less, curr) => {
@@ -395,10 +403,17 @@ const Supplying = (props) => {
         }, 0).toFixed(2);
     };
 
-    const getSupplierCost = product => {
-        const cost = isDefinedAndNotVoid(product.costs) ? product.costs.find(c => c.supplier.id === selectedSupplier.id) : null;
-        return !isDefined(cost) || cost.value.length === 0 || cost.value === 0 ? "Non renseigné" : getFloat(cost.value).toFixed(2) + " €";
+    const getSupplierCostMessage = product => {
+        const cost = getSupplierCostValue(product);
+        return cost <= 0 ? "Non renseigné" : cost.toFixed(2) + " €";
     };
+
+    const getSupplierCostValue = product => {
+        const cost = getSupplierCost(product);
+        return !isDefined(cost) || cost.value.length === 0 ? 0 : getFloat(cost.value);
+    }
+
+    const getSupplierCost = product => isDefinedAndNotVoid(product.costs) ? product.costs.find(c => c.supplier.id === selectedSupplier.id) : null;
 
     const getDisabledDays = date => isDisabledDay(date);
 
@@ -425,6 +440,16 @@ const Supplying = (props) => {
         }
         return openDay;
     };
+
+    const addToast = newToast => setToasts([...toasts, newToast]);
+
+    const toasters = (()=>{
+        return toasts.reduce((toasters, toast) => {
+          toasters[toast.position] = toasters[toast.position] || []
+          toasters[toast.position].push(toast)
+          return toasters
+        }, {})
+    })();
 
     return (
         <CRow>
@@ -491,6 +516,10 @@ const Supplying = (props) => {
                                 </CInputGroup>
                             </CCol>
                         </CRow>
+                        <CRow className="my-4">
+                            { isDefined(selectedSupplier) && isDefined(selectedSupplier.provisionMin) && <CCol xs="12" lg="6"><CLabel className="font-italic font-weight-bold">Minimum de commande : { selectedSupplier.provisionMin.toFixed(2) } €</CLabel></CCol> }
+                            { isDefined(selectedSupplier) && isDefined(selectedSupplier.deliveryMin) && <CCol xs="12" lg="6"><CLabel className="font-italic font-weight-bold">Minimum pour livraison : { selectedSupplier.deliveryMin.toFixed(2) } €</CLabel></CCol> }
+                        </CRow>
                         <hr/>
                         <CRow className="mb-4">
                             <CCol xs="12" lg="5" className="mt-4">
@@ -549,7 +578,7 @@ const Supplying = (props) => {
                                     'Coût':
                                         item => <td style={{width: '15%'}}>
                                                     {/* { item.stock.security + " " + item.unit } */}
-                                                    { getSupplierCost(item.product) }
+                                                    { getSupplierCostMessage(item.product) }
                                                 </td>
                                     ,
                                      'Stock':
@@ -612,15 +641,15 @@ const Supplying = (props) => {
                                     </CCol>
                                 </CRow>
                                 <CRow>
-                                    {/* <CCol xs="12" lg="5" className="mt-4">
-                                        <Select className="mr-2" name="supplier" label="Fournisseur" value={ isDefined(selectedSupplier) ? selectedSupplier.id : 0 } onChange={ handleSupplierChange }>
-                                            { suppliers.map(supplier => <option key={ supplier.id } value={ supplier.id }>{ supplier.name }</option>) }
+                                    <CCol xs="12" lg="6" className="mt-4">
+                                        <Select className="mr-2" name="receiveMode" label="Mode de récupération des marchandises" value={ receiveMode } onChange={ handleReceiveModeChange }>
+                                            <option value={"récupération"}>{"Récupération sur place"}</option>
+                                            <option value={"livraison"}>{"Livraison"}</option>
                                         </Select>
-                                    </CCol> */}
-                                    <CCol className="mt-4">
-                                        {/* <SimpleDatePicker selectedDate={ [deliveryDate] } minDate={ minDate } onDateChange={ handleDeliveryDateChange } label="Date de livraison souhaitée"/> */}
+                                    </CCol>
+                                    <CCol xs="12" lg="6" className="mt-4">
                                         <CFormGroup>
-                                            <CLabel htmlFor="deliveryDate">Date de livraison souhaitée</CLabel>
+                                            <CLabel htmlFor="deliveryDate">Date de { receiveMode } souhaitée</CLabel>
                                             <CInputGroup>
                                                 <Flatpickr
                                                     name="date"
@@ -640,15 +669,18 @@ const Supplying = (props) => {
                                             </CInputGroup>
                                         </CFormGroup>
                                     </CCol>
-                                    <CCol xs="12" lg="4" className="mt-4">
-                                    <Select className="mr-2" name="sendMode" label="Mode d'envoi" value={ sendingMode } onChange={ handleSendingModeChange }>
-                                        <option value={"email"}>{"Email"}</option>
-                                        <option value={"sms"}>{"SMS"}</option>
-                                        <option value={"email & sms"}>{"Email & SMS"}</option>
-                                    </Select>
-                                </CCol>
-                                    <CCol xs="12" lg="2" className="mt-4 d-flex justify-content-center">
-                                        <CButton color="success" className="mt-4" onClick={ handleSubmit } style={{width: '180px', height: '35px'}} disabled={ displayedProducts.findIndex(p => p.selected) === -1 }>
+                                </CRow>
+                                <CRow>
+                                    
+                                    <CCol xs="12" lg="6" className="mt-2">
+                                        <Select className="mr-2" name="sendMode" label="Mode d'envoi de la commande" value={ sendingMode } onChange={ handleSendingModeChange }>
+                                            <option value={"email"}>{"Email"}</option>
+                                            <option value={"sms"}>{"SMS"}</option>
+                                            <option value={"email & sms"}>{"Email & SMS"}</option>
+                                        </Select>
+                                    </CCol>
+                                    <CCol xs="12" lg="6" className="mt-2 d-flex justify-content-start">
+                                        <CButton color="success" className="mt-4" onClick={ handleSubmit } style={{width: '180px', height: '35px'}}>      {/* displayedProducts.findIndex(p => p.selected) === -1      disabled={ isDefined(selectedSupplier.provisionMin) ? getFloat(getTotal()) < selectedSupplier.provisionMin : false } */}
                                             Commander
                                         </CButton>
                                     </CCol>
@@ -658,8 +690,63 @@ const Supplying = (props) => {
                     </CCardBody>
                 </CCard>
             </CCol>
+
+            <CCol sm="12" lg="6">
+              {Object.keys(toasters).map((toasterKey) => (
+                <CToaster
+                  position={toasterKey}
+                  key={'toaster' + toasterKey}
+                >
+                  {
+                    toasters[toasterKey].map((toast, key)=>{
+                    return(
+                      <CToast
+                        key={ 'toast' + key }
+                        show={ true }
+                        autohide={ toast.autohide }
+                        fade={ toast.fade }
+                        color={ toast.color }
+                        style={{ color: 'white' }}
+                      >
+                        <CToastHeader closeButton={ toast.closeButton }>
+                            { toast.title }
+                        </CToastHeader>
+                        <CToastBody style={{ backgroundColor: 'white', color: "black" }}>
+                            { toast.messsage }
+                        </CToastBody>
+                      </CToast>
+                    )
+                  })
+                  }
+                </CToaster>
+              ))}
+            </CCol>
         </CRow>
     );
 }
 
 export default Supplying;
+
+
+// const provision = getNewProvision();
+// console.log(provision);
+// ProvisionActions
+//     .create(provision)
+//     .then(response => {
+//         setToSupplies(provision.goods);
+//         setSelectAll(false);
+//         // setDisplayedProducts(displayedProducts.filter(p => !p.selected))
+//         //TODO : Flash notification de succès
+//         // history.replace("/components/provisions");
+//     })
+//     .catch( error => {
+//         // const { violations } = response.data;
+//         // if (violations) {
+//         //     const apiErrors = {};
+//         //     violations.forEach(({propertyPath, message}) => {
+//         //         apiErrors[propertyPath] = message;
+//         //     });
+//         //     // setErrors(apiErrors);
+//         // }
+//         //TODO : Flash notification d'erreur
+//     });
