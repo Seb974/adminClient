@@ -5,7 +5,13 @@ function filterAuthorizationRoles(roles) {
 }
 
 function filterRoles(roles) {
-    return roles.length === 1 ? roles[0] : roles.filter(role => role !== getDefaultRole())[0];
+    return  roles.length === 1 ? roles[0] : 
+            roles.includes("ROLE_SELLER") && roles.includes("ROLE_DELIVERER") ? "ROLE_PICKER" : 
+            roles.filter(role => role !== getDefaultRole())[0];
+}
+
+function isRelaypoint(roles) {
+    return (Array.isArray(roles) && roles.includes("ROLE_RELAYPOINT")) || roles === "ROLE_RELAYPOINT";
 }
 
 function hasPrivileges(user) {
@@ -13,7 +19,7 @@ function hasPrivileges(user) {
 }
 
 function hasAdminAccess(user) {
-    const adminAccessRoles = ["ROLE_SELLER", "ROLE_DELIVERER"];
+    const adminAccessRoles = ["ROLE_SELLER", "ROLE_DELIVERER", "ROLE_TEAM", "ROLE_PICKER", "ROLE_RELAYPOINT", "ROLE_SUPERVISOR"];
     return adminAccessRoles.includes(user.roles);
 }
 
@@ -23,6 +29,14 @@ function isSeller(user) {
 
 function isDeliverer(user) {
     return user.roles === "ROLE_DELIVERER";
+}
+
+function isPicker(user) {
+    return user.roles === "ROLE_PICKER";
+}
+
+function isSupervisor(user) {
+    return user.roles === "ROLE_SUPERVISOR";
 }
 
 function hasAdminPrivileges(user) {
@@ -37,6 +51,10 @@ function getDefaultRole() {
     return "ROLE_USER";
 }
 
+function isProfesional(roles) {
+    return roles.find(r => ["ROLE_VIP", "ROLE_GRANDS_COMPTES", "ROLE_CHR", "ROLE_PROFESSIONNELS"].includes(r)) !== undefined;
+}
+
 export default {
     filterRoles,
     getDefaultRole,
@@ -46,5 +64,9 @@ export default {
     hasAllPrivileges,
     filterAuthorizationRoles,
     isSeller,
-    isDeliverer
+    isDeliverer,
+    isRelaypoint,
+    isPicker,
+    isSupervisor,
+    isProfesional
 }

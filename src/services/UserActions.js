@@ -1,4 +1,5 @@
 import api from 'src/config/api';
+import { isDefined } from 'src/helpers/utils';
 
 function register(user) {
     const { name, email, password } = user;
@@ -7,8 +8,20 @@ function register(user) {
 
 function findAll() {
     return api
-        .get('/api/users')
+        .get(`/api/users?pagination=false`)
         .then(response => response.data['hydra:member']);
+}
+
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/users?order[name]=asc&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/users?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 }
 
 function deleteUser(id) {
@@ -41,13 +54,22 @@ function findDeliverers() {
             .then(response => response.data['hydra:member']);
 }
 
+function getAccountingId(order) {
+    return isDefined(order.user) && isDefined(order.user.accountingId) ? new Promise((resolve, reject) => resolve(order.user.accountingId)) :
+         api.post('/api/accounting/user/' + order.id)
+            .then(response => response.data)
+}
+
 export default {
     register,
     findAll,
+    findAllPaginated,
+    findWord,
     delete: deleteUser,
     find, 
     update, 
     create,
     findUser,
-    findDeliverers
+    findDeliverers,
+    getAccountingId
 }

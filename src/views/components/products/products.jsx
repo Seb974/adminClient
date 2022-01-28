@@ -1,37 +1,41 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ProductsContext from '../../../contexts/ProductsContext'
 import ProductActions from '../../../services/ProductActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
+import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 
 const Products = (props) => {
 
-    const itemsPerPage = 15;
-    const fields = ['name', ' '];
+    const itemsPerPage = 3;
+    const fields = ['name', 'promo', ' '];
     const { currentUser } = useContext(AuthContext);
-    const { products, setProducts } = useContext(ProductsContext);
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => {
-        ProductActions.findAll()
-                .then(response => {
-                    console.log(response);
-                    setDisplayedProducts(response);
-                    setProducts(response);
-                })
-                .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedProducts(), []);
+    useEffect(() => getDisplayedProducts(), [search]);
+    useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
 
-    useEffect(() => {
-        setDisplayedProducts(products);
-    }, [products]);
+    const getDisplayedProducts = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedProducts(search, page) : await getProducts(page);
+        if (isDefined(response)) {
+            setDisplayedProducts(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getProducts = (page = 1) => page >=1 ? ProductActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedProducts = (word, page = 1) => ProductActions.findWord(word, page, itemsPerPage);
 
     const handleDelete = (id) => {
         const originalProducts = [...displayedProducts];
@@ -51,7 +55,6 @@ const Products = (props) => {
                 Liste des produits
                 <CCol col="6" sm="4" md="2" className="ml-auto">
                     <Link role="button" to="/components/products/new" block variant="outline" color="success">CRÉER</Link>
-                    {/* <CButton block variant="outline" color="success">CRÉER</CButton> */}
                 </CCol>
             </CCardHeader>
             <CCardBody>
@@ -60,10 +63,34 @@ const Products = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
-                  item => <td><Link to={ "/components/products/" + item.id }>{ item.name }</Link></td>
+                  item => <td>
+                            <Link to={ "/components/products/" + item.id }>
+                                { item.available ? <i className="fas fa-store mr-2 text-success"></i> : <i className="fas fa-store-slash mr-2 text-danger"></i> }
+                                { item.name }
+                            </Link>
+                          </td>
+                ,
+                'promo':
+                  item =>  <td>
+                              { isDefined(item.discount) && item.discount > 0 && isDefined(item.offerEnd) && new Date(item.offerEnd) >= new Date() ?
+                                  <CBadge color="warning">
+                                      <span style={{ fontSize: "1.2em"}}>{ item.discount + " %" }</span>
+                                  </CBadge>
+                                : <>-</>
+                              }
+                          </td>
                 ,
                 ' ':
                   item => (
@@ -80,5 +107,5 @@ const Products = (props) => {
       </CRow>
     );
 }
- 
+
 export default Products;

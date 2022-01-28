@@ -7,11 +7,12 @@ const brandInfo = getStyle('info') || '#20a8d8'
 const brandDanger = getStyle('danger') || '#f86c6b'
 
 const MainChartExample = attributes => {
-  const random = (min, max)=>{
-    return Math.floor(Math.random() * (max - min + 1) + min)
+  
+  const random = (min, max)=> {
+    return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
-  const defaultDatasets = (()=>{
+  const defaultDatasets = (()=> {
     let elements = 27
     const data1 = []
     const data2 = []

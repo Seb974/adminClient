@@ -1,0 +1,17 @@
+{
+    "products" : {
+        "product_model": "Kréma",
+        "product_barcode": "4591000000010",
+        "product_supplier": 0,
+        "product_price": "0.90",
+        "product_category": 0,
+        "product_stock_management": 0,
+        "product_supplier_reference": "",
+        "product_vat": 2,
+        "multiple": 1
+    },
+    "categories" : {
+		"category_name": "Category 5",
+		"category_ref_ext": ""
+	}
+}

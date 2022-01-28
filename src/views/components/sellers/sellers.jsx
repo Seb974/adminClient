@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import SellerActions from '../../../services/SellerActions'
+import SellerActions from '../../../services/SellerActions';
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
@@ -9,23 +9,41 @@ import Roles from 'src/config/Roles';
 
 const Sellers = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 3;
     const { currentUser } = useContext(AuthContext);
     const fields = ['name', 'turnover', 'totalToPay', ' '];
     const [sellers, setSellers] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
+
+    useEffect(() => getDisplayedSellers(), []);
+    useEffect(() => getDisplayedSellers(), [search]);
+    useEffect(() => getDisplayedSellers(currentPage), [currentPage]);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => {
-        SellerActions.findAll()
-            .then(response => {
-                console.log(response);
-                setSellers(response);
-            })
-            .catch(error => console.log(error));
-    }, []);
+    const getDisplayedSellers = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedSellers(search, page) : await getSellers(page);
+        if (isDefined(response)) {
+            setSellers(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getSellers = (page = 1) => page >=1 ? SellerActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedSellers = (word, page = 1) => SellerActions.findWord(word, page, itemsPerPage);  
+
+    // useEffect(() => {
+    //     SellerActions.findAll()
+    //         .then(response => {
+    //             console.log(response);
+    //             setSellers(response);
+    //         })
+    //         .catch(error => console.log(error));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalSellers = [...sellers];
@@ -56,7 +74,16 @@ const Sellers = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/sellers/" + item.id }>{ item.name }</Link></td>

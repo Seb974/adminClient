@@ -1,3 +1,5 @@
+import { getFloat } from "./utils";
+
 export const getFormattedVariations = (variations, defaultVariation) => {
     if (variations && variations.length > 0) {
         return variations.map((variation, index) => {
@@ -46,25 +48,39 @@ export const getTotalWeight = (components) => {
     return totalWeight;
 };
 
+export const getTotalContentWeight = (components) => {
+    let totalContentWeight = 0;
+    components.map((component) => {
+        let unitWeight = !isDefined(component.product.contentWeight) ? 1 : component.product.contentWeight;
+        totalContentWeight += unitWeight * component.quantity;
+    });
+    return totalContentWeight;
+};
+
 export const getProductToWrite = (product, type, categories, variations, adaptedComponents, components) => {
     const {image, stock, userGroups, catalogs, ...noImgProduct} = product;
     return {
         ...noImgProduct,
-        stock: type === "simple" ? stock : null,
+        stock: type === "simple" ? {...stock, name: noImgProduct.name, unit: type === "mixed" ? "U" : noImgProduct.unit} : null,
         userGroups: userGroups.map(userGroup => userGroup['@id']),
         catalogs: catalogs.map(catalog => catalog['@id']),
         productGroup: type === "mixed" ? null : product.productGroup,
-        tax: product.tax['@id'],
+        tax: typeof product.tax === 'string' ? product.tax : product.tax['@id'],
         seller: noImgProduct.seller['@id'],
+        suppliers: isDefinedAndNotVoid(product.suppliers) ? product.suppliers.map(s => s.value) : [],
+        discount: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? getFloat(product.discount) : null,
+        offerEnd: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? product.offerEnd : null,
         categories: product.categories.map(category => categories.find(element => element.id === category.value)['@id']),
         stockManaged: type === "mixed" ? null : noImgProduct.stockManaged,
         unit: type === "mixed" ? "U" : noImgProduct.unit,
         fullDescription: type === "mixed" ? createDescription(product, components) : noImgProduct.fullDescription,
         weight: type === "mixed" ? getTotalWeight(components) : product.unit === "Kg" ? 1 : noImgProduct.weight.length <= 0 ? 1 : parseFloat(noImgProduct.weight),
+        contentWeight: type === "mixed" ? getTotalContentWeight(components) : product.unit === "Kg" || noImgProduct.contentWeight.length <= 0 ? 1 : parseFloat(noImgProduct.contentWeight),
         prices: product.prices.map(price => {
             return ({...price, amount: parseFloat(price.amount), priceGroup: price.priceGroup['@id']})
         }),
         components: adaptedComponents,
+        costs: isDefinedAndNotVoid(product.costs) ? product.costs.map(c => ({...c, supplier: c.supplier['@id']})) : [],
         variations
     };
 };
@@ -88,6 +104,8 @@ export const getVariationToWrite = (variation, product) => {
                 name: size.name,
                 stock: {
                     ...size.stock,
+                    name: getProductName(product, variation, size),
+                    unit: product.unit,
                     quantity: size.stock !== undefined && size.stock !== null && size.stock.quantity ? size.stock.quantity : 0,
                     alert: parseFloat(product.stock.alert), 
                     security: parseFloat(product.stock.security)
@@ -97,23 +115,66 @@ export const getVariationToWrite = (variation, product) => {
     };
 };
 
+const getProductName = (product, variation, size) => {
+    const variationName = exists(variation, variation.name) ? " " + variation.name : "";
+    const sizeName = exists(size, size.name) ? " " + size.name : "";
+    return product.name + variationName + sizeName;
+};
+
+const exists = (entity, entityName) => {
+    return isDefined(entity) && isDefined(entityName) && entityName.length > 0 && entityName !== " ";
+};
+
 export const defineType = (product) => {
     return product.isMixed ? "mixed" : product.variations && product.variations.length > 0 ? "with-variations" : "simple";
 };
 
 export const formatProduct = (product, defaultStock) => {
-    const {prices, categories, stock, variations} = product;
+    const {prices, categories, stock, variations, discount, offerEnd} = product;
     const basePrice = prices !== null && prices !== undefined && prices.length > 0 ? prices[0].amount : "";
     const formattedProduct = {
         ...product, 
         userGroups: isDefinedAndNotVoid(product.userGroups) ? isDefined(product.userGroups[0].label) ? product.userGroups : product.userGroups.map(group => ({value: group})) : [],
         catalogs: isDefinedAndNotVoid(product.catalogs) ? isDefined(product.catalogs[0].label) ? product.catalogs : product.catalogs.map(catalog => ({...catalog, value: catalog.id, label: catalog.name, isFixed: false})) : [],
+        suppliers: isDefinedAndNotVoid(product.suppliers) ? isDefined(product.suppliers[0].label) ? product.suppliers : product.suppliers.map(supplier => ({...supplier, value: supplier['@id'], label: supplier.name, isFixed: false})) : [],
         categories: categories.map(category => ({value: category.id, label: category.name, isFixed: false})),
         uniquePrice: isDefinedAndNotVoid(prices) ? prices.every(price => price.amount === basePrice) : true,
-        stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock
+        stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock,
+        discount: isDefined(discount) ? discount : "",
+        offerEnd: isDefined(offerEnd) ? new Date(offerEnd) : new Date()
     };
     return formattedProduct;
 };
+
+export const getProductGroups = () => {
+    return [
+        {value: "J + 1", label: "DLC à J + 1", isFixed: false},
+        {value: "J + 3", label: "DLC à J + 3", isFixed: false},
+        {value: "J + 6", label: "DLC à J + 6", isFixed: false},
+        {value: "J + 10", label: "DLC à J + 10", isFixed: false},
+    ];
+}
+
+export const getWritableProduct = product => {
+    return {
+        ...product,
+        catalogs: isDefinedAndNotVoid(product.catalogs) ? product.catalogs.map(c => c['@id']) : [],
+        categories: isDefinedAndNotVoid(product.categories) ? product.categories.map(c => c['@id']) : [],
+        components: isDefinedAndNotVoid(product.components) ? product.components.map(c => c['@id']) : [],
+        costs: isDefinedAndNotVoid(product.costs) ? product.costs.map(c => c['@id']) : [],
+        prices: isDefinedAndNotVoid(product.prices) ? product.prices.map(p => p['@id']) : [],
+        suppliers: isDefinedAndNotVoid(product.suppliers) ? product.suppliers.map(s => s['@id']) : [],
+        userGroups: isDefinedAndNotVoid(product.userGroups) ? product.userGroups.map(u => u['@id']) : [],
+        variations: isDefinedAndNotVoid(product.variations) ? product.variations.map(v => v['@id']) : [],
+        image: isDefined(product.image) ? product.image['@id'] : null,
+        seller: isDefined(product.seller) ? product.seller['@id'] : null,
+        stock: isDefined(product.stock) ? product.stock['@id'] : null,
+        tax: isDefined(product.tax) ? product.tax['@id'] : null,
+
+
+
+    }
+}
 
 const isDefined = variable => variable !== undefined && variable !== null;
 const isDefinedAndNotVoid = variable => Array.isArray(variable) ? isDefined(variable) && variable.length > 0 : isDefined(variable);

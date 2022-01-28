@@ -3,18 +3,37 @@ import DayOffActions from '../../../services/DayOffActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const DaysOff = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 5;
     const fields = ['name', 'date', ' '];
     const [daysOff, setDaysOff] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        DayOffActions.findAll()
-            .then(response => setDaysOff(response))
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedDays(), []);
+    useEffect(() => getDisplayedDays(), [search]);
+    useEffect(() => getDisplayedDays(currentPage), [currentPage]);
+
+    const getDisplayedDays = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedDays(search, page) : await getDays(page);
+        if (isDefined(response)) {
+            setDaysOff(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getDays = (page = 1) => page >=1 ? DayOffActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedDays = (word, page = 1) => DayOffActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     DayOffActions.findAll()
+    //         .then(response => setDaysOff(response))
+    //         .catch(error => console.log(error.response));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalDaysOff = [...daysOff];
@@ -42,7 +61,16 @@ const DaysOff = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/days_off/" + item.id }>{ item.name }</Link></td>

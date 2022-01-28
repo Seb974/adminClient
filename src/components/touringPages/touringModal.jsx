@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { CButton, CCol, CRow } from '@coreui/react';
 import ItemDetails from './itemDetails';
@@ -13,7 +13,6 @@ const TouringModal = ({ order, touring, tourings, setTourings }) => {
 
     const handleSubmit = () => {
         const orderToWrite = getDeliveredOrder(viewedOrder);
-        console.log(orderToWrite);
         OrderActions
             .update(order.id, orderToWrite)
             .then(response => {

@@ -32,7 +32,7 @@ const TheEmailApp = () => {
             />
             <Route 
               exact 
-              path="/apps/email/message" 
+              path="/apps/email/messages/:id" 
               name="Message" 
               render={props => <CFade><Message {...props}/></CFade>} 
             />

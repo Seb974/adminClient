@@ -9,8 +9,8 @@ const Catalog = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const [editing, setEditing] = useState(false);
-    const defaultErrors = { name: "", code: "", latitude: "", longitude: "", needsParcel: "", isDefault: "", minLat: "", maxLat: "", minLng: "", maxLng: "", zoom: "" };
-    const [catalog, setCatalog] = useState({ name: "", code: "", latitude: "", longitude: "", needsParcel: true, isDefault: false, minLat: "", maxLat: "", minLng: "", maxLng: "", zoom: "" });
+    const defaultErrors = { name: "", code: "", latitude: "", longitude: "", needsParcel: "", isDefault: "", minLat: "", maxLat: "", minLng: "", maxLng: "", zoom: "" , isActive: false};
+    const [catalog, setCatalog] = useState({ name: "", code: "", latitude: "", longitude: "", needsParcel: true, isDefault: false, minLat: "", maxLat: "", minLng: "", maxLng: "", zoom: "", isActive: "" });
     const [errors, setErrors] = useState(defaultErrors);
     const [enabled, setEnabled] = useState(false);
 
@@ -239,6 +239,16 @@ const Catalog = ({ match, history }) => {
                                             <CSwitch name="isDefault" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ catalog.isDefault } onChange={ handleCheckBoxes } disabled={ !enabled }/>
                                         </CCol>
                                         <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Catalogue par défaut</CCol>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" md="6" className="mt-4">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="isActive" className="mr-1" color="danger" shape="pill" variant="opposite" checked={ catalog.isActive } onChange={ handleCheckBoxes }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Activé</CCol>
                                     </CFormGroup>
                                 </CCol>
                             </CRow>

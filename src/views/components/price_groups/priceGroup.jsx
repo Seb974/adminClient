@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import GroupActions from 'src/services/GroupActions';
 import PriceGroupActions from 'src/services/PriceGroupActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
+import { getFloat, isDefined } from 'src/helpers/utils';
 
 const PriceGroup = ({ match, history }) => {
 
     const { id = "new" } = match.params;
+    const defaultError = { name: "", rate: "", userGroup: "" };
     const [editing, setEditing] = useState(false);
     const [groups, setGroups] = useState([]);
-    const [priceGroup, setPriceGroup] = useState({ name: "", userGroup: [] });
-    const [errors, setErrors] = useState({ name: "", userGroup: "" });
+    const [priceGroup, setPriceGroup] = useState({ name: "", rate: "", userGroup: [] });
+    const [errors, setErrors] = useState(defaultError);
 
     useEffect(() => {
         fetchGroups();
@@ -29,7 +31,6 @@ const PriceGroup = ({ match, history }) => {
             setEditing(true);
             PriceGroupActions.find(id)
                 .then( response => {
-                    console.log(response);
                     const userGroup = response.userGroup === null || response.userGroup === undefined ? [] :
                                       response.userGroup.map(group => ({...group, isFixed: false}));
                     setPriceGroup({...response, userGroup});
@@ -48,30 +49,36 @@ const PriceGroup = ({ match, history }) => {
             .then(response => {
                 const filteredGroups = response.filter(group => group.hasShopAccess && (group.priceGroup === null || group.priceGroup === undefined));
                 setGroups(filteredGroups.map(group => ({...group, isFixed: false})));
-            });
+            })
+            .catch(error => console.log(error));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const { userGroup } = priceGroup;
-        const formattedPriceGroup = {...priceGroup, userGroup: userGroup.map(group => group['@id'])};
+        const formattedPriceGroup = {...priceGroup, rate: getFloat(priceGroup.rate), userGroup: userGroup.map(group => group['@id'])};
         const request = !editing ? PriceGroupActions.create(formattedPriceGroup) : PriceGroupActions.update(id, formattedPriceGroup);
 
         request.then(response => {
-                    setErrors({name: ""});
+                    setErrors(defaultError);
                     //TODO : Flash notification de succès
                     history.replace("/components/price_groups");
                 })
-               .catch( ({ response }) => {
-                    const { violations } = response.data;
-                    if (violations) {
-                        const apiErrors = {};
-                        violations.forEach(({propertyPath, message}) => {
-                            apiErrors[propertyPath] = message;
-                        });
-                        setErrors(apiErrors);
+               .catch( error => {
+                    const { response } = error;
+                    if (!isDefined(response)) {
+                        const { violations } = response.data;
+                        if (violations) {
+                            const apiErrors = {};
+                            violations.forEach(({propertyPath, message}) => {
+                                apiErrors[propertyPath] = message;
+                            });
+                            setErrors(apiErrors);
+                        }
+                        //TODO : Flash notification d'erreur
+                    } else {
+                        console.log(error)
                     }
-                    //TODO : Flash notification d'erreur
                });
     }
 
@@ -85,7 +92,7 @@ const PriceGroup = ({ match, history }) => {
                     <CCardBody>
                         <CForm onSubmit={ handleSubmit }>
                             <CRow>
-                                <CCol xs="12" sm="12">
+                                <CCol xs="12" sm="6">
                                     <CFormGroup>
                                         <CLabel htmlFor="name">Nom</CLabel>
                                         <CInput
@@ -96,6 +103,25 @@ const PriceGroup = ({ match, history }) => {
                                             placeholder="Nom de la catégorie"
                                             invalid={ errors.name.length > 0 } 
                                         />
+                                        <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" sm="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="rate">Marge idéale</CLabel>
+                                        <CInputGroup>
+                                            <CInput
+                                                id="rate"
+                                                name="rate"
+                                                value={ priceGroup.rate }
+                                                onChange={ handleChange }
+                                                placeholder="% de marge"
+                                                invalid={ errors.rate.length > 0 } 
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText>%</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
                                         <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>

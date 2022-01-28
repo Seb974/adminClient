@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import SellerActions from 'src/services/SellerActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getFloat, getInt, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getDateFrom, getFloat, getHourFrom, getInt, isDefinedAndNotVoid } from 'src/helpers/utils';
 import '../../../assets/css/searchBar.css';
 import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
+import Image from 'src/components/forms/image';
 
 const Seller = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const { currentUser } = useContext(AuthContext);
     const [editing, setEditing] = useState(false);
-    const defaultSeller = {name: "", delay: "", ownerRate: ""};
-    const [seller, setSeller] = useState({...defaultSeller });
+    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: ""};
+    const [seller, setSeller] = useState({...defaultSeller, needsRecovery: false, delayInDays: true, image: null, isActive: true });
     const [errors, setErrors] = useState(defaultSeller);
     const [users, setUsers] = useState([]);
     const [isAdmin, setIsAdmin] = useState([]);
-
     
     useEffect(() => {
         fetchSeller(id);
@@ -36,6 +36,7 @@ const Seller = ({ match, history }) => {
             setEditing(true);
             SellerActions.find(id)
                 .then(response => {
+                    console.log(response);
                     setSeller(response);
                     if (isDefinedAndNotVoid(response.users))
                         setUsers(response.users);
@@ -48,28 +49,56 @@ const Seller = ({ match, history }) => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleRecovery = ({ currentTarget }) => setSeller({...seller, needsRecovery: !seller.needsRecovery});
+    const handleStatus = ({ currentTarget }) => setSeller({...seller, isActive: !seller.isActive});
+    const handleDelayType = ({ currentTarget }) => setSeller({...seller, delayInDays: !seller.delayInDays});
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const sellerToWrite = getSellerToWrite();
-        const request = !editing ? SellerActions.create(sellerToWrite) : SellerActions.update(id, sellerToWrite);
-        request.then(response => {
-                    setErrors(defaultSeller);
-                    //TODO : Flash notification de succès
-                    history.replace("/components/sellers");
-                })
-               .catch( ({ response }) => {
-                   if (response) {
-                       const { violations } = response.data;
-                       if (violations) {
-                           const apiErrors = {};
-                           violations.forEach(({propertyPath, message}) => {
-                               apiErrors[propertyPath] = message;
-                           });
-                           setErrors(apiErrors);
+        if (!seller.needsRecovery || (seller.needsRecovery && delaysConsistency())) {
+            const sellerToWrite = await getSellerWithImage();
+            const request = !editing ? SellerActions.create(sellerToWrite) : SellerActions.update(id, sellerToWrite);
+            request.then(response => {
+                        setErrors(defaultSeller);
+                        //TODO : Flash notification de succès
+                        history.replace("/components/sellers");
+                    })
+                   .catch( ({ response }) => {
+                       if (response) {
+                           const { violations } = response.data;
+                           if (violations) {
+                               const apiErrors = {};
+                               violations.forEach(({propertyPath, message}) => {
+                                   apiErrors[propertyPath] = message;
+                               });
+                               setErrors(apiErrors);
+                           }
+                           //TODO : Flash notification d'erreur
                        }
-                       //TODO : Flash notification d'erreur
-                   }
-               });
+                   });
+        } else {
+            setErrors({...errors, delay: "Le délai de préparation ne peut être inférieur au délai de récupération"});
+        }
+    };
+
+    const delaysConsistency = () => {
+        const today = new Date();
+        const preparationDelay = getDelayFromDays(today, seller.delay);
+        const recovery = seller.delayInDays ? 
+            getDelayFromDays(today, parseInt(seller.recoveryDelay)) :
+            getDelayFromMinutes(today, parseInt(seller.recoveryDelay));
+        return recovery.getTime() <= preparationDelay.getTime();
+    };
+
+    const getDelayFromDays = (today, days) => {
+        return new Date(today.getFullYear(), today.getMonth(), (today.getDate() + parseInt(days)), 9, 0, 0);
+    };
+
+    const getDelayFromMinutes = (today, minutes) => {
+        const days = Math.floor(minutes / 60) >= 24 ? Math.floor( Math.floor(minutes / 60) / 24) : 0;
+        const hours = days > 0 ? Math.floor((minutes - days * 24 * 60)/ 60) : Math.floor(minutes / 60);
+        const trueMinutes = minutes % 60;
+        return new Date(today.getFullYear(), today.getMonth(), (today.getDate() + days), (9 + hours), trueMinutes, 0);
     };
 
     const getSellerToWrite = () => {
@@ -77,8 +106,23 @@ const Seller = ({ match, history }) => {
             ...seller, 
             ownerRate: getFloat(seller.ownerRate),
             delay: getInt(seller.delay),
-            users: users.map(user => user['@id'])
+            recoveryDelay: seller.needsRecovery ? getInt(seller.recoveryDelay) : null,
+            users: isDefinedAndNotVoid(users) ? users.map(user => user['@id']) : []
         };
+    };
+
+    const getSellerWithImage = async () => {
+        let sellerWithImage = getSellerToWrite();
+        if (seller.image) {
+             if (!seller.image.filePath) {
+                const image = await SellerActions.createImage(seller.image);
+                console.log(image);
+                sellerWithImage = {...sellerWithImage, image: image['@id']};
+            } else {
+                sellerWithImage = {...sellerWithImage, image: sellerWithImage.image['@id']};
+            }
+        }
+        return sellerWithImage;
     };
 
     return (
@@ -91,7 +135,7 @@ const Seller = ({ match, history }) => {
                     <CCardBody>
                         <CForm onSubmit={ handleSubmit }>
                             <CRow>
-                                <CCol xs="12" sm="12" md="12">
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
                                     <CFormGroup>
                                         <CLabel htmlFor="name">Nom</CLabel>
                                         <CInput
@@ -105,7 +149,61 @@ const Seller = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
+                                <CCol xs="12" sm="12" md="6">
+                                    <Image entity={ seller } setEntity={ setSeller } isLandscape={ true }/>
+                                </CCol>
                             </CRow>
+                            <CRow>
+                                <CCol xs="12" md="6" className="my-4">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="isActive" className="mr-1" color="danger" shape="pill" variant="opposite" checked={ seller.isActive } onChange={ handleStatus }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Actif</CCol>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" md="6" className="my-4">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="needsRecovery" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.needsRecovery } onChange={ handleRecovery }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Récupération des produits</CCol>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+
+                            { seller.needsRecovery &&
+                                <CRow className="mt-3">
+                                    <CCol xs="12" md="6" className="mt-4">
+                                        <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                            <CCol xs="3" sm="2" md="3">
+                                                <CSwitch name="delayInDays" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.delayInDays } onChange={ handleDelayType }/>
+                                            </CCol>
+                                            <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Décalage en jour</CCol>
+                                        </CFormGroup>
+                                    </CCol>
+                                    <CCol xs="12" md="6">
+                                        <CFormGroup>
+                                            <CLabel htmlFor="name">Délais entre récupération et livraison</CLabel>
+                                            <CInputGroup>
+                                                <CInput
+                                                    id="recoveryDelay"
+                                                    name="recoveryDelay"
+                                                    type="number"
+                                                    value={ seller.recoveryDelay }
+                                                    onChange={ handleChange }
+                                                    placeholder=" "
+                                                    invalid={ errors.recoveryDelay.length > 0 } 
+                                                />
+                                                <CInputGroupAppend>
+                                                    <CInputGroupText>{ seller.delayInDays ? "Jour(s)" : "Minute(s)" }</CInputGroupText>
+                                                </CInputGroupAppend>
+                                            </CInputGroup>
+                                            <CInvalidFeedback>{ errors.recoveryDelay }</CInvalidFeedback>
+                                        </CFormGroup>
+                                    </CCol>
+                                </CRow>
+                        }
 
                             <CRow className="mt-4">
                                 { isAdmin && 
@@ -146,8 +244,8 @@ const Seller = ({ match, history }) => {
                                             <CInputGroupAppend>
                                                 <CInputGroupText>Jour(s)</CInputGroupText>
                                             </CInputGroupAppend>
+                                            <CInvalidFeedback>{ errors.delay }</CInvalidFeedback>
                                         </CInputGroup>
-                                        <CInvalidFeedback>{ errors.delay }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
                             </CRow>

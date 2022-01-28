@@ -129,7 +129,8 @@ const UserPage = ({ history, match }) => {
                             <CRow>
                                 <h4>Adresse</h4>
                             </CRow>
-                            <AddressPanel informations={ informations } onInformationsChange={ onInformationsChange } onPositionChange={ onUpdatePosition } errors={ errors }/>
+                            {/* <AddressPanel informations={ informations } onInformationsChange={ onInformationsChange } onPositionChange={ onUpdatePosition } errors={ errors }/> */}
+                            <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
                             <CRow>
                                 <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
                             </CRow>

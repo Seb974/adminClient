@@ -3,16 +3,18 @@ import { CBadge, CDropdown, CDropdownItem, CDropdownMenu, CDropdownToggle, CImg 
 import CIcon from '@coreui/icons-react'
 import AuthActions from 'src/services/AuthActions'
 import AuthContext from 'src/contexts/AuthContext'
+import { isDefined } from 'src/helpers/utils'
 
 const TheHeaderDropdown = () => {
-  const { isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser } = useContext(AuthContext);
+  const { isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, setSupervisor, setSeller } = useContext(AuthContext);
 
   const handleLogout = () => {
     AuthActions.logout()
                .then(response => {
                    setIsAuthenticated(false);
                    setCurrentUser(AuthActions.getCurrentUser());
-                  //  history.push("/");
+                   setSupervisor(null);
+                   setSeller(null);
                });
   }
 
@@ -38,7 +40,8 @@ const TheHeaderDropdown = () => {
           color="light"
           className="text-center"
         >
-          <strong>Account</strong>
+          <strong>{ currentUser.name || "Account" }</strong><br/>
+          { isDefined(currentUser.metas) && <small>{ currentUser.metas.zipcode }</small> }
         </CDropdownItem>
         <CDropdownItem>
           <CIcon name="cil-bell" className="mfe-2" /> 

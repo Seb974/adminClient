@@ -1,14 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { CCol, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CTextarea } from '@coreui/react';
+import { CCol, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSelect, CTextarea } from '@coreui/react';
 import Select from 'src/components/forms/Select';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
-import Image from './image';
+import Image from '../forms/image';
 import GroupActions from 'src/services/GroupActions';
 import CatalogActions from 'src/services/CatalogActions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import SellerActions from 'src/services/SellerActions';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
+import Suppliers from './Suppliers';
 
 const Characteristics = ({ product, categories, type, setProduct, errors, history}) => {
 
@@ -114,7 +115,7 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                     </CFormGroup>
                 </CCol>
             </CRow>
-            <Image product={product} setProduct={setProduct} />
+            <Image entity={ product } setEntity={ setProduct } isLandscape={ false } sizes="600 x 800"/>
             <CRow className="mb-3">
                 <CCol xs="12" sm="12">
                     <Select name="seller" label="Vendeur" value={ isDefined(product.seller) ? product.seller.id : 0 } error={ errors.seller } onChange={ handleSellerChange } required={ true }>
@@ -122,9 +123,19 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                     </Select>
                 </CCol>
             </CRow>
+            <Suppliers product={ product } setProduct={ setProduct } />
             <CRow className="mb-3">
-                <CCol xs="12" sm="12">
+                <CCol xs="12" sm="6">
                     <SelectMultiple name="categories" label="Catégories" value={ product.categories } error={ errors.categories } onChange={ handleCategoriesChange } data={ categories.map(category => ({value: category.id, label: category.name, isFixed: false})) }/>
+                </CCol>
+                <CCol xs="12" sm="6">
+                    <CLabel htmlFor="select">Durée de vie</CLabel>
+                    <CSelect custom name="productGroup" id="productGroup" value={ product.productGroup } onChange={ handleChange }>
+                        <option value="J + 1">J + 1</option>
+                        <option value="J + 3">J + 3</option>
+                        <option value="J + 6">J + 6</option>
+                        <option value="J + 10">J + 10</option>
+                    </CSelect>
                 </CCol>
             </CRow>
             { isAdmin &&

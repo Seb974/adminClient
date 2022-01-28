@@ -5,14 +5,17 @@ import ProductsContext from 'src/contexts/ProductsContext';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Select from '../forms/Select';
+import Roles from 'src/config/Roles';
 
 const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
 
+    const [isAdmin, setIsAdmin] = useState(false);
     const { products } = useContext(ProductsContext);
     const [variants, setVariants] = useState([]);
-    const { settings } = useContext(AuthContext);
+    const { settings, currentUser } = useContext(AuthContext);
 
     useEffect(() => {
+        setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         getPrice();
         getUnit();
         if (isDefined(item.product.variations))
@@ -94,6 +97,7 @@ const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
                             name={ item.count }
                             value={ item.price }
                             onChange={ onChange }
+                            disabled={ !isAdmin }
                         />
                         <CInputGroupAppend>
                             <CInputGroupText>€</CInputGroupText>

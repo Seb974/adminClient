@@ -15,7 +15,7 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
     useEffect(() => getDisplayedProduct(), [products]);
 
     const getDisplayedProduct = () => {
-        if (!isDefined(displayedProduct.unit) && products.length > 0) {
+        if ( products.length > 0) {
             const productToDisplay = products.find(product => product.id === item.product.id);
             setDisplayedProduct(productToDisplay);
             if (isDefined(productToDisplay) && isDefined(productToDisplay.variations))
@@ -88,7 +88,7 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
                         <CInput
                             id="orderedQty"
                             type="number"
-                            name={ item.count }
+                            name={ item.id }
                             value={ item.orderedQty }
                             onChange={ onChange }
                             disabled={ true }
@@ -106,7 +106,7 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
                         <CInput
                             id="preparedQty"
                             type="number"
-                            name={ item.count }
+                            name={ item.id }
                             value={ item.preparedQty }
                             onChange={ onChange }
                             disabled={ isDelivery }

@@ -2,8 +2,10 @@ import React from 'react';
 import { CButton, CCol, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import Item from './Item';
+import { isDefined } from 'src/helpers/utils';
+import Packages from './Packages';
 
-const Items = ({ items, setItems, defaultItem, editing }) => {
+const Items = ({ items, setItems, defaultItem, editing, packages = null }) => {
 
     const handleItemAdd = () => {
         setItems([
@@ -54,6 +56,7 @@ const Items = ({ items, setItems, defaultItem, editing }) => {
                 <CCol md="1">{""}</CCol>
                 <CCol md="10"><hr/></CCol>
             </CRow>
+            { isDefined(packages) && <Packages packages={ packages } /> }
             <CRow className="mt-4 d-flex justify-content-start ml-1">
                 <CButton size="sm" color="warning" onClick={ handleItemAdd }><CIcon name="cil-plus"/> Ajouter un produit</CButton>
             </CRow>

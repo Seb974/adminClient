@@ -1,0 +1,7 @@
+.logout-button {
+    color: #2eb85c;
+}
+
+.logout-button:hover, .logout-button:visited, .logout-button:active, .logout-button:focus {
+    color: #e55353;
+}

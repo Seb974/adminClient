@@ -13,7 +13,7 @@ const Group = ({ match, history }) => {
     const today = new Date();
     const { id = "new" } = match.params;
     const [editing, setEditing] = useState(false);
-    const [group, setGroup] = useState({ label: "", hasAdminAccess: false, hasShopAccess: true, subjectToTaxes: true, dayInterval: 0, onlinePayment: true, hourLimit: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 0)});
+    const [group, setGroup] = useState({ label: "", hasAdminAccess: false, hasShopAccess: true, subjectToTaxes: true, dayInterval: 0, onlinePayment: true, hourLimit: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 0), soldOutNotification: false});
     const [errors, setErrors] = useState({label: "", hasAdminAccess: "", hasShopAccess: "", subjectToTaxes: "", onlinePayment: "", dayInterval: "", hourLimit: ""});
 
     useEffect(() => fetchGroup(id), []);
@@ -34,7 +34,8 @@ const Group = ({ match, history }) => {
                         subjectToTaxes: isDefined(response.subjectToTaxes) ? response.subjectToTaxes : group.subjectToTaxes,
                         onlinePayment: isDefined(response.onlinePayment) ? response.onlinePayment : group.onlinePayment,
                         dayInterval: isDefined(response.dayInterval) ? response.dayInterval : group.dayInterval,
-                        hourLimit: isDefined(response.hourLimit) ? new Date(response.hourLimit) : group.hourLimit
+                        hourLimit: isDefined(response.hourLimit) ? new Date(response.hourLimit) : group.hourLimit,
+                        soldOutNotification: isDefined(response.soldOutNotification) ? response.soldOutNotification : group.soldOutNotification
                     };
                     setGroup(newGroup);
                 })
@@ -131,7 +132,7 @@ const Group = ({ match, history }) => {
                                 <>
                                     <hr className="mx-3 my-4"/>
                                     <CRow className="mb-5 ml-1">
-                                        <CCol xs="12" sm="12" md="6" className="d-flex align-items-center">
+                                        <CCol xs="12" sm="12" md="4" className="d-flex align-items-center">
                                             <CFormGroup row className="mb-0 mt-4 d-flex align-items-center">
                                                 <CCol xs="3" sm="2" md="3">
                                                     <CSwitch name="subjectToTaxes" color="dark" shape="pill" variant="opposite" checked={ group.subjectToTaxes } onChange={ handleCheckBoxes }/>
@@ -141,13 +142,23 @@ const Group = ({ match, history }) => {
                                                 </CCol>
                                             </CFormGroup>
                                         </CCol>
-                                        <CCol xs="12" sm="12" md="6" className="d-flex align-items-center">
+                                        <CCol xs="12" sm="12" md="4" className="d-flex align-items-center">
                                             <CFormGroup row className="mb-0 mt-4 d-flex align-items-center">
                                                 <CCol xs="3" sm="2" md="3">
                                                     <CSwitch name="onlinePayment" color="dark" shape="pill" variant="opposite" checked={ group.onlinePayment } onChange={ handleCheckBoxes }/>
                                                 </CCol>
                                                 <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
                                                     Paiement sur site
+                                                </CCol>
+                                            </CFormGroup>
+                                        </CCol>
+                                        <CCol xs="12" sm="12" md="4" className="d-flex align-items-center">
+                                            <CFormGroup row className="mb-0 mt-4 d-flex align-items-center">
+                                                <CCol xs="3" sm="2" md="3">
+                                                    <CSwitch name="soldOutNotification" color="dark" shape="pill" variant="opposite" checked={ group.soldOutNotification } onChange={ handleCheckBoxes }/>
+                                                </CCol>
+                                                <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                                    Notification de rupture
                                                 </CCol>
                                             </CFormGroup>
                                         </CCol>

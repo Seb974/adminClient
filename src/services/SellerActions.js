@@ -6,6 +6,20 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.name > b.name) ? 1 : -1));
 }
 
+function findAllPaginated(page = 1, items = 30) {
+    return api
+        .get(`/api/sellers?&order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
+function findWord(word, page = 1, items = 30) {
+    return api
+        .get(`/api/sellers?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data)
+        .catch(error => []);
+}
+
 function deleteSeller(id) {
     return api.delete('/api/sellers/' + id);
 }
@@ -24,10 +38,21 @@ function create(seller) {
     return api.post('/api/sellers', {...seller});
 }
 
+function createImage(image) {
+    let formData = new FormData();
+    formData.append('file', image);
+    formData.append('instance', "SELLER-LOGO");
+    return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
+              .then(response => response.data);
+}
+
 export default {
     findAll,
+    findAllPaginated,
+    findWord,
     delete: deleteSeller,
     find,
     update,
-    create
+    create,
+    createImage
 }

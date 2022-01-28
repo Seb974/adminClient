@@ -1,3 +1,4 @@
+import Roles from "src/config/Roles";
 import { isInSelectedCountry } from "./map";
 import { getFloat, isDefined, isDefinedAndNotVoid } from "./utils";
 
@@ -8,6 +9,37 @@ export const shop = {
     address: "21 chemin Jean Cadet, 97410, Saint-Pierre, La Réunion",
     zipcode: "97410",
     city: "Saint-Pierre"
+};
+
+export const cardStyle = {
+    style: {
+        base: {
+            fontSize: "16px",
+            color: "#424770",
+            letterSpacing: "0.025em",
+            fontFamily: "Source Code Pro, monospace",
+            "::placeholder": {
+            color: "#aab7c4"
+            }
+        },
+        invalid: {
+            color: "#9e2146"
+        }
+    }
+};
+
+export const updateError = "Votre paiement a bien été reçu.\n" +
+    "Toutefois, une erreur est survenue lors du changement de statut des factures acquittées.\n" +
+    "Nous vous invitons à contacter nos services sur les horaires d'ouverture, " +
+    "afin que nous puissions mettre à jour les factures concernées.";
+
+export const paymentConnexionError = "Une erreur est survenue lors de la connexion à la plateforme de paiement. " +
+                                     "Vérifier l'état de votre connexion internet et rafraichissez la page pour réessayer.";
+
+export const getShop = platform => {
+    const { id, name, metas } = platform;
+    const { position, address, zipcode, city } = metas;
+    return { id: -id, coordinates: position, name, address, zipcode, city };
 };
 
 export const getOrderToWrite = (order, user, informations, productCart, date, objectDiscount, selectedCatalog, condition, settings) => {
@@ -25,42 +57,66 @@ export const getOrderToWrite = (order, user, informations, productCart, date, ob
             variation: isDefined(item.variation) ? item.variation['@id'] : null,
             size: isDefined(item.size) ? item.size['@id'] : null,
             orderedQty: getFloat(item.orderedQty),
+            preparedQty: isDefined(item.preparedQty) ? !isNaN(getFloat(item.preparedQty)) ? getFloat(item.preparedQty) : null : null,
+            deliveredQty: isDefined(item.deliveredQty) ? !isNaN(getFloat(item.deliveredQty)) ?getFloat(item.deliveredQty) : null : null,
             price: getFloat(item.price),
             unit: item.unit,
-            taxRate: !settings.subjectToTaxes ? 0 : item.product.tax.catalogTaxes.find(catalogTax => catalogTax.catalog.id === selectedCatalog.id).percent,
+            taxRate: item.product.tax.catalogTaxes.find(catalogTax => catalogTax.catalog.id === selectedCatalog.id).percent,   // !settings.subjectToTaxes ? 0 : 
             isAdjourned: false,
             isPrepared: false
         })),
         isRemains: false,
-        status: !isDefined(order.status) ? "WAITING" : order.status
+        status: !isDefined(order.status) ? "WAITING" : order.status,
+        packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        preparator: isDefined(order.preparator) ? (typeof order.preparator === 'object' ? isDefined(order.preparator['@id']) ? order.preparator['@id'] : null : typeof order.preparator === 'string' ? order.preparator : null) : null,
     };
 };
 
-export const getPreparedOrder = order => {
-    const { user, metas, catalog, appliedCondition, promotion, items } = order;
+export const setOrderStatus = (order, status) => {
+    const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
     return {
         ...order,
+        status,
         user: isDefined(user) ? (typeof user === 'object' ? user['@id'] : user) : null,
         metas: isDefined(metas) ? (typeof metas === 'object' ? metas['@id'] : metas) : null,
         catalog: isDefined(catalog) ? (typeof catalog === 'object' ? catalog['@id'] : catalog) : null,
         appliedCondition: isDefined(appliedCondition) ? (typeof appliedCondition === 'object' ? appliedCondition['@id'] : appliedCondition) : null,
         promotion: isDefined(promotion) ? (typeof promotion === 'object' ? promotion['@id'] : promotion) : null,
-        items: items.map(item => ({
-            ...item, 
-            product: isDefined(item.product) ? (typeof item.product === 'object' ? item.product['@id'] : item.product) : null,
-            variation: isDefined(item.variation) ? (typeof item.variation === 'object' ? item.variation['@id'] : item.variation) : null,
-            size: isDefined(item.size) ? (typeof item.size === 'object' ? item.size['@id'] : item.size) : null,
-            preparedQty: getFloat(item.preparedQty),
-            isAdjourned: item.isAdjourned,
-            isPrepared: true
-        })),
-        isRemains: false,
-        status: "PREPARED"
+        items: items.map(item => item['@id']),
+        packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        preparator: isDefined(preparator) ? (typeof preparator === 'object' ? isDefined(preparator['@id']) ? preparator['@id'] : null : typeof preparator === 'string' ? preparator : null) : null,
+    }
+};
+
+export const getPreparedOrder = (order, currentUser) => {
+    const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
+    return {
+        ...order,
+        user: isDefined(user) ? (typeof user === 'object' ? user['@id'] : user) : null,
+        metas: isDefined(metas) ? (typeof metas === 'object' ? metas['@id'] : metas) : null,
+        catalog: isDefined(catalog) ? (typeof catalog === 'object' ? catalog['@id'] : catalog) : null,
+        preparator: isDefined(preparator) ? (typeof preparator === 'object' ? isDefined(preparator['@id']) ? preparator['@id'] : null : typeof preparator === 'string' ? preparator : null) : null,
+        appliedCondition: isDefined(appliedCondition) ? (typeof appliedCondition === 'object' ? appliedCondition['@id'] : appliedCondition) : null,
+        promotion: isDefined(promotion) ? (typeof promotion === 'object' ? promotion['@id'] : promotion) : null,
+        items: items.map(item => {
+            return Roles.hasAdminPrivileges(currentUser) || Roles.isPicker(currentUser) || isDefined(item.product) && isDefined(item.product.seller) && item.product.seller.users.find(user => user.id === currentUser.id) !== undefined ? 
+                {...item, 
+                    product: isDefined(item.product) ? (typeof item.product === 'string' ? item.product : item.product['@id']) : null,
+                    variation: isDefined(item.variation) ? (typeof item.variation === 'string' ? item.variation : item.variation['@id']) : null,
+                    size: isDefined(item.size) ? (typeof item.size === 'string' ? item.size : item.size['@id']) : null,
+                    preparedQty: isDefined(item.preparedQty) ? typeof item.preparedQty === 'string' && item.preparedQty.length > 0 ? getFloat(item.preparedQty) : item.preparedQty: null,
+                    isAdjourned: item.isAdjourned,
+                }
+                :
+                item['@id']
+        }),
+        packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        isRemains: false
     };
 }
 
 export const getDeliveredOrder = order => {
-    const { user, metas, catalog, appliedCondition, promotion, items } = order;
+    const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
     return {
         ...order,
         user: isDefined(user) ? (typeof user === 'object' ? user['@id'] : user) : null,
@@ -75,7 +131,9 @@ export const getDeliveredOrder = order => {
             size: isDefined(item.size) ? (typeof item.size === 'object' ? item.size['@id'] : item.size) : null,
             deliveredQty: getFloat(item.deliveredQty),
         })),
-        status: "DELIVERED"
+        packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        status: isDefined(metas.isRelaypoint) && metas.isRelaypoint ? "COLLECTABLE" : "DELIVERED",
+        preparator: isDefined(preparator) ? (typeof preparator === 'object' ? isDefined(preparator['@id']) ? preparator['@id'] : null : typeof preparator === 'string' ? preparator : null) : null,
     };
 }
 
@@ -91,7 +149,7 @@ export const validateForm = (user, informations, catalog, condition, relaypoints
         errors['phone'] = "Le numéro de téléphone est invalide ou non renseigné."
     if (!isValidAddress(informations, catalog, condition, relaypoints))
         errors['address'] = "L'adresse n'est pas valide."
-    else if (!isValidCatalog(catalog, informations)) {
+    else if (!isDefined(user.catalog) && !isValidCatalog(catalog, informations)) {
         errors['address'] = "Adresse non disponible depuis le catalogue sélectionné."
         isCatalogError = true;
     } else if (!isDeliverable(catalog, condition)) {

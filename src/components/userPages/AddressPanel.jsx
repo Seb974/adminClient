@@ -1,27 +1,17 @@
 import React from 'react';
 import Field from '../forms/Field';
-import Map from '../map/Map';
+import Map from '../map/addressLocation/Map';
 
 const initialPosition = [-21.329519, 55.471617];
 const initialInformations = { phone: '', address: '', address2: '', zipcode: '', city: '', position: initialPosition};
 
-const AddressPanel = ({ informations, onInformationsChange, onPositionChange, errors }) => {
+const AddressPanel = ({ informations, setInformations, errors }) => {
 
-    const onChange = ({ currentTarget }) => {
-        onInformationsChange({...informations, [currentTarget.name]: currentTarget.value});
-    };
-
-    const updatePosition = suggestion => {
-        const { lat, lng } = suggestion.latlng;
-        const zipcode = JSON.stringify([lat, lng]) !== JSON.stringify(informations.position) ? suggestion.postcodes[0] : '';
-        const city = JSON.stringify([lat, lng]) !== JSON.stringify(informations.position) ? suggestion.city : '';
-        const address = JSON.stringify([lat, lng]) !== JSON.stringify(informations.position) ? suggestion.value : '';
-        onPositionChange({position: [lat, lng], address, zipcode, city});
-    };
+    const onChange = ({ currentTarget }) => setInformations({...informations, [currentTarget.name]: currentTarget.value});
 
     return (
         <>
-            <Map informations={ informations } updatePosition={ updatePosition } initialPosition={ initialPosition }/>
+            <Map informations={ informations } setInformations={ setInformations } errors={ errors }/>
             <div className="row">
                 <div className="col-md-12">
                     <Field
@@ -34,7 +24,7 @@ const AddressPanel = ({ informations, onInformationsChange, onPositionChange, er
                     />
                 </div>
             </div>
-            <div className="row mb-3">
+            <div className="row">
                 <div className="col-md-6">
                     <Field 
                         name="zipcode"

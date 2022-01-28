@@ -7,18 +7,36 @@ import { isDefined } from 'src/helpers/utils';
 
 const Cities = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 5;
     const fields = ['name', 'zipCode', ' '];
     const [cities, setCities] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        CityActions.findAll()
-            .then(response => {
-                console.log(response);
-                setCities(response);
-            })
-            .catch(error => console.log(error));
-    }, []);
+    useEffect(() => getDisplayedCities(), []);
+    useEffect(() => getDisplayedCities(), [search]);
+    useEffect(() => getDisplayedCities(currentPage), [currentPage]);
+
+    const getDisplayedCities = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedCities(search, page) : await getCities(page);
+        if (isDefined(response)) {
+            setCities(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getCities = (page = 1) => page >=1 ? CityActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedCities = (word, page = 1) => CityActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => {
+    //     CityActions.findAll()
+    //         .then(response => {
+    //             console.log(response);
+    //             setCities(response);
+    //         })
+    //         .catch(error => console.log(error));
+    // }, []);
 
     const handleDelete = (id) => {
         const originalCities = [...cities];
@@ -46,7 +64,16 @@ const Cities = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/cities/" + item.id }>{ item.name }</Link></td>

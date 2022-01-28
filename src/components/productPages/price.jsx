@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { CCol, CFormGroup, CInput, CLabel, CSelect, CSwitch } from '@coreui/react';
+import { CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CSelect, CSwitch } from '@coreui/react';
 import TaxActions from '../../services/TaxActions';
 import PriceGroupActions from '../../services/PriceGroupActions';
+import Flatpickr from 'react-flatpickr';
+import { French } from "flatpickr/dist/l10n/fr.js";
 
 const Price = ({product, setProduct, history }) => {
 
@@ -66,6 +68,11 @@ const Price = ({product, setProduct, history }) => {
         }
     };
 
+    const onDateChange = datetime => {
+        const newDate = new Date(datetime[0].getFullYear(), datetime[0].getMonth(), datetime[0].getDate(), 9, 0, 0);
+        setProduct({...product, offerEnd: newDate});
+    };
+
     return (
         <>
             <hr className="mt-5 mb-5"/>
@@ -78,14 +85,19 @@ const Price = ({product, setProduct, history }) => {
                 </CCol>
                 <CCol xs="12" md="4">
                     <CLabel htmlFor="select">{ product.uniquePrice ? "Prix" : "Prix de base"}</CLabel>
-                    <CInput
-                        type="number"
-                        name={ product.prices.length <=0 ? "price" : product.prices[0].priceGroup.name }
-                        id={ product.prices.length <=0 ? "price" : product.prices[0].priceGroup.name }
-                        value={ product.prices.length <=0 ? "" : product.prices[0].amount }
-                        onChange={ handlePriceChange } 
-                        placeholder={ product.uniquePrice ? "Prix HT" : "Prix de base HT"}
-                    />
+                    <CInputGroup>
+                        <CInput
+                            type="number"
+                            name={ product.prices.length <=0 ? "price" : product.prices[0].priceGroup.name }
+                            id={ product.prices.length <=0 ? "price" : product.prices[0].priceGroup.name }
+                            value={ product.prices.length <=0 ? "" : product.prices[0].amount }
+                            onChange={ handlePriceChange } 
+                            placeholder={ product.uniquePrice ? "Prix HT" : "Prix de base HT"}
+                        />
+                        <CInputGroupAppend>
+                            <CInputGroupText>€</CInputGroupText>
+                        </CInputGroupAppend>
+                    </CInputGroup>
                 </CCol>
                 <CFormGroup row className="mt-4 mb-0 ml-1 d-flex align-items-end">
                     <CCol xs="3" sm="3">
@@ -103,20 +115,60 @@ const Price = ({product, setProduct, history }) => {
                             return (
                                 <CCol key={index} xs="12" md="4" className="mt-4">
                                     <CLabel htmlFor="select">{ "Prix " + price.priceGroup.name }</CLabel>
-                                    <CInput
-                                        type="number"
-                                        name={price.priceGroup.name}
-                                        id={price.priceGroup.name}
-                                        value={ price.amount }
-                                        onChange={ handlePriceChange } 
-                                        placeholder={ "Prix " + price.priceGroup.name + " HT"}
-                                    />
+                                    <CInputGroup>
+                                        <CInput
+                                            type="number"
+                                            name={price.priceGroup.name}
+                                            id={price.priceGroup.name}
+                                            value={ price.amount }
+                                            onChange={ handlePriceChange } 
+                                            placeholder={ "Prix " + price.priceGroup.name + " HT"}
+                                        />
+                                        <CInputGroupAppend>
+                                            <CInputGroupText>€</CInputGroupText>
+                                        </CInputGroupAppend>
+                                     </CInputGroup>
                                 </CCol>
                             )}
                         })
                     }
                 </CFormGroup>
             }
+            <CFormGroup row>
+                <CCol xs="12" md="6" className="mt-4">
+                    <CLabel htmlFor="discount">{ "Taux de remise" }</CLabel>
+                    <CInputGroup>
+                        <CInput
+                            type="number"
+                            name="discount"
+                            id="discount"
+                            value={ product.discount }
+                            onChange={ handleChange } 
+                            placeholder={ "Remise" }
+                        />
+                        <CInputGroupAppend>
+                            <CInputGroupText>%</CInputGroupText>
+                        </CInputGroupAppend>
+                        </CInputGroup>
+                </CCol>
+                <CCol xs="12" md="6" className="mt-4">
+                    <CFormGroup>
+                        <CLabel htmlFor="offerEnd">Valable jusqu'au</CLabel>
+                        <Flatpickr
+                            name="offerEnd"
+                            value={ product.offerEnd }
+                            onChange={ onDateChange }
+                            className="form-control form-control-sm"
+                            options={{
+                                mode: "single",
+                                dateFormat: "d/m/Y",
+                                minDate: 'today',
+                                locale: French,
+                            }}
+                        />
+                    </CFormGroup>
+                </CCol>
+            </CFormGroup>
         </>
     );
 }

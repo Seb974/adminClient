@@ -1,83 +1,55 @@
-import React from 'react'
-import {
-  CSidebar,
-  CSidebarBrand,
-  CSidebarNav,
-  CSidebarNavItem,
-  CContainer,
-  CCard,
-  CCardBody,
-  CSidebarMinimizer
-} from '@coreui/react'
+import React, { useContext } from 'react'
+import { CSidebar, CSidebarBrand, CSidebarNav, CSidebarNavItem, CContainer, CCard, CCardBody, CSidebarMinimizer} from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-
-import {
-  TheAside,
-  TheFooter,
-  TheHeader
-} from '../../../containers'
+import { TheAside, TheFooter, TheHeader } from '../../../containers'
+import MessageContext from 'src/contexts/MessageContext'
+import { isDefinedAndNotVoid } from 'src/helpers/utils'
+import { useSelector } from 'react-redux'
+import classNames from 'classnames'
 
 const EmailNav = ({children}) => {
+
+  const darkMode = useSelector(state => state.darkMode);
+  const classes = classNames('c-app c-default-layout', darkMode && 'c-dark-theme');
+  const { messages, setMessages } = useContext(MessageContext);
+
   return (
-    <div className="c-app">
+    <div className={classes}>
       <CSidebar
         unfoldable
         fixed={true} 
-        colorScheme="light"
+        colorScheme="primary"
       >
         <CSidebarBrand className="d-md-down-none" to="/apps/email">
-          <CIcon
-            className="c-sidebar-brand-full"
-            name="logo-negative"
-            height={35}
-          />
-          <CIcon
-            className="c-sidebar-brand-minimized"
-            name="sygnet"
-            height={35}
-          />
+          <img src="assets/img/logo/logo_navbar_full.png" height={30} alt="logo" className="c-sidebar-brand-full" name="logo-negative"/>
+          <img src="assets/img/logo/logo_fp_7.png" height={32} alt="logo" className="c-sidebar-brand-minimized" name="sygnet"/>
         </CSidebarBrand>
         <CSidebarNav>
           <CSidebarNavItem 
             color="success"
-            to="./compose"
+            to="/apps/email/compose"
             icon="cil-pencil"
             name="Compose"
           /> 
-          <CSidebarNavItem 
-            to="./inbox"
-            icon="cil-inbox"
-            name="Inbox"
-            badge={{ text: 4, color: 'danger' }}
-          />      
-          <CSidebarNavItem 
-            icon="cil-star"
-            name="Stared"
-          />
-          <CSidebarNavItem 
-            icon="cil-paper-plane"
-            name="Sent"
-          />
-          <CSidebarNavItem 
-            icon="cil-trash"
-            name="Trash"
-          />
-          <CSidebarNavItem 
-            icon="cil-bookmark"
-            name="Important"
-            badge={{ text: 5, color: 'info' }}
-          />
-          <CSidebarNavItem 
-            icon="cil-inbox"
-            name="Spam"
-            badge={{ text: 25, color: 'warning' }}
-          />
+          { isDefinedAndNotVoid(messages) && messages.filter(m => !m.isRead).length > 0 ?
+              <CSidebarNavItem 
+                to="/apps/email/inbox"
+                icon="cil-inbox"
+                name="Inbox"
+                badge={{ text: messages.filter(m => !m.isRead).length, color: 'danger' }}
+              />
+          :
+              <CSidebarNavItem 
+                to="/apps/email/inbox"
+                icon="cil-inbox"
+                name="Inbox"
+              />
+          }
           <CSidebarNavItem
             to="/"
             className="mt-auto"
             icon="cil-speedometer"
             name="Dashboard"
-            badge={{ text: 'NEW', color: 'info' }}
           />
         </CSidebarNav>
         <CSidebarMinimizer/>

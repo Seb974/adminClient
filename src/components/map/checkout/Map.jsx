@@ -13,11 +13,12 @@ import PolylineOverlay from '../PolylineOverlay';
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require("worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker").default;
 
-const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount, objectDiscount, setObjectDiscount, errors }) => {
+const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount, objectDiscount, setObjectDiscount, errors, catalog = null }) => {
 
     const map = useRef(null);
     const searchInput = useRef(null);
     const { currentUser, settings, selectedCatalog } = useContext(AuthContext);
+    const [currentCatalog, setCurrentCatalog] = useState(selectedCatalog);
     const apiToken = process.env.REACT_APP_MAPBOX_TOKEN;
     const [defaultView, setDefaultView] = useState({ latitude: 0, longitude: 0, zoom: 9});
     const [viewport, setViewport] = useState(defaultView);
@@ -31,16 +32,20 @@ const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount,
     // 'mapbox://styles/mapbox/light-v8'
 
     useEffect(() => {
-        if (isDefined(selectedCatalog) && Object.keys(selectedCatalog).length > 0 && isDefinedAndNotVoid(selectedCatalog.center)) {
-            setDefaultView({ latitude: selectedCatalog.center[0], longitude: selectedCatalog.center[1], zoom: selectedCatalog.zoom});
+        setCurrentCatalog(isDefined(catalog) ? catalog : selectedCatalog);
+    }, [selectedCatalog, catalog]);
+
+    useEffect(() => {
+        if (isDefined(currentCatalog) && Object.keys(currentCatalog).length > 0 && isDefinedAndNotVoid(currentCatalog.center)) {
+            setDefaultView({ latitude: currentCatalog.center[0], longitude: currentCatalog.center[1], zoom: currentCatalog.zoom});
             setViewport({
                 ...viewport, 
-                latitude: !isInitialState(informations.position) ? informations.position[0] : selectedCatalog.center[0], 
-                longitude: !isInitialState(informations.position) ? informations.position[1] : selectedCatalog.center[1], 
-                zoom: !isInitialState(informations.position) ? 17 : selectedCatalog.zoom
+                latitude: !isInitialState(informations.position) ? informations.position[0] : currentCatalog.center[0], 
+                longitude: !isInitialState(informations.position) ? informations.position[1] : currentCatalog.center[1], 
+                zoom: !isInitialState(informations.position) ? 17 : currentCatalog.zoom
             });
         }
-    }, [selectedCatalog]);
+    }, [currentCatalog]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(informations.position) && !isInitialState(informations.position)) {
@@ -56,20 +61,10 @@ const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount,
     },[informations.position]);
 
     useEffect(() => {
-        if (informations.address.length > 0 && !isRelaypoint && relaypoints.length > 0) {
+        if (informations.address.length > 0 && !isRelaypoint && relaypoints.length > 0)
             setCityCondition(informations.zipcode);
-            // const newCondition = setCityCondition(informations.zipcode);
-            // const alternatives = checkForAlternatives(informations.zipcode, newCondition, relaypoints, settings, informations.position, selectedCatalog);
-            // if (isDefined(alternatives))
-            //     // addToast(alternatives.message, alternatives.params);
-            // if (isDefined(newCondition) && !isDefined(alternatives))
-            //     // addToast("Livraison à domicile sélectionné", { appearance: "success", autoDismiss: true });
-            // else if (selectedCatalog.needsParcel && !isDefined(alternatives))
-            //     // addToast("Adresse de livraison sélectionnée", { appearance: "success", autoDismiss: true });
-        } 
-        else if (informations.address.length === 0) {
+        else if (informations.address.length === 0)
             onClear()
-        }
     }, [informations.address, relaypoints]);
 
     const updatePosition = suggestion => {
@@ -83,18 +78,14 @@ const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount,
             city: suggestion.city
         });
         setIsRelaypoint(false);
-        if (isDefined(suggestion.force)) {
+        if (isDefined(suggestion.force))
             setCityCondition(suggestion.postcodes[0]);
-            // const newCondition = setCityCondition(suggestion.postcodes[0]);
-            // if (isDefined(newCondition))
-            //     addToast("Livraison à domicile sélectionné", { appearance: "success", autoDismiss: true });
-        }
     };
 
     const onClear = () => {
         setInformations(informations => ({
             ...informations, 
-            position: selectedCatalog.center,
+            position: currentCatalog.center,
             address: '', 
             address2: '', 
             zipcode: '', 
@@ -103,9 +94,9 @@ const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount,
         setIsRelaypoint(false);
         setCondition(undefined);
         setViewport({
-            latitude: isDefined(selectedCatalog) && isDefinedAndNotVoid(selectedCatalog.center) ? selectedCatalog.center[0] : defaultView.latitude,
-            longitude: isDefined(selectedCatalog)&& isDefinedAndNotVoid(selectedCatalog.center) ? selectedCatalog.center[1] : defaultView.longitude,
-            zoom: isDefined(selectedCatalog) && isDefined(selectedCatalog.zoom) ? selectedCatalog.zoom : defaultView.zoom,
+            latitude: isDefined(currentCatalog) && isDefinedAndNotVoid(currentCatalog.center) ? currentCatalog.center[0] : defaultView.latitude,
+            longitude: isDefined(currentCatalog)&& isDefinedAndNotVoid(currentCatalog.center) ? currentCatalog.center[1] : defaultView.longitude,
+            zoom: isDefined(currentCatalog) && isDefined(currentCatalog.zoom) ? currentCatalog.zoom : defaultView.zoom,
             transitionDuration: 1800, 
             transitionInterpolator: new FlyToInterpolator() 
         });
@@ -118,8 +109,8 @@ const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount,
     };
 
     const isInitialState = (position) => {
-        return !isDefinedAndNotVoid(position) || !isDefinedAndNotVoid(selectedCatalog.center) ||
-               JSON.stringify(position) === JSON.stringify(selectedCatalog.center) || 
+        return !isDefinedAndNotVoid(position) || !isDefinedAndNotVoid(currentCatalog.center) ||
+               JSON.stringify(position) === JSON.stringify(currentCatalog.center) || 
                JSON.stringify(position) === JSON.stringify([0, 0]);
    };
 

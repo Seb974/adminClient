@@ -62,7 +62,8 @@ const TaxPage = ({ match, history }) => {
 
     const fetchCatalogs = () => {
         CatalogActions.findAll()
-            .then(response => setCatalogs(response));
+            .then(response => setCatalogs(response))
+            .catch(error => console.log(error));
     };
 
     const handleChange = ({ currentTarget }) => setTax({...tax, [currentTarget.name]: currentTarget.value});

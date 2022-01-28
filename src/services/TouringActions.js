@@ -10,6 +10,17 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.start > b.start) ? 1 : -1));
 }
 
+function findDelivererBetween(dates, deliverer) {
+    const delivererId = `deliverer=${ deliverer['@id'] }`;
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `end[after]=${ getStringDate(UTCDates.start) }&end[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/tourings?${ delivererId }&${ dateLimits }`)
+        .then(response => {
+            return response.data['hydra:member'].sort((a, b) => (new Date(a.end) < new Date(b.end)) ? -1 : 1);
+        });
+}
+
 function deleteTouring(id) {
     return api.delete('/api/tourings/' + id);
 }
@@ -57,7 +68,12 @@ function closeTouring(touring) {
         ...touring,
         end: new Date(),
         isOpen: false,
-        orderEntities: touring.orderEntities.map(order => ({id: order.id, status: 'DELIVERED'})),
+        orderEntities: 
+        touring.orderEntities.map(order => ({
+            id: order.id, 
+            deliveredQty: order.preparedQty,
+            status: isDefined(order.metas.isRelaypoint) && order.metas.isRelaypoint ? 'COLLECTABLE' : 'DELIVERED'
+        })),
         deliverer: isDefined(touring.deliverer) ? typeof touring.deliverer === 'string' ? touring.deliverer : touring.deliverer['@id'] : null
     });
 }
@@ -71,6 +87,17 @@ function updateTruckPosition(touring, position) {
     });
 }
 
+function patch(id, touring) {
+    return api.patch('/api/tourings/' + id, touring);
+}
+
+// function formatUTC(dates) {
+//     return {
+//         start: new Date(dates.start.toUTCString()), 
+//         end: new Date(dates.end.toUTCString())
+//     };
+// }
+
 // function updateFromMercure(data) {
 //     const filteredProducts = products.filter(item => item.id !== product.id);
 //     return [...filteredProducts, product].sort((a, b) => (a.name > b.name) ? 1 : -1);
@@ -78,8 +105,10 @@ function updateTruckPosition(touring, position) {
 
 export default {
     findAll,
+    findDelivererBetween,
     delete: deleteTouring,
     find,
+    patch,
     update,
     create,
     getTourings,

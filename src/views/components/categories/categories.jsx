@@ -3,21 +3,42 @@ import CategoryActions from '../../../services/CategoryActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
+import { isDefined } from 'src/helpers/utils';
 
 const Categories = (props) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 3;
     const fields = ['name', ' '];
     const [categories, setCategories] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        CategoryActions.findAll()
-            .then(response => {
-              console.log(response);
-              setCategories(response);
-            })
-            .catch(error => console.log(error.response));
-    }, []);
+    useEffect(() => getDisplayedCategories(), []);
+    useEffect(() => getDisplayedCategories(), [search]);
+    useEffect(() => getDisplayedCategories(currentPage), [currentPage]);
+
+    const getDisplayedCategories = async (page = 1) => {
+        const response = isDefined(search) && search.length > 0 ? await getSearchedCategories(search, page) : await getCategories(page);
+        if (isDefined(response)) {
+            setCategories(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+    };
+
+    const getCategories = (page = 1) => page >=1 ? CategoryActions.findAllPaginated(page, itemsPerPage) : undefined;
+    const getSearchedCategories = (word, page = 1) => CategoryActions.findWord(word, page, itemsPerPage);
+
+    // useEffect(() => fetchCategories(), []);
+
+    // const fetchCategories = () => {
+    //     CategoryActions.findAll()
+    //         .then(response => {
+    //           console.log(response);
+    //           setCategories(response);
+    //         })
+    //         .catch(error => console.log(error.response));
+    // };
 
     const handleDelete = (id) => {
         const originalCategories = [...categories];
@@ -45,7 +66,16 @@ const Categories = (props) => {
               fields={ fields }
               bordered
               itemsPerPage={ itemsPerPage }
-              pagination
+              pagination={{
+                'pages': Math.ceil(totalItems / itemsPerPage),
+                'activePage': currentPage,
+                'onActivePageChange': page => setCurrentPage(page),
+                'align': 'center',
+                'dots': true,
+                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+              }}
+              tableFilter
+              onTableFilterChange={ word => setSearch(word) }
               scopedSlots = {{
                 'name':
                   item => <td><Link to={ "/components/categories/" + item.id }>{ item.name }</Link></td>

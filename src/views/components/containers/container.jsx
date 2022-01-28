@@ -45,6 +45,8 @@ const Container = ({ match, history }) => {
         }
     }, [catalogs, container]);
 
+    useEffect(() => console.log(catalogOptions), [catalogOptions]);
+
     const handleChange = ({ currentTarget }) => setContainer({...container, [currentTarget.name]: currentTarget.value});
     const handleCheckBoxes = ({ currentTarget }) => setContainer({...container, [currentTarget.name]: !container[currentTarget.name]});
     const handleStockChange = ({ currentTarget }) => setContainer({...container, stock: {...container.stock, [currentTarget.name]: currentTarget.value}})
@@ -57,7 +59,8 @@ const Container = ({ match, history }) => {
                     const { catalogPrices, ...container } = response; 
                     setContainer(container);
                     if (catalogPrices.length > 0) {
-                        setCatalogOptions(catalogPrices.map(catalog => ({...catalog.catalog, amount: catalog.amount})));
+                        // setCatalogOptions(catalogPrices.map(catalog => ({...catalog.catalog, amount: catalog.amount})));
+                        setCatalogOptions(catalogPrices);
                     }
                 })
                 .catch(error => {
@@ -70,7 +73,8 @@ const Container = ({ match, history }) => {
 
     const fetchCatalogs = () => {
         CatalogActions.findAll()
-            .then(response => setCatalogs(response));       // .filter(catalog => catalog.needsParcel)
+            .then(response => setCatalogs(response))
+            .catch(error => history.replace("/components/containers"));
     };
 
     const fetchTaxes = () => {
@@ -96,7 +100,6 @@ const Container = ({ match, history }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const containerToWrite = getContainerToWrite();
-        console.log(containerToWrite);
         const request = !editing ? ContainerActions.create(containerToWrite) : ContainerActions.update(id, containerToWrite);
         request.then(response => {
                     setErrors(defaultErrors);
@@ -128,12 +131,14 @@ const Container = ({ match, history }) => {
             width: getFloat(container.width),
             height: getFloat(container.height),
             stock: {
-                ...container.stock, 
+                ...container.stock,
+                name: container.name,
+                unit: "U",
                 quantity: getFloat(container.stock.quantity),
                 alert: getFloat(container.stock.alert),
                 security: getFloat(container.stock.security),
             },
-            catalogPrices: catalogOptions.map(catalog => ({catalog: catalog['@id'], amount: getFloat(catalog.amount) }))
+            catalogPrices: catalogOptions.map(catalogPrice => ({...catalogPrice, catalog: catalogPrice.catalog['@id'], amount: getFloat(catalogPrice.amount) }))
         };
     }
 

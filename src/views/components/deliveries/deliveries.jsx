@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup, CInputCheckbox, CLabel } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -9,22 +8,23 @@ import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { isSameDate, getDateFrom } from 'src/helpers/days';
 import Spinner from 'react-bootstrap/Spinner'
-import { Button } from 'bootstrap';
 import OrderDetails from 'src/components/preparationPages/orderDetails';
-import CIcon from '@coreui/icons-react';
 import TouringActions from 'src/services/TouringActions';
 import Select from 'src/components/forms/Select';
-import UserActions from 'src/services/UserActions';
-import { shop, isSamePosition } from 'src/helpers/checkout';
-import TouringLocation from 'src/components/map/touring/touringLocation';
-import DeliveryContext from 'src/contexts/DeliveryContext';
+import { getShop, isSamePosition } from 'src/helpers/checkout';
 import DelivererActions from 'src/services/DelivererActions';
+import PlatformContext from 'src/contexts/PlatformContext';
+import { updateDeliveries } from 'src/data/dataProvider/eventHandlers/orderEvents';
+import MercureContext from 'src/contexts/MercureContext';
 
 const Deliveries = (props) => {
 
     const itemsPerPage = 30;
     const fields = ['name', 'date', 'total', 'selection', ' '];
-    const { currentUser } = useContext(AuthContext);
+    const { platform } = useContext(PlatformContext);
+    const { currentUser, supervisor } = useContext(AuthContext);
+    const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
+    const [mercureOpering, setMercureOpering] = useState(false);
     const [orders, setOrders] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -35,6 +35,7 @@ const Deliveries = (props) => {
     const [selectAll, setSelectAll] = useState(false);
     const [deliverers, setDeliverers] = useState([]);
     const [selectedDeliverer, setSelectedDeliverer] = useState(null);
+    const shop = getShop(platform);
 
     useEffect(() => {
         const isUserAdmin = Roles.hasAdminPrivileges(currentUser);
@@ -46,7 +47,13 @@ const Deliveries = (props) => {
             setSelectedDeliverer(currentUser);
     }, []);
 
-    useEffect(() => console.log(deliverers), [deliverers]);
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedOrders) && !mercureOpering) {
+            setMercureOpering(true);
+            updateDeliveries(updatedOrders, dates, orders, setOrders, currentUser, supervisor, setUpdatedOrders)
+                .then(response => setMercureOpering(response));
+        }
+    }, [updatedOrders]);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
     useEffect(() => getOrders(), [dates]);
@@ -66,24 +73,19 @@ const Deliveries = (props) => {
     }
 
     const fetchDeliverers = () => {
-        // UserActions
-        //     .findDeliverers()
-        //     .then(response => {
-        //         setDeliverers(response);
-        //         setSelectedDeliverer(response[0]);
-        //     });
         DelivererActions
             .findAll()
             .then(response => {
                     setDeliverers(response);
                     setSelectedDeliverer(response[0]);
-                });
+                })
+            .catch(error => console.log(error));
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = item => {
         const originalOrders = [...orders];
-        setOrders(orders.filter(order => order.id !== id));
-        OrderActions.delete(id)
+        setOrders(orders.filter(order => order.id !== item.id));
+        OrderActions.delete(item, isAdmin)
                       .catch(error => {
                            setOrders(originalOrders);
                            console.log(error.response);
@@ -95,8 +97,12 @@ const Deliveries = (props) => {
             const newStart = new Date(datetime[0].getFullYear(), datetime[0].getMonth(), datetime[0].getDate(), 0, 0, 0);
             const newEnd = new Date(datetime[1].getFullYear(), datetime[1].getMonth(), datetime[1].getDate(), 23, 59, 0);
             setDates({start: newStart, end: newEnd});
-
         }
+    };
+
+    const handleDelivererChange = ({ currentTarget }) => {
+        const newDeliverer = deliverers.find(deliverer => deliverer.id === parseInt(currentTarget.value));
+        setSelectedDeliverer(newDeliverer);
     };
 
     const handleSelect = item => {
@@ -147,10 +153,7 @@ const Deliveries = (props) => {
 
     const handleCreateTrip = () => {
         getOrderedOrders()
-            .then(response => {
-                console.log(response);
-                createTouring(response);
-            });
+            .then(response => createTouring(response));
     }
 
     const getOrderedOrders = () => {
@@ -187,7 +190,6 @@ const Deliveries = (props) => {
         return OrderActions
             .getOptimizedTrip(tripFromShop)
             .then(response => {
-                console.log(response);
                 let optimizedOrders = [];
                 const startIndex = priorizedOrders.length;
                 if (isDefined(response.waypoints)) {
@@ -302,6 +304,7 @@ const Deliveries = (props) => {
                                                             <i className="fas fa-truck mr-2"></i>
                                                         }{ item.name }<br/>
                                                         <small><i>{ item.metas.zipcode } { item.metas.city }</i></small>
+                                                        <br/>
                                                     </Link>
                                                 </td>
                                     ,
@@ -337,14 +340,17 @@ const Deliveries = (props) => {
                                     ' ':
                                         item => (
                                             <td className="mb-3 mb-xl-0 text-center" style={{color: item.status === "WAITING" ? "dimgray" : "black"}}>
+                                                { item.status !== "WAITING" && 
+                                                    <CButton color="light" href={"#/components/delivery/" + item.id} target="_blank" className="mx-1 my-1"><i className="fas fa-clipboard-list"></i></CButton>
+                                                }
                                                 <CButton color="warning" disabled={ !isAdmin } href={ "#/components/orders/" + item.id } className="mx-1 my-1"><i className="fas fa-pen"></i></CButton>
-                                                <CButton color="danger" disabled={ !isAdmin } onClick={ () => handleDelete(item.id) } className="mx-1 my-1"><i className="fas fa-trash"></i></CButton>
+                                                <CButton color="danger" disabled={ !isAdmin } onClick={ () => handleDelete(item) } className="mx-1 my-1"><i className="fas fa-trash"></i></CButton>
                                             </td>
                                         )
                                     ,
                                     'details':
                                         item => <CCollapse show={details.includes(item.id)}>
-                                                    <OrderDetails order={ item } isDelivery={ true }/>
+                                                    <OrderDetails order={ item } isDelivery={ true } id={ item.id }/>
                                                 </CCollapse>
                                 }}
                             />
@@ -352,8 +358,8 @@ const Deliveries = (props) => {
                         { orders.length > 0 &&
                             <CRow className="mt-4 d-flex justify-content-center align-items-start">
                                 { isAdmin && 
-                                    <Select className="mr-2" name="deliverer" label=" " onChange={ ({ currentTarget }) => console.log(currentTarget.value) } style={{width: '140px', height: '35px'}}>
-                                        { deliverers.map(deliverer => <option value={ deliverer }>{ deliverer.name }</option>) }
+                                    <Select className="mr-2" name="deliverer" label=" " value={ isDefined(selectedDeliverer) ? selectedDeliverer.id : 0 } onChange={ handleDelivererChange } style={{width: '140px', height: '35px'}}>
+                                        { deliverers.map(deliverer => <option key={ deliverer.id } value={ deliverer.id }>{ deliverer.name }</option>) }
                                     </Select>
                                 }
                                 <CButton size="sm" color="success" onClick={ handleCreateTrip } className={ "ml-2" } style={{width: '140px', height: '35px'}} disabled={ orders.findIndex(o => o.selected) === -1 }>

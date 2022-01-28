@@ -1,95 +1,53 @@
-import React from 'react'
-import {
-  CButtonToolbar,
-  CDropdown,
-  CDropdownToggle,
-  CDropdownMenu,
-  CDropdownItem,
-  CBadge,
-  CButton,
-  CButtonGroup,
-  CForm,
-  CFormGroup,
-  CLabel,
-  CInput,
-  CTextarea,
-  CRow,
-  CCol,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
+import React, { useState } from 'react'
+import { CButton, CForm, CFormGroup, CLabel, CInput, CTextarea, CRow, CCol } from '@coreui/react'
+import api from 'src/config/api';
 
-const Compose = () => {
+const Compose = ({history}) => {
+
+  const [message, setMessage] = useState({email: "", subject: "", message: ""});
+
+  const handleChange = ({ currentTarget }) => setMessage({...message, [currentTarget.name]: currentTarget.value});
+
+  const handleSubmit = async e => {
+      e.preventDefault();
+      api.post('/api/email/send', message)
+         .then(response => {
+              history.replace("/apps/email/inbox");
+         })
+         .catch(error => console.log(error));
+  };
+
   return (
     <>
-      <p className="text-center">New Message</p>
+      <p className="text-center">Nouveau message</p>
 
-      <CForm>
+      <CForm onSubmit={ handleSubmit }>
         <CRow form className="mb-3">
-          <CLabel sm="1" className="col-1" htmlFor="to">To:</CLabel>
+          <CLabel sm="1" className="col-1 mt-2" htmlFor="email">Pour:</CLabel>
           <CCol sm="11">
-            <CInput className="form-control" id="to" type="email" placeholder="Type email" />
+            <CInput className="form-control" id="email" name="email" type="email" placeholder="Adresse email" value={ message.email } onChange={ handleChange }/>
           </CCol>
         </CRow>
         <CRow form className="mb-3">
-          <CLabel sm="1" className="col-1" htmlFor="cc">CC:</CLabel>
+          <CLabel sm="1" className="col-1 mt-2" htmlFor="subject">Sujet:</CLabel>
           <CCol sm="11">
-            <CInput className="form-control" id="cc" type="email" placeholder="Type email" />
+            <CInput className="form-control" id="subject" name="subject" type="text" placeholder="Sujet" value={ message.subject } onChange={ handleChange }/>
           </CCol>
         </CRow>
-        <CRow form className="mb-3">
-          <CLabel sm="1" className="col-1" htmlFor="bcc">BCC:</CLabel>
-          <CCol sm="11">
-            <CInput className="form-control" id="bcc" type="email" placeholder="Type email" />
+      
+        <CRow>
+          <CCol className="ml-auto" sm="11">
+            <CFormGroup className="mt-4">
+              <CTextarea rows="12" placeholder="Message content" id="message" name="message" value={ message.message } onChange={ handleChange }/>
+            </CFormGroup>
+            <CFormGroup>
+              <CButton color="success" type="submit">Send</CButton>
+            </CFormGroup>
           </CCol>
         </CRow>
+
       </CForm>
-
-      <CRow>
-        <CCol className="ml-auto" sm="11">
-          <CButtonToolbar>
-            <CButtonGroup>
-              <CButton color="light"><CIcon name="cil-bold" /></CButton>
-              <CButton color="light"><CIcon name="cil-italic" /></CButton>
-              <CButton color="light"><CIcon name="cil-underline" /></CButton>
-            </CButtonGroup>{' '}
-            <CButtonGroup>
-              <CButton color="light"><CIcon name="cil-align-left" /></CButton>
-              <CButton color="light"><CIcon name="cil-align-right" /></CButton>
-              <CButton color="light"><CIcon name="cil-align-center" /></CButton>
-              <CButton color="light"><CIcon name="cil-justify-center" /></CButton>
-            </CButtonGroup>
-            <CButtonGroup>
-              <CButton color="light"><CIcon name="cil-indent-increase" /></CButton>
-              <CButton color="light"><CIcon name="cil-indent-decrease" /></CButton>
-            </CButtonGroup>
-            <CButtonGroup>
-              <CButton color="light"><CIcon name="cil-list" /></CButton>
-              <CButton color="light"><CIcon name="cil-list-numbered" /></CButton>
-            </CButtonGroup>
-            <CButton color="light"><CIcon name="cil-trash" /></CButton>
-            <CButton color="light"><CIcon name="cil-paperclip" /></CButton>
-            <CDropdown>
-              <CDropdownToggle caret color="light">
-                <CIcon name="cil-tags" />
-              </CDropdownToggle>
-              <CDropdownMenu>
-                <CDropdownItem href="#">add label<CBadge color="danger"> Home</CBadge></CDropdownItem>
-                <CDropdownItem href="#">add label<CBadge color="info"> Job</CBadge></CDropdownItem>
-                <CDropdownItem href="#">add label<CBadge color="success"> Clients</CBadge></CDropdownItem>
-                <CDropdownItem href="#">add label<CBadge color="warning"> News</CBadge></CDropdownItem>
-              </CDropdownMenu>
-            </CDropdown>
-          </CButtonToolbar>
-          <CFormGroup className="mt-4">
-            <CTextarea rows="12" placeholder="Message content"/>
-          </CFormGroup>
-          <CFormGroup>
-            <CButton color="success" type="submit">Send</CButton>{' '}
-            <CButton color="light" type="submit">Draft</CButton>{' '}
-            <CButton color="danger" type="submit">Discard</CButton>
-          </CFormGroup>
-        </CCol>
-      </CRow>
+            
     </>
   )
 }

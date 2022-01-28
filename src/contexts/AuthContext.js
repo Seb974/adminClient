@@ -8,5 +8,9 @@ export default React.createContext({
     eventSource: {},
     setEventSource: (value) => {},
     settings: {},
-    setSettings: (value) => {}
+    setSettings: (value) => {},
+    seller: {},
+    setSeller: (value) => {},
+    supervisor: {},
+    setSupervisor: (value) => {}
 });
