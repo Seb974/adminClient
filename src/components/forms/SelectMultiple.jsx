@@ -25,8 +25,6 @@ const SelectMultiple = ({ name, value, error = "", label, onChange, data }) => {
 
     const darkMode = useSelector(state => state.darkMode);
 
-    useEffect(() => console.log(darkMode), [darkMode]);
-
     const handleChange = (value, { action, removedValue }) => {
         switch (action) {
             case 'remove-value':

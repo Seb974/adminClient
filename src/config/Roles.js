@@ -19,7 +19,7 @@ function hasPrivileges(user) {
 }
 
 function hasAdminAccess(user) {
-    const adminAccessRoles = ["ROLE_SELLER", "ROLE_DELIVERER", "ROLE_TEAM", "ROLE_PICKER", "ROLE_RELAYPOINT", "ROLE_SUPERVISOR"];
+    const adminAccessRoles = ["ROLE_SELLER", "ROLE_DELIVERER", "ROLE_TEAM", "ROLE_PICKER", "ROLE_RELAYPOINT", "ROLE_SUPERVISOR", "ROLE_STORE_MANAGER"];
     return adminAccessRoles.includes(user.roles);
 }
 
@@ -37,6 +37,10 @@ function isPicker(user) {
 
 function isSupervisor(user) {
     return user.roles === "ROLE_SUPERVISOR";
+}
+
+function isStoreManager(user) {
+    return user.roles === "ROLE_STORE_MANAGER";
 }
 
 function hasAdminPrivileges(user) {
@@ -68,5 +72,6 @@ export default {
     isRelaypoint,
     isPicker,
     isSupervisor,
+    isStoreManager,
     isProfesional
 }

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback,  CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback,  CToaster, CToast, CToastHeader, CToastBody, CSwitch } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
@@ -23,6 +23,8 @@ import 'flatpickr/dist/themes/material_blue.css';
 import { French } from "flatpickr/dist/l10n/fr.js";
 import Flatpickr from 'react-flatpickr';
 import { getDateFrom, isSameDate, isSameTime } from 'src/helpers/days';
+import PlatformContext from 'src/contexts/PlatformContext';
+import StoreActions from 'src/services/StoreActions';
 
 const Supplying = (props) => {
 
@@ -32,8 +34,9 @@ const Supplying = (props) => {
     const { height, width } = useWindowDimensions();
     const [minDate, setMinDate] = useState(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 1));
     const fields = ['Produit', 'Coût', 'Stock', 'Besoin', 'Commande', 'Sélection'];
-    const { currentUser } = useContext(AuthContext);
+    const { currentUser, seller } = useContext(AuthContext);
     const { products } = useContext(ProductsContext);
+    const { platform } = useContext(PlatformContext);
     const [orders, setOrders] = useState([]);
     const [sendingMode, setSendingMode] = useState("email");
     const [receiveMode, setReceiveMode] = useState("livraison");
@@ -51,6 +54,10 @@ const Supplying = (props) => {
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [deliveryDate, setDeliveryDate] = useState(today);
     const [supplied, setSupplied] = useState([]);
+    const [stores, setStores] = useState([]);
+    const [selectedStore, setSelectedStore] = useState(null);
+    const [mainView, setMainView] = useState(true);
+    const [hasIndependencies, setHasIndependencies] = useState(false);
 
     const [toasts, setToasts] = useState([]);
     const voidMessage = "Aucun produit n'est sélectionné.";
@@ -76,24 +83,31 @@ const Supplying = (props) => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         getOrders();
         fetchSuppliers();
-        fetchSellers();
+        if (!Roles.isSeller(currentUser) && !Roles.isStoreManager(currentUser)) {
+            fetchSellers();
+        } else {
+            setSellers([seller]);
+            setSelectedSeller(seller);
+            defineStores(seller);
+        }
     }, []);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-    useEffect(() => getOrders(), [dates]);
+    useEffect(() => getOrders(), [dates, selectedStore, mainView]);
 
     useEffect(() => {
-        if (isDefinedAndNotVoid(orders) && isDefinedAndNotVoid(products) && isDefinedAndNotVoid(productGroups) && isDefined(selectedSeller)) {
+        if (isDefined(orders) && isDefinedAndNotVoid(products) && isDefinedAndNotVoid(productGroups)) {
             const productsToDisplay = getProductsList();
             setDisplayedProducts(productsToDisplay);
             setSelectAll(false);
         }
-    }, [orders, products, productGroups, evolution, selectedSeller, supplied, selectedSupplier]);
+    }, [orders, products, productGroups, evolution, selectedSeller, supplied, selectedSupplier, selectedStore, mainView]);
 
     const getOrders = () => {
         setLoading(true);
         const UTCDates = getUTCDates(dates);
-        OrderActions.findStatusBetween(UTCDates, selectedStatus, currentUser)
+        const Id = mainView || !isDefined(selectedStore) ? platform['@id'] : selectedStore['@id'];
+        OrderActions.findInWarehouseStatusBetween(UTCDates, selectedStatus, currentUser, mainView, Id)
                 .then(response => {
                     setOrders(response.map(data => ({...data, selected: false})));
                     setLoading(false);
@@ -120,8 +134,24 @@ const Supplying = (props) => {
             .then(response => {
                 setSellers(response);
                 setSelectedSeller(response[0]);
+                defineStores(response[0]);
             })
             .catch(error => console.log(error));
+    };
+
+    const defineStores = seller => {
+        if (isDefinedAndNotVoid(seller.stores)) {
+            const independantStores = seller.stores.filter(s => !s.main);
+            const hasIndependency = independantStores.length > 0;
+            setStores(independantStores)
+            setSelectedStore(independantStores[0]);
+            setHasIndependencies(hasIndependency);
+        } else {
+            setStores([]);
+            setSelectedStore(null);
+            setHasIndependencies(false);
+            setMainView(true);
+        }
     };
 
     const handleGroupChange = productGroups => setProductGroups(productGroups);
@@ -165,6 +195,12 @@ const Supplying = (props) => {
     const handleSellerChange= ({ currentTarget }) => {
         const newSeller = sellers.find(seller => seller.id === parseInt(currentTarget.value));
         setSelectedSeller(newSeller);
+        defineStores(newSeller);
+    };
+
+    const handleStoreChange= ({ currentTarget }) => {
+        const newStore = stores.find(store => store.id === parseInt(currentTarget.value));
+        setSelectedStore(newStore);
     };
 
     const handleEvolutionChange = ({ currentTarget }) => {
@@ -178,6 +214,8 @@ const Supplying = (props) => {
             setDeliveryDate(newSelection);
         }
     };
+
+    const handleView = ({ currentTarget }) => setMainView(!mainView);
 
     const handleSubmit = () => {
         if (displayedProducts.findIndex(p => p.selected) === -1) {
@@ -213,14 +251,17 @@ const Supplying = (props) => {
 
     const getNewProvision = () => {
         const goods = getGoods();
-        return {
-            seller: selectedSeller['@id'], 
+        const newProvision = {
+            seller: selectedSeller['@id'],
             supplier: selectedSupplier,
             provisionDate: new Date(deliveryDate), 
             sendingMode,
             receiveMode,
             goods
         };
+        return mainView || !isDefined(selectedStore) ?
+            {...newProvision, platform: platform['@id'], metas: isDefined(selectedSeller.metas) ? selectedSeller.metas['@id'] : platform.metas['@id'] } :
+            {...newProvision, store: selectedStore['@id'], metas: selectedStore.metas['@id']};
     };
 
     const getGoods = () => {
@@ -257,7 +298,7 @@ const Supplying = (props) => {
 
     const getProductsArray = groups => {
         let productsList = [];
-        const sellerProducts = groups.filter(p => p.seller.id === selectedSeller.id);
+        const sellerProducts = !Roles.isStoreManager(currentUser) && isDefined(selectedSeller) ? groups.filter(p => p.seller.id === selectedSeller.id) : groups;
         sellerProducts
             .filter(p => isDefinedAndNotVoid(p.suppliers) && isDefined(selectedSupplier) && p.suppliers.findIndex(s => s.id === selectedSupplier.id) !== -1 )
             .map(product => {
@@ -279,7 +320,8 @@ const Supplying = (props) => {
             product: { id: product.id, name: product.name, costs: product.costs },
             variation: null,
             size: null,
-            stock: product.stock,
+            // stock: product.stock,
+            stock: getStock(product),
             unit: product.unit,
             selected: false
         };
@@ -290,10 +332,28 @@ const Supplying = (props) => {
             product: { id: product.id, name: product.name, costs: product.costs },
             variation: { id: variation.id, name: variation.color },
             size: { id: size.id, name: size.name },
-            stock: size.stock,
+            // stock: size.stock,
+            stock: getStock(size),
             unit: product.unit,
             selected: false
         };
+    };
+
+    const getStock = element => {
+        let stock = null;
+        if (isDefinedAndNotVoid(element.stocks)) {
+            if ((Roles.isStoreManager(currentUser) && isDefined(selectedStore) && !selectedStore.main) || (!Roles.isStoreManager(currentUser) && !mainView))
+                stock = element.stocks.find(s => isDefined(s.store) && s.store === selectedStore["@id"]);
+            else
+                stock = element.stocks.find(s => isDefined(s.platform));
+
+        }
+        return isDefined(stock) ? stock : getNewStock();
+    };
+
+    const getNewStock = () => {
+        const newStock = { quantity: 0, alert: 0, security: 0 };
+        return isDefined(selectedStore) ? {...newStock, store: selectedStore['@id']} : {...newStock, platform: platform['@id']}
     };
 
     const extractSales = elements => elements.map((element, index) => addSales(element, index));
@@ -465,21 +525,50 @@ const Supplying = (props) => {
                             </CCol>
                         </CRow>
                         <CRow>
-                            <CCol xs="12" sm="5" md="5">
-                                    <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
-                                        { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                            { !Roles.isStoreManager(currentUser) ? 
+                                <CCol xs="12" sm="5" md="5">
+                                        <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
+                                            { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                                        </Select>
+                                </CCol>
+                                :
+                                <CCol xs="12" sm="5" md="5">
+                                    <Select className="mr-2" name="selectedStore" label="Boutique" onChange={ handleStoreChange } value={ isDefined(selectedStore) ? selectedStore.id : 0 }>
+                                        { stores.map(store => <option key={ store.id } value={ store.id }>{ store.name }</option>) }
                                     </Select>
-                            </CCol>
-                            <CCol xs="12" lg="7">
-                                <RangeDatePicker
-                                    minDate={ dates.start }
-                                    maxDate={ dates.end }
-                                    onDateChange={ handleDateChange }
-                                    label="Bornes du calcul prévisionnel"
-                                    className = "form-control mb-3"
-                                />
-                            </CCol>
+                                </CCol>
+                            }
+                                <CCol xs="12" lg="7">
+                                    <RangeDatePicker
+                                        minDate={ dates.start }
+                                        maxDate={ dates.end }
+                                        onDateChange={ handleDateChange }
+                                        label="Bornes du calcul prévisionnel"
+                                        className = "form-control mb-3"
+                                    />
+                                </CCol>
                         </CRow>
+                        { !Roles.isStoreManager(currentUser) &&
+                            <CRow>
+                                <CCol xs="12" md="6" className="my-4">
+                                    <CFormGroup row className="mb-0 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="requireDeclaration" className="mr-0" color="dark" shape="pill" variant="opposite" checked={ mainView } onChange={ handleView } disabled={ !hasIndependencies }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                            Stock principal (du site)
+                                        </CCol>
+                                    </CFormGroup>
+                                </CCol>
+                                { !mainView &&
+                                    <CCol xs="12" sm="5" md="5">
+                                        <Select className="mr-2" name="selectedStore" label="Boutique" onChange={ handleStoreChange } value={ isDefined(selectedStore) ? selectedStore.id : 0 }>
+                                            { stores.map(store => <option key={ store.id } value={ store.id }>{ store.name }</option>) }
+                                        </Select>
+                                    </CCol>
+                                }
+                            </CRow>
+                        }
                         <hr/>
                         <CRow>
                             <CCol xs="12" lg="12" className="mt-4">
@@ -726,27 +815,3 @@ const Supplying = (props) => {
 }
 
 export default Supplying;
-
-
-// const provision = getNewProvision();
-// console.log(provision);
-// ProvisionActions
-//     .create(provision)
-//     .then(response => {
-//         setToSupplies(provision.goods);
-//         setSelectAll(false);
-//         // setDisplayedProducts(displayedProducts.filter(p => !p.selected))
-//         //TODO : Flash notification de succès
-//         // history.replace("/components/provisions");
-//     })
-//     .catch( error => {
-//         // const { violations } = response.data;
-//         // if (violations) {
-//         //     const apiErrors = {};
-//         //     violations.forEach(({propertyPath, message}) => {
-//         //         apiErrors[propertyPath] = message;
-//         //     });
-//         //     // setErrors(apiErrors);
-//         // }
-//         //TODO : Flash notification d'erreur
-//     });

@@ -4,16 +4,21 @@ import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton 
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
+import { useContext } from 'react';
+import AuthContext from 'src/contexts/AuthContext';
+import Roles from 'src/config/Roles';
 
 const Stores = (props) => {
 
     const itemsPerPage = 10;
     const fields = ['name', ' '];
+    const { currentUser } = useContext(AuthContext);
     const [stores, setStores] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
 
+    useEffect(() => console.log(Roles.isSeller(currentUser)), []);
     useEffect(() => getDisplayedStores(), []);
     useEffect(() => getDisplayedStores(), [search]);
     useEffect(() => getDisplayedStores(currentPage), [currentPage]);

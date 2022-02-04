@@ -3,19 +3,22 @@ import { Link } from 'react-router-dom';
 import SellerActions from 'src/services/SellerActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getDateFrom, getFloat, getHourFrom, getInt, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getDateFrom, getFloat, getHourFrom, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import '../../../assets/css/searchBar.css';
 import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import Image from 'src/components/forms/image';
+import AddressPanel from 'src/components/userPages/AddressPanel';
 
 const Seller = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const { currentUser } = useContext(AuthContext);
     const [editing, setEditing] = useState(false);
-    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: ""};
+    const initialInformations =  AddressPanel.getInitialInformations();
+    const [informations, setInformations] = useState(initialInformations);
+    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "" };
     const [seller, setSeller] = useState({...defaultSeller, needsRecovery: false, delayInDays: true, image: null, isActive: true });
     const [errors, setErrors] = useState(defaultSeller);
     const [users, setUsers] = useState([]);
@@ -31,13 +34,17 @@ const Seller = ({ match, history }) => {
     
     const handleChange = ({ currentTarget }) => setSeller({...seller, [currentTarget.name]: currentTarget.value});
 
+    const onPhoneChange = ({ currentTarget }) => setInformations({...informations, phone: currentTarget.value});
+
     const fetchSeller = id => {
         if (id !== "new") {
             setEditing(true);
             SellerActions.find(id)
                 .then(response => {
-                    console.log(response);
-                    setSeller(response);
+                    const {metas, ...dbSeller} = response;
+                    setSeller(dbSeller);
+                    if (isDefined(metas))
+                        setInformations(metas);
                     if (isDefinedAndNotVoid(response.users))
                         setUsers(response.users);
                 })
@@ -107,7 +114,9 @@ const Seller = ({ match, history }) => {
             ownerRate: getFloat(seller.ownerRate),
             delay: getInt(seller.delay),
             recoveryDelay: seller.needsRecovery ? getInt(seller.recoveryDelay) : null,
-            users: isDefinedAndNotVoid(users) ? users.map(user => user['@id']) : []
+            users: isDefinedAndNotVoid(users) ? users.map(user => user['@id']) : [],
+            metas: {...informations, isRelaypoint: false},
+            stores: isDefinedAndNotVoid(seller.stores) ? seller.stores.map(s =>s['@id']) : []
         };
     };
 
@@ -149,10 +158,32 @@ const Seller = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" sm="12" md="6">
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="name">Téléphone</CLabel>
+                                        <CInput
+                                            type="tel"
+                                            id="phone"
+                                            name="phone"
+                                            value={ informations.phone }
+                                            onChange={ onPhoneChange }
+                                            placeholder="N° de téléphone"
+                                            invalid={ errors.phone.length > 0 } 
+                                        />
+                                        <CInvalidFeedback>{ errors.phone }</CInvalidFeedback>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" md="12">
                                     <Image entity={ seller } setEntity={ setSeller } isLandscape={ true }/>
                                 </CCol>
                             </CRow>
+                            <CRow>
+                                <h5 className="ml-3 mt-3">Adresse du stock principal</h5>
+                            </CRow>
+                            <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
+                            <hr/>
                             <CRow>
                                 <CCol xs="12" md="6" className="my-4">
                                     <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">

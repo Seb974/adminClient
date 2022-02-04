@@ -51,7 +51,14 @@ const Users = (props) => {
         <CCol xs="12" lg="12">
           <CCard>
             <CCardHeader>
-              Liste des utilisateurs
+              <CRow>
+                  <CCol col="6">
+                    Liste des utilisateurs
+                  </CCol>
+                  <CCol col="6" sm="4" md="2" className="text-right">
+                      <Link role="button" to="/components/users/new" block variant="outline" color="success">CRÉER</Link>
+                  </CCol>
+              </CRow>
             </CCardHeader>
             <CCardBody>
             <CDataTable

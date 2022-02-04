@@ -28,6 +28,24 @@ function findStatusBetween(dates, statuses, user) {
         });
 }
 
+function findInWarehouseStatusBetween(dates, statuses, user, main, Id) {
+    const status = getStatusList(statuses);
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
+    const sellerCondition = !main ? `store=${ Id }` : `platform=${ Id }`;
+    return api
+        .get(`/api/order_entities?${ status }&${ dateLimits }&${ sellerCondition }`)
+        .then(response => {
+            const data = Roles.hasAdminPrivileges(user) || Roles.isSupervisor(user) ? 
+                response.data['hydra:member'] :
+                response.data['hydra:member'].filter(order => {
+                    return order.items.find(item => {
+                        return item.product.seller.users.find(u => u.id === user.id) !== undefined}) !== undefined;
+                });
+            return data.sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
+        });
+}
+
 function findPreparations(dates, user) {
     const status = `status[]=WAITING&status[]=PRE-PREPARED`;
     const UTCDates = formatUTC(dates);
@@ -193,6 +211,7 @@ export default {
     findPickersPreparations,
     findCheckouts,
     findStatusBetween,
+    findInWarehouseStatusBetween,
     getOptimizedTrip,
     delete: deleteOrder,
     find,

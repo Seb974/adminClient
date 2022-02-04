@@ -8,6 +8,7 @@ import CIcon from '@coreui/icons-react';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import ProductsContext from 'src/contexts/ProductsContext';
+import PlatformContext from 'src/contexts/PlatformContext';
 import Roles from 'src/config/Roles';
 import Select from 'src/components/forms/Select';
 import Goods from 'src/components/provisionPages/Goods';
@@ -21,6 +22,7 @@ const Provision = ({ match, history }) => {
     const [editing, setEditing] = useState(false);
     const { products } = useContext(ProductsContext);
     const { currentUser } = useContext(AuthContext);
+    const { platform } = useContext(PlatformContext);
     const [provision, setProvision] = useState({ provisionDate: new Date(), status: "ORDERED" });
     const defaultErrors = { provisionDate: "" };
     const [errors, setErrors] = useState(defaultErrors);
@@ -122,23 +124,24 @@ const Provision = ({ match, history }) => {
 
     const handleSubmit = () => {
         const provisionToWrite = getProvisionToWrite();
-        const request = !editing ? ProvisionActions.create(provisionToWrite) : ProvisionActions.patch(id, provisionToWrite);
-        request.then(response => {
-            setErrors(defaultErrors);
-            //TODO : Flash notification de succès
-            history.replace("/components/provisions");
-        })
-        .catch( ({ response }) => {
-            const { violations } = response.data;
-            if (violations) {
-                const apiErrors = {};
-                violations.forEach(({propertyPath, message}) => {
-                    apiErrors[propertyPath] = message;
-                });
-                setErrors(apiErrors);
-            }
-            //TODO : Flash notification d'erreur
-        });
+        console.log(provisionToWrite);
+        // const request = !editing ? ProvisionActions.create(provisionToWrite) : ProvisionActions.patch(id, provisionToWrite);
+        // request.then(response => {
+        //     setErrors(defaultErrors);
+        //     //TODO : Flash notification de succès
+        //     history.replace("/components/provisions");
+        // })
+        // .catch( ({ response }) => {
+        //     const { violations } = response.data;
+        //     if (violations) {
+        //         const apiErrors = {};
+        //         violations.forEach(({propertyPath, message}) => {
+        //             apiErrors[propertyPath] = message;
+        //         });
+        //         setErrors(apiErrors);
+        //     }
+        //     //TODO : Flash notification d'erreur
+        // });
     };
 
     const getProvisionToWrite = () => {
@@ -148,6 +151,7 @@ const Provision = ({ match, history }) => {
             seller: seller['@id'],
             supplier: supplier['@id'],
             provisionDate: new Date(provisionDate),
+            platform: platform['@id'],
             goods: goods.map(good => {
                 const { product, variation, size, price, quantity, received } = good;
                 return {

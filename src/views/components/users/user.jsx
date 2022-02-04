@@ -131,7 +131,7 @@ const UserPage = ({ history, match }) => {
                             </CRow>
                             {/* <AddressPanel informations={ informations } onInformationsChange={ onInformationsChange } onPositionChange={ onUpdatePosition } errors={ errors }/> */}
                             <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
-                            <CRow>
+                            <CRow className="mt-4 d-flex justify-content-center">
                                 <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
                             </CRow>
                         </CForm>

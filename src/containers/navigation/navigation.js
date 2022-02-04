@@ -8,6 +8,7 @@ function getNav(translation, currentUser)
     const mainRole = Roles.hasAdminPrivileges(currentUser) ? "ADMIN" : 
            (Roles.isSeller(currentUser) && Roles.isDeliverer(currentUser) || Roles.isPicker(currentUser)) ? "PICKER" : 
            Roles.isSeller(currentUser) ? "SELLER" :
+           Roles.isStoreManager(currentUser) ? "STORE_MANAGER" :
            Roles.isDeliverer(currentUser) ? "DELIVERER" : 
            Roles.isSupervisor(currentUser) ? "SUPERVISOR" : 
            Roles.isRelaypoint(currentUser.roles) ? "RELAYPOINT" : "USER";
@@ -137,33 +138,33 @@ function getNav(translation, currentUser)
           to: '/components/collects',
           icon: <CIcon name="cil-task" customClasses="c-sidebar-nav-icon"/>,
         },
-    !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue : 
+    !["ADMIN", "PICKER", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue : 
     {
       _tag: 'CSidebarNavTitle',
       _children: [translation("activity.label")],
     },
-    !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue :  
+    !["ADMIN", "PICKER", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
       {
         _tag: 'CSidebarNavItem',
         name: translation("supply.label"),
         to: '/components/supplies/shop',
         icon: <CIcon name="cil-clipboard" customClasses="c-sidebar-nav-icon"/>,
       },
-    !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue :  
+    !["ADMIN", "PICKER", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
       {
         _tag: 'CSidebarNavItem',
         name: translation("in-progress.label"),
         to: '/components/supplies/in-progress',
         icon: <CIcon name="cil-find-in-page" customClasses="c-sidebar-nav-icon"/>,
       },
-    !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue :  
+    !["ADMIN", "PICKER", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
       {
         _tag: 'CSidebarNavItem',
         name: translation("provisions.label"),
         to: '/components/provisions',
         icon: <CIcon name="cib-azure-artifacts" customClasses="c-sidebar-nav-icon"/>,
       },
-    !["ADMIN", "PICKER", "SELLER"].includes(mainRole) ? voidValue :  
+    !["ADMIN", "PICKER", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
         {
           _tag: 'CSidebarNavItem',
           name: translation("stocks.label"),
@@ -278,6 +279,13 @@ function getNav(translation, currentUser)
           icon: <CIcon name="cib-itch-io" customClasses="c-sidebar-nav-icon"/>,
           // icon: <CIcon name="cib-emlakjet" customClasses="c-sidebar-nav-icon"/>,
         },
+    !["ADMIN","SELLER"].includes(mainRole) ? voidValue :
+        {
+          _tag: 'CSidebarNavItem',
+          name: translation("stores.label"),
+          to: '/components/stores',
+          icon: <CIcon name="cil-home" customClasses="c-sidebar-nav-icon"/>,
+        },
     !["ADMIN", "DELIVERER"].includes(mainRole) ? voidValue :  
         {
           _tag: 'CSidebarNavItem',
@@ -366,12 +374,6 @@ function getNav(translation, currentUser)
               name: translation("catalogs.label"),
               to: '/components/catalogs',
               icon: <CIcon name="cil-globe-alt" customClasses="c-sidebar-nav-icon"/>,
-            },
-            {
-              _tag: 'CSidebarNavItem',
-              name: translation("stores.label"),
-              to: '/components/stores',
-              icon: <CIcon name="cil-home" customClasses="c-sidebar-nav-icon"/>,
             },
             {
               _tag: 'CSidebarNavItem',

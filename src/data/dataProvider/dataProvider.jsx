@@ -71,7 +71,7 @@ const DataProvider = ({ children }) => {
     }, [isAuthenticated]);
 
     useEffect(() => {
-        if (Roles.isSeller(currentUser))
+        if (Roles.isSeller(currentUser) || Roles.isStoreManager(currentUser))
             SellerActions
                 .findAll()
                 .then(response => setSeller(response[0]));
