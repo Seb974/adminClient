@@ -56,5 +56,7 @@
     "agents.label": "Equipe",
     "stores.label": "Boutiques",
     "costs.label": "Coûts",
-    "in-progress.label": "En cours"
+    "in-progress.label": "En cours",
+    "departments.label": "Rayons",
+    "physical_sales.label": "Ventes physiques"
 }

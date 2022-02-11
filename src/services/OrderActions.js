@@ -14,11 +14,11 @@ function findAll() {
 function findStatusBetween(dates, statuses, user) {
     const status = getStatusList(statuses);
     const UTCDates = formatUTC(dates);
-    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
     return api
         .get(`/api/order_entities?${ status }&${ dateLimits }`)
         .then(response => {
-            const data = Roles.hasAdminPrivileges(user) || Roles.isSupervisor(user) ? 
+            const data = Roles.hasAdminPrivileges(user) || Roles.isSupervisor(user) || Roles.isPicker(user) ? 
                 response.data['hydra:member'] :
                 response.data['hydra:member'].filter(order => {
                     return order.items.find(item => {

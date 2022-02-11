@@ -38,6 +38,45 @@ function create(store) {
     return api.post('/api/stores', {...store});
 }
 
+function getCategories(store) {
+    return api.get('/api/hiboutik/' + store.id + '/categories')
+              .then(response => response.data);
+}
+
+function sendCategories(store) {
+    return api.post('/api/hiboutik/' + store.id + '/categories');
+}
+
+function getProducts(store) {
+    return api.get('/api/hiboutik/' + store.id + '/products')
+              .then(response => response.data);
+}
+
+function sendProducts(store) {
+    return api.post('/api/hiboutik/' + store.id + '/products');
+}
+
+function sendSelectedProducts(store, selectionArray) {
+    return api.post('/api/hiboutik/' + store.id + '/products', selectionArray);
+}
+
+function sendSelectedCategories(store, selectionArray) {
+    return api.post('/api/hiboutik/' + store.id + '/categories', selectionArray);
+}
+
+function getTurnover(store, dates) {
+    const UTCDates = formatUTC(dates);
+    return api.post('/api/hiboutik/' + store.id + '/turnover', {from: UTCDates.start, to: UTCDates.end})
+              .then(response => response.data);
+}
+
+function formatUTC(dates) {
+    return {
+        start: new Date(dates.start.toUTCString()), 
+        end: new Date(dates.end.toUTCString())
+    };
+}
+
 export default {
     findAll,
     findAllPaginated,
@@ -45,5 +84,12 @@ export default {
     delete: deleteStore,
     find,
     update,
-    create
+    create,
+    getProducts,
+    sendProducts,
+    sendSelectedProducts,
+    getCategories,
+    sendCategories,
+    sendSelectedCategories,
+    getTurnover
 }

@@ -32,9 +32,9 @@ const TheHeaderDropdownMssg = () => {
           messages.filter(m => !m.isRead)
                   .filter((m, i) => i < messageLimit)
                   .sort((a, b) => (a.sentAt > b.sentAt) ? -1 : 1)
-                  .map(message => {
+                  .map((message, key) => {
                       return (
-                          <CDropdownItem href={"/#/apps/email/messages/" + message.id}>
+                          <CDropdownItem key={ key } href={"/#/apps/email/messages/" + message.id}>
                               <div className="message" style={{ width: "100%" }}>
                                 <div className="pt-3 mr-3 float-left">
                                   <div className="c-avatar">
@@ -55,10 +55,13 @@ const TheHeaderDropdownMssg = () => {
                       );
                   })
         }
-        <CDropdownItem href="#" className="text-center border-top" style={{ width: "100%", margin: 'auto' }}>
+        {/* <CDropdownItem href="#" className="text-center border-top" style={{ width: "100%", margin: 'auto' }}>
           <Link to="/apps/email/inbox" style={{ width: "100%", margin: 'auto' }}>
             <strong>Voir tous les messages</strong>
           </Link>
+          </CDropdownItem> */}
+          <CDropdownItem href="/#/apps/email/inbox" className="d-flex justify-content-center border-top" style={{ width: "100%", margin: 'auto' }}>
+              <div className="text-center text-primary "><strong>Voir tous les messages</strong></div>
           </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>

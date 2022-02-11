@@ -8,10 +8,10 @@ import AuthContext from 'src/contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import '../assets/css/header.css'
 import Roles from 'src/config/Roles'
+import { isDefined } from 'src/helpers/utils'
 
 const TheHeader = (props) => {
   const dispatch = useDispatch()
-  // const asideShow = useSelector(state => state.asideShow)
   const darkMode = useSelector(state => state.darkMode)
   const sidebarShow = useSelector(state => state.sidebarShow)
   const { currentUser, supervisor, seller, setIsAuthenticated, setCurrentUser, setSupervisor, setSeller } = useContext(AuthContext);
@@ -55,7 +55,9 @@ const TheHeader = (props) => {
         }
       </CHeaderBrand>
 
-      <CHeaderNav className="d-md-down-none mr-auto"></CHeaderNav>
+      <CHeaderNav className="d-md-down-none mr-auto">
+          { (isDefined(currentUser) && currentUser.name) }
+      </CHeaderNav>
 
       <CHeaderNav className="px-3">
         { Roles.hasAdminPrivileges(currentUser) && <TheHeaderDropdownMssg/> }

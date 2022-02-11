@@ -56,5 +56,7 @@
     "agents.label": "Team",
     "stores.label": "Stores",
     "costs.label": "Costs",
-    "in-progress.label": "In progress"
+    "in-progress.label": "In progress",
+    "departments.label": "Department",
+    "physical_sales.label": "Physical sales"
 }

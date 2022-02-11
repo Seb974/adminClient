@@ -4,7 +4,6 @@ import React from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
 import DataProvider from './data/dataProvider/dataProvider';
 import AdminRoute from './components/route/AdminRoute';
-import PrivateRoute from './components/route/PrivateRoute';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import 'mapbox-gl/dist/mapbox-gl.css';

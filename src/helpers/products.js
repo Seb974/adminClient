@@ -67,6 +67,7 @@ export const getProductToWrite = (product, type, categories, variations, adapted
         productGroup: type === "mixed" ? null : product.productGroup,
         tax: typeof product.tax === 'string' ? product.tax : product.tax['@id'],
         seller: noImgProduct.seller['@id'],
+        department: noImgProduct.department['@id'],
         suppliers: isDefinedAndNotVoid(product.suppliers) ? product.suppliers.map(s => s.value) : [],
         discount: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? getFloat(product.discount) : null,
         offerEnd: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? product.offerEnd : null,
@@ -130,7 +131,7 @@ export const defineType = (product) => {
 };
 
 export const formatProduct = (product, defaultStock) => {
-    const {prices, categories, stock, variations, discount, offerEnd} = product;
+    const {prices, categories, stock, variations, discount, offerEnd, storeAvailable} = product;
     const basePrice = prices !== null && prices !== undefined && prices.length > 0 ? prices[0].amount : "";
     const formattedProduct = {
         ...product, 
@@ -141,7 +142,8 @@ export const formatProduct = (product, defaultStock) => {
         uniquePrice: isDefinedAndNotVoid(prices) ? prices.every(price => price.amount === basePrice) : true,
         stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock,
         discount: isDefined(discount) ? discount : "",
-        offerEnd: isDefined(offerEnd) ? new Date(offerEnd) : new Date()
+        offerEnd: isDefined(offerEnd) ? new Date(offerEnd) : new Date(),
+        storeAvailable: isDefined(storeAvailable) ? storeAvailable : true
     };
     return formattedProduct;
 };
@@ -168,6 +170,7 @@ export const getWritableProduct = product => {
         variations: isDefinedAndNotVoid(product.variations) ? product.variations.map(v => v['@id']) : [],
         image: isDefined(product.image) ? product.image['@id'] : null,
         seller: isDefined(product.seller) ? product.seller['@id'] : null,
+        department: isDefined(product.department) ? product.department['@id'] : null,
         stock: isDefined(product.stock) ? product.stock['@id'] : null,
         tax: isDefined(product.tax) ? product.tax['@id'] : null,
 

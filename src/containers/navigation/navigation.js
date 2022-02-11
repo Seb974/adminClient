@@ -199,6 +199,13 @@ function getNav(translation, currentUser)
         to: '/components/orders',
         icon: <CIcon name="cil-history" customClasses="c-sidebar-nav-icon"/>,
       },
+    !["ADMIN", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
+      {
+        _tag: 'CSidebarNavItem',
+        name: translation("physical_sales.label"),
+        to: '/components/stores/sales',
+        icon: <CIcon name="cil-calculator" customClasses="c-sidebar-nav-icon"/>,
+      },
     !["ADMIN"].includes(mainRole) ? voidValue :
       {
         _tag: 'CSidebarNavTitle',
@@ -248,6 +255,13 @@ function getNav(translation, currentUser)
           name: translation("categories.label"),
           to: '/components/categories',
           icon: <CIcon name="cil-columns" customClasses="c-sidebar-nav-icon"/>,
+        },
+    !["ADMIN"].includes(mainRole) ? voidValue :  
+        {
+          _tag: 'CSidebarNavItem',
+          name: translation("departments.label"),
+          to: '/components/departments',
+          icon: <CIcon name="cil-folder-open" customClasses="c-sidebar-nav-icon"/>,
         },
     !["ADMIN", "SELLER"].includes(mainRole) ? voidValue :  
         {
@@ -702,115 +716,125 @@ function getNav(translation, currentUser)
             },
           ]
         },
-    !["ADMIN"].includes(mainRole) ? voidValue : 
-        {
-          _tag: 'CSidebarNavTitle',
-          _children: ['Extras'],
-        },
-    !["ADMIN"].includes(mainRole) ? voidValue : 
-        {
-          _tag: 'CSidebarNavDropdown',
-          name: 'Pages',
-          route: '/pages',
-          icon: 'cil-star',
-          _children: [
-            {
-              _tag: 'CSidebarNavItem',
-              name: 'Login',
-              to: '/login',
-            },
-            {
-              _tag: 'CSidebarNavItem',
-              name: 'Register',
-              to: '/register',
-            },
-            {
-              _tag: 'CSidebarNavItem',
-              name: 'Error 404',
-              to: '/404',
-            },
-            {
-              _tag: 'CSidebarNavItem',
-              name: 'Error 500',
-              to: '/500',
-            },
-          ],
-        },
-    !["ADMIN"].includes(mainRole) ? voidValue : 
-        {
-          _tag: 'CSidebarNavItem',
-          name: 'Disabled',
-          icon: 'cil-ban',
-          badge: {
-            color: 'secondary',
-            text: 'NEW',
-          },
-          addLinkClass: 'c-disabled',
-          'disabled': true
-        },
 
 
-    !["ADMIN"].includes(mainRole) ? voidValue : 
-        {
-          _tag: 'CSidebarNavDropdown',
-          name: 'Apps',
-          route: '/apps',
-          icon: 'cil-layers',
-          _children: [
-            {
-              _tag: 'CSidebarNavDropdown',
-              name: 'Invoicing',
-              route: '/apps/invoicing',
-              icon: 'cil-spreadsheet',
-              _children: [
-                {
-                  _tag: 'CSidebarNavItem',
-                  name: 'Invoice',
-                  to: '/apps/invoicing/invoice',
-                  badge: {
-                    color: 'danger',
-                    text: 'PRO'
-                  }
-                }
-              ]
-            },
-            {
-              _tag: 'CSidebarNavDropdown',
-              name: 'Email',
-              route: '/apps/email',
-              icon: 'cil-envelope-open',
-              _children: [
-                {
-                  _tag: 'CSidebarNavItem',
-                  name: 'Inbox',
-                  to: '/apps/email/inbox',
-                  badge: {
-                    color: 'danger',
-                    text: 'PRO',
-                  },
-                },
-                {
-                  _tag: 'CSidebarNavItem',
-                  name: 'Message',
-                  to: '/apps/email/message',
-                  badge: {
-                    color: 'danger',
-                    text: 'PRO',
-                  },
-                },
-                {
-                  _tag: 'CSidebarNavItem',
-                  name: 'Compose',
-                  to: '/apps/email/compose',
-                  badge: {
-                    color: 'danger',
-                    text: 'PRO',
-                  },
-                },
-              ],
-            },
-          ]
-        },
+
+
+
+
+
+
+
+
+    // !["ADMIN"].includes(mainRole) ? voidValue : 
+    //     {
+    //       _tag: 'CSidebarNavTitle',
+    //       _children: ['Extras'],
+    //     },
+    // !["ADMIN"].includes(mainRole) ? voidValue : 
+    //     {
+    //       _tag: 'CSidebarNavDropdown',
+    //       name: 'Pages',
+    //       route: '/pages',
+    //       icon: 'cil-star',
+    //       _children: [
+    //         {
+    //           _tag: 'CSidebarNavItem',
+    //           name: 'Login',
+    //           to: '/login',
+    //         },
+    //         {
+    //           _tag: 'CSidebarNavItem',
+    //           name: 'Register',
+    //           to: '/register',
+    //         },
+    //         {
+    //           _tag: 'CSidebarNavItem',
+    //           name: 'Error 404',
+    //           to: '/404',
+    //         },
+    //         {
+    //           _tag: 'CSidebarNavItem',
+    //           name: 'Error 500',
+    //           to: '/500',
+    //         },
+    //       ],
+    //     },
+    // !["ADMIN"].includes(mainRole) ? voidValue : 
+    //     {
+    //       _tag: 'CSidebarNavItem',
+    //       name: 'Disabled',
+    //       icon: 'cil-ban',
+    //       badge: {
+    //         color: 'secondary',
+    //         text: 'NEW',
+    //       },
+    //       addLinkClass: 'c-disabled',
+    //       'disabled': true
+    //     },
+
+
+    // !["ADMIN"].includes(mainRole) ? voidValue : 
+    //     {
+    //       _tag: 'CSidebarNavDropdown',
+    //       name: 'Apps',
+    //       route: '/apps',
+    //       icon: 'cil-layers',
+    //       _children: [
+    //         {
+    //           _tag: 'CSidebarNavDropdown',
+    //           name: 'Invoicing',
+    //           route: '/apps/invoicing',
+    //           icon: 'cil-spreadsheet',
+    //           _children: [
+    //             {
+    //               _tag: 'CSidebarNavItem',
+    //               name: 'Invoice',
+    //               to: '/apps/invoicing/invoice',
+    //               badge: {
+    //                 color: 'danger',
+    //                 text: 'PRO'
+    //               }
+    //             }
+    //           ]
+    //         },
+    //         {
+    //           _tag: 'CSidebarNavDropdown',
+    //           name: 'Email',
+    //           route: '/apps/email',
+    //           icon: 'cil-envelope-open',
+    //           _children: [
+    //             {
+    //               _tag: 'CSidebarNavItem',
+    //               name: 'Inbox',
+    //               to: '/apps/email/inbox',
+    //               badge: {
+    //                 color: 'danger',
+    //                 text: 'PRO',
+    //               },
+    //             },
+    //             {
+    //               _tag: 'CSidebarNavItem',
+    //               name: 'Message',
+    //               to: '/apps/email/message',
+    //               badge: {
+    //                 color: 'danger',
+    //                 text: 'PRO',
+    //               },
+    //             },
+    //             {
+    //               _tag: 'CSidebarNavItem',
+    //               name: 'Compose',
+    //               to: '/apps/email/compose',
+    //               badge: {
+    //                 color: 'danger',
+    //                 text: 'PRO',
+    //               },
+    //             },
+    //           ],
+    //         },
+    //       ]
+    //     },
 
 
 

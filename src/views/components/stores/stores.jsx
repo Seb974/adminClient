@@ -18,7 +18,6 @@ const Stores = (props) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
 
-    useEffect(() => console.log(Roles.isSeller(currentUser)), []);
     useEffect(() => getDisplayedStores(), []);
     useEffect(() => getDisplayedStores(), [search]);
     useEffect(() => getDisplayedStores(currentPage), [currentPage]);

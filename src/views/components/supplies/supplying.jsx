@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback,  CToaster, CToast, CToastHeader, CToastBody, CSwitch } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CInputGroup, CInput, CInputGroupAppend, CInputGroupPrepend, CInputGroupText, CCardFooter, CLabel, CValidFeedback, CInvalidFeedback, CToaster, CToast, CToastHeader, CToastBody, CSwitch } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { getEvolutionPoints, getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import Spinner from 'react-bootstrap/Spinner'
+import Spinner from 'react-bootstrap/Spinner';
 import Select from 'src/components/forms/Select';
 import SupplierActions from 'src/services/SupplierActions';
 import { getStatus } from 'src/helpers/orders';
@@ -25,6 +25,8 @@ import Flatpickr from 'react-flatpickr';
 import { getDateFrom, isSameDate, isSameTime } from 'src/helpers/days';
 import PlatformContext from 'src/contexts/PlatformContext';
 import StoreActions from 'src/services/StoreActions';
+import DepartmentActions from 'src/services/DepartmentActions';
+import SaleActions from 'src/services/SaleActions';
 
 const Supplying = (props) => {
 
@@ -58,6 +60,8 @@ const Supplying = (props) => {
     const [selectedStore, setSelectedStore] = useState(null);
     const [mainView, setMainView] = useState(true);
     const [hasIndependencies, setHasIndependencies] = useState(false);
+    const [departments, setDepartments] = useState([]);
+    const [visibleDepartments, setVisibleDepartments] = useState([]);
 
     const [toasts, setToasts] = useState([]);
     const voidMessage = "Aucun produit n'est sélectionné.";
@@ -83,6 +87,7 @@ const Supplying = (props) => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         getOrders();
         fetchSuppliers();
+        fetchDepartments();
         if (!Roles.isSeller(currentUser) && !Roles.isStoreManager(currentUser)) {
             fetchSellers();
         } else {
@@ -96,18 +101,26 @@ const Supplying = (props) => {
     useEffect(() => getOrders(), [dates, selectedStore, mainView]);
 
     useEffect(() => {
-        if (isDefined(orders) && isDefinedAndNotVoid(products) && isDefinedAndNotVoid(productGroups)) {
+        if (isDefined(selectedSupplier) && isDefined(selectedSeller))
+            getSupplierDepartments();
+    }, [selectedSupplier, selectedSeller]);
+
+
+    useEffect(() => {
+        if (isDefined(orders) && isDefinedAndNotVoid(products)) {
             const productsToDisplay = getProductsList();
             setDisplayedProducts(productsToDisplay);
             setSelectAll(false);
         }
-    }, [orders, products, productGroups, evolution, selectedSeller, supplied, selectedSupplier, selectedStore, mainView]);
+    }, [orders, products, evolution, selectedSeller, supplied, visibleDepartments, selectedStore, mainView]);
 
     const getOrders = () => {
         setLoading(true);
         const UTCDates = getUTCDates(dates);
-        const Id = mainView || !isDefined(selectedStore) ? platform['@id'] : selectedStore['@id'];
-        OrderActions.findInWarehouseStatusBetween(UTCDates, selectedStatus, currentUser, mainView, Id)
+        // const Id = mainView || !isDefined(selectedStore) ? platform['@id'] : selectedStore['@id'];
+        if (mainView || !isDefined(selectedStore)) {
+            OrderActions
+                .findInWarehouseStatusBetween(UTCDates, selectedStatus, currentUser, mainView, platform['@id'])
                 .then(response => {
                     setOrders(response.map(data => ({...data, selected: false})));
                     setLoading(false);
@@ -116,7 +129,45 @@ const Supplying = (props) => {
                     console.log(error);
                     setLoading(false);
                 });
-    }
+        } else {
+            SaleActions
+                .findStoreSalesBetween(UTCDates, selectedStore)
+                .then(response => {
+                    const formattedSales = getFormattedSales(response);
+                    console.log(formattedSales);
+                    setOrders(formattedSales);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.log(error);
+                    setLoading(false);
+                });
+
+        }
+    };
+
+    const getFormattedSales = sales => {
+        return sales.map(({purchases, ...sale}) => {
+            return { 
+                ...sale, 
+                isRemains: false,
+                selected: false,
+                items: purchases.map(({quantity, ...p}) => ({...p, orderedQty: quantity, unit: p.product.unit }))
+            };
+        })
+    };
+
+
+    const fetchDepartments = () => {
+        DepartmentActions
+            .findAll()
+            .then(response => {
+                const formattedDepartments = response.map(d => ({value: d['@id'], label: d.name, isFixed: false}));
+                setDepartments(formattedDepartments);
+                // setVisibleDepartments(formattedDepartments);
+            })
+            .catch(error => console.log(error));
+    };
 
     const fetchSuppliers = () => {
         SupplierActions
@@ -154,7 +205,7 @@ const Supplying = (props) => {
         }
     };
 
-    const handleGroupChange = productGroups => setProductGroups(productGroups);
+    const handleDepartmentChange = departments => setVisibleDepartments(departments);
 
     const handleDateChange = datetime => {
         if (isDefined(datetime[1])){
@@ -290,10 +341,30 @@ const Supplying = (props) => {
     };
 
     const getProductsList = () => {
-        const groupSelection = productGroups.map(p => p.value);
-        const groupProducts = products.filter(p => groupSelection.includes(p.productGroup));
-        const productsList = getProductsArray(groupProducts);
-        return extractSales(productsList);
+        if (isDefinedAndNotVoid(visibleDepartments)) {
+            const departmentSelection = visibleDepartments.map(d => d.value);
+            const departmentProducts = products.filter(p => isDefined(p.department) && departmentSelection.includes(p.department['@id']));
+            const productsList = getProductsArray(departmentProducts);
+            return extractSales(productsList);
+        }
+        return [];
+    };
+
+    const getSupplierDepartments = (p = products) => {
+        let departmentList = [];
+        p.filter(product => product.seller.id ===  selectedSeller.id && product.suppliers.map(s => s.id).includes(selectedSupplier.id))
+         .map(product => {
+            departmentList = isDefined(product.product) ?
+                isDefined(product.product.department) ? addIfNotInclude(departmentList, product.product.department) : departmentList :
+                isDefined(product.department) ? addIfNotInclude(departmentList, product.department) : departmentList;
+        });
+        const supplierDepartments = [...new Set(departmentList)].map(d => ({value: d['@id'], label: d.name, isFixed: false}));
+        setVisibleDepartments(supplierDepartments);
+    };
+
+    const addIfNotInclude = (list, item) => {
+        const listItem = list.findIndex(i => i.id === item.id);
+        return listItem === -1 ? [...list, item] : list;
     };
 
     const getProductsArray = groups => {
@@ -317,7 +388,7 @@ const Supplying = (props) => {
 
     const getSimpleProduct = product => {
         return {
-            product: { id: product.id, name: product.name, costs: product.costs },
+            product: { id: product.id, name: product.name, costs: product.costs, department: product.department },
             variation: null,
             size: null,
             // stock: product.stock,
@@ -329,7 +400,7 @@ const Supplying = (props) => {
 
     const getVariantProduct = (product, variation, size) => {
         return {
-            product: { id: product.id, name: product.name, costs: product.costs },
+            product: { id: product.id, name: product.name, costs: product.costs, department: product.department },
             variation: { id: variation.id, name: variation.color },
             size: { id: size.id, name: size.name },
             // stock: size.stock,
@@ -549,19 +620,19 @@ const Supplying = (props) => {
                                 </CCol>
                         </CRow>
                         { !Roles.isStoreManager(currentUser) &&
-                            <CRow>
-                                <CCol xs="12" md="6" className="my-4">
+                            <CRow className="mt-3">
+                                <CCol xs="12" md="5" className="my-4">
                                     <CFormGroup row className="mb-0 d-flex align-items-end">
                                         <CCol xs="3" sm="2" md="3">
                                             <CSwitch name="requireDeclaration" className="mr-0" color="dark" shape="pill" variant="opposite" checked={ mainView } onChange={ handleView } disabled={ !hasIndependencies }/>
                                         </CCol>
                                         <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
-                                            Stock principal (du site)
+                                            Stock principal
                                         </CCol>
                                     </CFormGroup>
                                 </CCol>
                                 { !mainView &&
-                                    <CCol xs="12" sm="5" md="5">
+                                    <CCol xs="12" md="7">
                                         <Select className="mr-2" name="selectedStore" label="Boutique" onChange={ handleStoreChange } value={ isDefined(selectedStore) ? selectedStore.id : 0 }>
                                             { stores.map(store => <option key={ store.id } value={ store.id }>{ store.name }</option>) }
                                         </Select>
@@ -612,14 +683,14 @@ const Supplying = (props) => {
                         <hr/>
                         <CRow className="mb-4">
                             <CCol xs="12" lg="5" className="mt-4">
-                                <SelectMultiple name="productGroups" label="Groupes de produits" value={ productGroups } onChange={ handleGroupChange } data={ getProductGroups() }/>
+                                <SelectMultiple name="productGroups" label="Rayons" value={ visibleDepartments } onChange={ handleDepartmentChange } data={ departments }/>
                             </CCol>
                             <CCol xs="12" lg="5" className="mt-4">
                                 <Select className="mr-2" name="supplier" label="Evolution des besoins" value={ evolution } onChange={ handleEvolutionChange } style={{ height: '39px'}}>
                                     { rates.map(rate => <option key={ rate.value } value={ rate.value }>{ rate.label }</option>) }
                                 </Select>
                             </CCol>
-                            <CCol xs="12" lg="2" className="mt-4 d-flex align-items-center justify-content-end pr-5">
+                            <CCol xs="12" lg="2" className="mt-4 d-flex align-items-start justify-content-end pr-5 pt-3">
                                 <CFormGroup row variant="custom-checkbox" inline className="d-flex align-items-center">
                                     <input
                                         className="mx-1 my-2"
@@ -753,7 +824,7 @@ const Supplying = (props) => {
                                                     }}
                                                 />
                                                 <CInputGroupAppend>
-                                                    <CInputGroupText style={{ minWidth: '43px'}}><CIcon name="cil-alarm"/></CInputGroupText>
+                                                    <CInputGroupText style={{ minWidth: '43px'}}><CIcon name="cil-calendar"/></CInputGroupText>
                                                 </CInputGroupAppend>
                                             </CInputGroup>
                                         </CFormGroup>

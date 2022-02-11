@@ -1,9 +1,12 @@
 import CIcon from '@coreui/icons-react';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CCollapse, CDataTable, CRow } from '@coreui/react';
 import React, { useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import Select from 'src/components/forms/Select';
+import Roles from 'src/config/Roles';
+import AuthContext from 'src/contexts/AuthContext';
 import { getArchiveDate, isSameDate } from 'src/helpers/days';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
@@ -14,6 +17,7 @@ const InProgress = (props) => {
 
     const itemsPerPage = 30;
     const { width } = useWindowDimensions();
+    const { currentUser } = useContext(AuthContext);
     const fields = ['Produit', 'Quantité', 'Date de réception'];
     const [loading, setLoading] = useState(false);
     const [sellers, setSellers] = useState([]);
@@ -22,6 +26,8 @@ const InProgress = (props) => {
     const [provisions, setProvisions] = useState([]);
     const [details, setDetails] = useState([]);
     const [csvContent, setCsvContent] = useState("");
+    const mainStore = { id: -1, name: "Principal" };
+    const [selectedStore, setSelectedStore] = useState(mainStore);
 
     const csvCode = 'data:text/csv;charset=utf-8,SEP=,%0A' + encodeURIComponent(csvContent);
 
@@ -29,7 +35,7 @@ const InProgress = (props) => {
 
     useEffect(() => fetchProvisions(), [selectedSeller]);
 
-    useEffect(() => setDisplayedProducts(getProducts()), [provisions]);
+    useEffect(() => setDisplayedProducts(getProducts()), [provisions, selectedStore]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(displayedProducts))
@@ -42,6 +48,8 @@ const InProgress = (props) => {
             .then(response => {
                 setSellers(response);
                 setSelectedSeller(response[0]);
+                if (Roles.isStoreManager(currentUser))
+                    setSelectedStore(response[0].stores[0])
             })
             .catch(error => console.log(error));
     };
@@ -63,9 +71,11 @@ const InProgress = (props) => {
     const getProducts = () => {
         if (isDefinedAndNotVoid(provisions)) {
             let products = [];
-            provisions.map(p => {
-                products = [...products, ...p.goods.map(g => ({...g, provisionDate: p.provisionDate, supplier: p.supplier.name}))]
-            });
+            provisions
+                .filter(p => (isDefined(p.store) && p.store === selectedStore['@id']) || (selectedStore.id === mainStore.id && isDefined(p.platform)))
+                .map(p => {
+                    products = [...products, ...p.goods.map(g => ({...g, provisionDate: p.provisionDate, supplier: p.supplier.name}))]
+                });
             return getAgregatedProducts(products);
         }
         return [];
@@ -122,6 +132,13 @@ const InProgress = (props) => {
         setSelectedSeller(newSeller);
     };
 
+    const handleStoreChange = ({ currentTarget }) => {
+        const newStore = isDefinedAndNotVoid(selectedSeller.stores) ? 
+            selectedSeller.stores.find(s => s.id === parseInt(currentTarget.value))
+        : mainStore;
+        setSelectedStore(isDefined(newStore) ? newStore : mainStore);
+    };
+
     const getFromDate = (agregated, current) => {
         const fromAgregated = new Date(agregated.from);
         const fromCurrent = new Date(current.provisionDate)
@@ -173,6 +190,13 @@ const InProgress = (props) => {
                             <CCol xs="12" sm="6" md="6">
                                 <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
                                     { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                                </Select>
+                            </CCol>
+
+                            <CCol xs="12" sm="6" md="6">
+                                <Select className="mr-2" name="store" label="Stock" onChange={ handleStoreChange } value={ isDefined(selectedStore) ? selectedStore.id : -1 }>
+                                    { !Roles.isStoreManager(currentUser) && <option value={ mainStore.id }>{ mainStore.name }</option>}
+                                    { isDefined(selectedSeller) && isDefinedAndNotVoid(selectedSeller.stores) && selectedSeller.stores.map(store => <option key={ store.id } value={ store.id }>{ store.name }</option>) }
                                 </Select>
                             </CCol>
                         </CRow>

@@ -10,6 +10,7 @@ import SellerActions from 'src/services/SellerActions';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import Suppliers from './Suppliers';
+import DepartmentActions from 'src/services/DepartmentActions';
 
 const Characteristics = ({ product, categories, type, setProduct, errors, history}) => {
 
@@ -17,6 +18,7 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
     const [groups, setGroups] = useState([]);
     const [sellers, setSellers] = useState([]);
     const [catalogs, setCatalogs] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
@@ -26,6 +28,7 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
         fetchGroups();
         fetchSellers();
         fetchCatalogs();
+        fetchDepartments();
     }, []);
 
     useEffect(() => {
@@ -45,11 +48,17 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
             setProduct({...product, seller: sellers[0]});
     }, [product, sellers]);
 
+    useEffect(() => {
+        if (!isDefinedAndNotVoid(product.department) && departments.length > 0)
+            setProduct({...product, department: departments[0]});
+    }, [product, departments]);
+
     const handleUsersChange = userGroups => setProduct(product => ({...product, userGroups}));
     const handleCatalogsChange = catalogs => setProduct(product => ({...product, catalogs}));
     const handleCategoriesChange = categories => setProduct(product => ({...product, categories}));
     const handleChange = ({ currentTarget }) => setProduct({...product, [currentTarget.name]: currentTarget.value});
     const handleSellerChange = ({ currentTarget }) => setProduct({...product, seller : sellers.find(seller => seller.id === parseInt(currentTarget.value))});
+    const handleDepartmentChange = ({ currentTarget }) => setProduct({...product, department : departments.find(d => d.id === parseInt(currentTarget.value))});
 
     const fetchGroups = () => {
         GroupActions.findAll()
@@ -58,6 +67,16 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                         // TODO : Notification flash d'une erreur
                         history.replace("/components/products");
                     });
+    };
+
+    const fetchDepartments = () => {
+        DepartmentActions
+            .findAll()
+            .then(response => setDepartments(response))
+            .catch(error => {
+                // TODO : Notification flash d'une erreur
+                history.replace("/components/products");
+            });
     };
 
     const fetchCatalogs = () => {
@@ -129,12 +148,13 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                     <SelectMultiple name="categories" label="Catégories" value={ product.categories } error={ errors.categories } onChange={ handleCategoriesChange } data={ categories.map(category => ({value: category.id, label: category.name, isFixed: false})) }/>
                 </CCol>
                 <CCol xs="12" sm="6">
-                    <CLabel htmlFor="select">Durée de vie</CLabel>
-                    <CSelect custom name="productGroup" id="productGroup" value={ product.productGroup } onChange={ handleChange }>
-                        <option value="J + 1">J + 1</option>
+                    <CLabel htmlFor="select">Rayon</CLabel>
+                    <CSelect custom name="productGroup" id="productGroup" value={ isDefined(product.department) ? product.department.id : 0 } onChange={ handleDepartmentChange }>
+                        {/* <option value="J + 1">J + 1</option>
                         <option value="J + 3">J + 3</option>
                         <option value="J + 6">J + 6</option>
-                        <option value="J + 10">J + 10</option>
+                        <option value="J + 10">J + 10</option> */}
+                        { departments.map(d => <option value={ d.id }>{ d.name }</option>) }
                     </CSelect>
                 </CCol>
             </CRow>

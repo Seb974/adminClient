@@ -12,11 +12,13 @@ import MercureContext from 'src/contexts/MercureContext';
 import CIcon from '@coreui/icons-react';
 import Roles from 'src/config/Roles';
 import { updateBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
+import PlatformContext from 'src/contexts/PlatformContext';
 
-const StatChart = ({ sales, interval, ...attributes }) => {
+const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
 
   const target = 60;
   const now = new Date();
+  const { platform } = useContext(PlatformContext);
   const { currentUser, supervisor, seller } = useContext(AuthContext);
   const dates = { start: getDateFrom(now, -interval, 0), end: now };
   const { updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
@@ -28,6 +30,19 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   const [viewedZones, setViewedZones] = useState([]);
   const [dataset, setDataset] = useState([]);
   const [mercureOpering, setMercureOpering] = useState(false);
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+        let viewedSales = [];
+        if (Roles.isStoreManager(currentUser))
+            viewedSales = isDefined(storeSales) ? storeSales : [];
+        else if (Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser))
+            viewedSales = isDefined(storeSales) && isDefined(sales) ? [...sales, ...storeSales] : [];
+        else
+            viewedSales = isDefined(sales) ? sales : [];
+
+        setOrders(viewedSales);
+  }, [sales, storeSales]);
 
   useEffect(() => {
       getPeriod();
@@ -41,24 +56,23 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   }, [sellers]);
 
   useEffect(() => {
-      const datas = !isDefined(supervisor) ? 
-          getFormattedDatas([
-              {label: 'Ventes', color: brandSuccess, backgroundColor: brandSuccess, borderWidth: 2, data: getFormattedSales()},
-              {label: 'Achats', color: brandInfo, borderWidth: 2, data: getFormattedProvisions()},
-              {label: 'Objectif de vente', color: brandDanger, borderWidth: 1, dash: [8, 5], data: getFormattedTarget()}
-          ])
-          :
-          getFormattedDatas([
-              {label: 'Achats', color: brandSuccess, backgroundColor: brandSuccess, borderWidth: 2, data: getFormattedSales()}
-          ])
-      ;
-      setDataset(datas);
-  }, [period, sales, provisions]);
+        const datas = !isDefined(supervisor) ? 
+            getFormattedDatas([
+                {label: 'Ventes', color: brandSuccess, backgroundColor: brandSuccess, borderWidth: 2, data: getFormattedSales()},
+                {label: 'Achats', color: brandInfo, borderWidth: 2, data: getFormattedProvisions()},
+                {label: 'Objectif de vente', color: brandDanger, borderWidth: 1, dash: [8, 5], data: getFormattedTarget()}
+            ])
+            :
+            getFormattedDatas([
+                {label: 'Achats', color: brandSuccess, backgroundColor: brandSuccess, borderWidth: 2, data: getFormattedSales()}
+            ]);
+        setDataset(datas);
+    }, [period, orders, provisions]);
 
   useEffect(() => {
       if (isDefinedAndNotVoid(zones))
-          setViewedZones(getSalesPerZone())
-  }, [sales, zones]);
+          setViewedZones(getSalesPerZone());
+    }, [orders, zones]);
 
   useEffect(() => {
     if (isDefinedAndNotVoid(updatedProvisions) && !mercureOpering) {
@@ -75,10 +89,14 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   };
 
   const fetchProvisions = () => {
-      console.log(sellers);
       ProvisionActions
           .findBetween(getUTCDates(), sellers)
-          .then(response => setProvisions(response));
+          .then(response => {
+                let storesProvisions = response;
+                if (Roles.hasAdminPrivileges(currentUser) || Roles.isPicker(currentUser))
+                    storesProvisions = response.filter(p => isDefined(p.store) && isDefined(p.store.platform));
+                setProvisions(storesProvisions);
+            });
   };
 
   const fetchZones = () => {
@@ -93,8 +111,8 @@ const StatChart = ({ sales, interval, ...attributes }) => {
       return {start: UTCStart, end: UTCEnd};
   };
 
-  const getFormattedSales = () => period.map(d => sales.reduce((sum, s) => sum += isSameDate(d, new Date(s.deliveryDate)) ? getTotalOrder(s) : 0, 0));     // s.totalHT
-  
+  const getFormattedSales = () => period.map(d => orders.reduce((sum, s) => sum += isSameDate(d, new Date(s.deliveryDate)) ? getTotalOrder(s) : 0, 0));     // s.totalHT
+
   const getFormattedProvisions = () => period.map(d => provisions.reduce((sum, p) => sum += isSameDate(d, new Date(p.provisionDate)) ? getTotalProvision(p.goods) : 0, 0));
   
   const getFormattedTarget = () => period.map(date => target);
@@ -103,16 +121,18 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   
   const getDataMax = data => data.reduce((max, d) => max = d > max ? d : max, 0);
 
-  const getSalesPerZone = () => zones.map(z => {
-    return { name: z.name, total: sales.reduce((sum, s) => sum += z.cities.findIndex(c => c.zipCode === s.metas.zipcode) !== -1 ? getTotalOrder(s) : 0, 0) };      // s.totalHT
-  });
+  const getSalesPerZone = () => zones.map(z => ({ name: z.name, total: orders.reduce((sum, s) => sum += z.cities.findIndex(c => c.zipCode === s.metas.zipcode) !== -1 ? getTotalOrder(s) : 0, 0) }));
 
   const getTotalOrder = order => order.items.reduce((sum, i) => sum += i.price * (isDefined(i.deliveredQty) ? i.deliveredQty : i.orderedQty), 0);
 
-  const getClients = () => [...new Set(sales.map(s => s.email))].length;
+  const getClients = () => {
+      const onlineClients = [...new Set(orders.filter(s => isDefined(s.email)).map(s => s.email))].length;
+      const storeClients = orders.reduce((sum, curr) => sum += isDefined(curr.numberOfSales) ? curr.numberOfSales : 0, 0);
+      return onlineClients + storeClients;
+  };
 
   const getTurnover = () => {
-    return sales.reduce((tSum, s) => {
+    return orders.reduce((tSum, s) => {
         return tSum += s.items.reduce((sum, i) => {
             const quantity = isDefined(i.deliveredQty) ? i.deliveredQty : i.orderedQty;
             return sum += (quantity * i.price);
@@ -121,13 +141,13 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   };
 
   const getPlatformPart = () => {
-      return sales.reduce((tSum, s) => {
-          return tSum += s.items.reduce((sum, i) => {
-              const platformPart = i.product.seller.ownerRate / 100;
-              const quantity = isDefined(i.deliveredQty) ? i.deliveredQty : i.orderedQty;
-              return sum += (quantity * i.price * platformPart);
-          }, 0);
-      }, 0).toFixed(2);
+    return orders.reduce((tSum, s) => {
+        return tSum += isDefined(s.numberOfSales) ? 0 : s.items.reduce((sum, i) => {
+            const platformPart = i.product.seller.ownerRate / 100;
+            const quantity = isDefined(i.deliveredQty) ? i.deliveredQty : i.orderedQty;
+            return sum += (quantity * i.price * platformPart);
+        }, 0);
+    }, 0).toFixed(2);
   };
 
   const getGain = () => {
@@ -136,7 +156,8 @@ const StatChart = ({ sales, interval, ...attributes }) => {
   };
 
   const getMax = () => {
-    const salesMax = getDataMax(getFormattedSales());
+    const formattedSales = getFormattedSales();
+    const salesMax = getDataMax(formattedSales);
     const provisionMax = getDataMax(getFormattedProvisions());
     return salesMax < provisionMax ? provisionMax : salesMax;
   };
@@ -156,13 +177,13 @@ const StatChart = ({ sales, interval, ...attributes }) => {
     <>
         <CRow>
             <CCol xs="12" sm={ !isDefined(supervisor) ? "6" : "4"} lg={ !isDefined(supervisor) ? "3" : "4"}>
-                <CWidgetIcon text="Commandes" header={ sales.length } color="primary" iconPadding={ false }>
+                <CWidgetIcon text="Commandes" header={ "" + orders.length } color="primary" iconPadding={ false }>
                     <CIcon width={ 24 } name="cil-clipboard"/>
                 </CWidgetIcon>
             </CCol>
             { !isDefined(supervisor) && 
                 <CCol xs="12" sm="6" lg="3">
-                    <CWidgetIcon text="Clients" header={ !isDefined(supervisor) ? getClients() : 0 } color="info" iconPadding={ false }>
+                    <CWidgetIcon text="Clients" header={ !isDefined(supervisor) ? "" + getClients() : "0" } color="info" iconPadding={ false }>
                         <CIcon width={ 24 } name="cil-people"/>
                     </CWidgetIcon>
                 </CCol>
@@ -170,7 +191,7 @@ const StatChart = ({ sales, interval, ...attributes }) => {
             <CCol xs="12" sm={ !isDefined(supervisor) ? "6" : "4"} lg={ !isDefined(supervisor) ? "3" : "4"}>
                 <CWidgetIcon 
                     text={ !isDefined(supervisor) ? "Chiffre d'affaires" : "Moyenne" }
-                    header={ !isDefined(supervisor) ? getTurnover() : (isDefinedAndNotVoid(sales) ? (getTurnover() / sales.length).toFixed(2) : 0) + " €" }
+                    header={ !isDefined(supervisor) ? getTurnover() : (isDefinedAndNotVoid(orders) ? (getTurnover() / orders.length).toFixed(2) : 0) + " €" }
                     color="warning"
                     iconPadding={ false }
                 >
@@ -207,7 +228,8 @@ const StatChart = ({ sales, interval, ...attributes }) => {
                 <CCardFooter>
                   <CRow className="text-center">
                     { viewedZones.map((zone, index) => {
-                        const percent = (zone.total / viewedZones.reduce((sum, z) => sum += z.total, 0) * 100).toFixed(2);
+                        const totalZones = viewedZones.reduce((sum, z) => sum += z.total, 0);
+                        const percent = totalZones > 0 ? (zone.total / totalZones * 100).toFixed(2) : 0;
                         return (
                             <CCol md sm="12" className="mb-sm-2 mb-0" key={ index }>
                                 <div className="text-muted">{ zone.name }</div>

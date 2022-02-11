@@ -6,6 +6,8 @@ const Agents = React.lazy(() => import('./views/components/agents/agents'));
 const Agent = React.lazy(() => import('./views/components/agents/agent'));
 const Categories = React.lazy(() => import('./views/components/categories/categories'));
 const Category = React.lazy(() => import('./views/components/categories/category'));
+const Departments = React.lazy(() => import('./views/components/departments/departments'));
+const Department = React.lazy(() => import('./views/components/departments/department'));
 const Groups = React.lazy(() => import('./views/components/groups/groups'));
 const Group = React.lazy(() => import('./views/components/groups/group'));
 const Containers = React.lazy(() => import('./views/components/containers/containers'));
@@ -39,6 +41,7 @@ const Banners = React.lazy(() => import('./views/components/banners/banners'));
 const Banner = React.lazy(() => import('./views/components/banners/banner'));
 const Relaypoints = React.lazy(() => import('./views/components/relaypoints/relaypoints'));
 const Relaypoint = React.lazy(() => import('./views/components/relaypoints/relaypoint'));
+const SalesPerStore = React.lazy(() => import('./views/components/stores/SalesPerStore'))
 const Stores = React.lazy(() => import('./views/components/stores/stores'));
 const Store = React.lazy(() => import('./views/components/stores/store'));
 const Preparations = React.lazy(() => import('./views/components/preparations/preparations'));
@@ -127,6 +130,8 @@ const routes = [
   { path: '/components/agents', name: 'Agents', component: Agents },
   { path: '/components/categories/:id', name: 'Category', component: Category },
   { path: '/components/categories', name: 'Categories', component: Categories },
+  { path: '/components/departments/:id', name: 'Department', component: Department },
+  { path: '/components/departments', name: 'Departments', component: Departments },
   { path: '/components/groups/:id', name: 'Group', component: Group },
   { path: '/components/groups', name: 'Groups', component: Groups },
   { path: '/components/containers/:id', name: 'Container', component: Container },
@@ -160,6 +165,7 @@ const routes = [
   { path: '/components/banners', name: 'Banners', component: Banners },
   { path: '/components/relaypoints/:id', name: 'Relaypoint', component: Relaypoint },
   { path: '/components/relaypoints', name: 'Relaypoints', component: Relaypoints },
+  { path: '/components/stores/sales', name: 'SalesPerStore', component: SalesPerStore },
   { path: '/components/stores/:id', name: 'Store', component: Store },
   { path: '/components/stores', name: 'Stores', component: Stores },
   { path: '/components/orders/:id', name: 'Order', component: Order },

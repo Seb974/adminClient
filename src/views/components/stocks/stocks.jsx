@@ -8,12 +8,15 @@ import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import StockActions from 'src/services/StockActions';
+import StoreActions from 'src/services/StoreActions';
 import ProductsContext from 'src/contexts/ProductsContext';
+import Select from 'src/components/forms/Select';
 
 const Stocks = (props) => {
 
     const itemsPerPage = 4;
-    const { currentUser } = useContext(AuthContext);
+    const { currentUser, seller } = useContext(AuthContext);
+    const mainStore = { id: -1, name: "Principal" };
     const fields = ['name', 'Sécurité', 'Alerte', 'Niveau'];
     const [stocks, setStocks] = useState([]);
     const { height, width } = useWindowDimensions();
@@ -21,10 +24,19 @@ const Stocks = (props) => {
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
+    const [stores, setStores] = useState([]);
+    const [selectedStore, setSelectedStore] = useState(mainStore);
 
-    useEffect(() => getDisplayedProducts(), []);
+    useEffect(() => {
+        getStores();
+        getDisplayedProducts();
+        if (Roles.isStoreManager(currentUser))
+            setSelectedStore(seller.stores[0]);
+    }, []);
+
     useEffect(() => getDisplayedProducts(), [search]);
     useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
+    useEffect(() => setStocks(defineStocks(displayedProducts)), [displayedProducts, selectedStore]);
 
     const getDisplayedProducts = async (page = 1) => {
         const response = isDefined(search) && search.length > 0 ? await getSearchedProducts(search, page) : await getProducts(page);
@@ -37,7 +49,12 @@ const Stocks = (props) => {
     const getProducts = (page = 1) => page >=1 ? ProductActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedProducts = (word, page = 1) => ProductActions.findWord(word, page, itemsPerPage);
 
-    useEffect(() => setStocks(defineStocks(displayedProducts)), [displayedProducts]);
+    const getStores = () => {
+        StoreActions
+            .findAll()
+            .then(response => setStores(response))
+            .catch(error => console.log(error));
+    };
 
     const defineStocks = products => {
         let newStocks = [];
@@ -48,18 +65,27 @@ const Stocks = (props) => {
     };
 
     const getStock = (product, stocks) => {
-        if (isDefined(product.stock))
-            stocks = [...stocks, {...product.stock, name: product.name, unit: product.unit, updated: false }];
-        else if (isDefinedAndNotVoid(product.variations)) {
+        if (isDefinedAndNotVoid(product.stocks)) {
+            const searchedProduct = getStockFromSelectedStore(product);
+            stocks = isDefined(searchedProduct) ? [...stocks, {...searchedProduct, name: product.name, unit: product.unit, updated: false }] : stocks;
+        } else if (isDefinedAndNotVoid(product.variations)) {
             product.variations.map(variation => {
                 if (isDefinedAndNotVoid(variation.sizes)) {
                     variation.sizes.map(size => {
-                        stocks = [...stocks, {...size.stock, name: getProductName(product, variation, size), unit: product.unit, updated: false}];
+                        const searchedSize = getStockFromSelectedStore(size);
+                        stocks = isDefined(searchedSize) ? [...stocks, {...searchedSize, name: getProductName(product, variation, size), unit: product.unit, updated: false}] : stocks;
                     });
                 }
             });
         }
         return stocks;
+    };
+
+    const getStockFromSelectedStore = element => {
+        if (selectedStore.id === mainStore.id)
+            return element.stocks.find(s => isDefined(s.platform));
+        else
+            return element.stocks.find(s => s.store === selectedStore['@id']);
     };
 
     const getProductName = (product, variation, size) => {
@@ -74,8 +100,16 @@ const Stocks = (props) => {
 
     const handleChange = ({ currentTarget }, stock) => {
         const index = stocks.findIndex(s => parseInt(s.id) === parseInt(stock.id));
-        const newStocks = stocks.map((s, i) => i !== index ? s : {...stock, quantity: currentTarget.value, updated: true} );
+        const newStocks = stocks.map((s, i) => i !== index ? s : {...stock, [currentTarget.name]: currentTarget.value, updated: true} );
         setStocks(newStocks);
+    };
+
+    const handleStoreChange = ({ currentTarget }) => {
+        const newStore = isDefinedAndNotVoid(stores) ? 
+            stores.find(s => s.id === parseInt(currentTarget.value))
+        : mainStore;
+        setSelectedStore(isDefined(newStore) ? newStore : mainStore);
+        setCurrentPage(1);
     };
 
     const handleUpdate = () => {
@@ -83,7 +117,7 @@ const Stocks = (props) => {
         stocksToUpdate.map(stock => {
             const {updated, name, ...dbStock} = stock;
             StockActions
-                .update(dbStock.id, {...dbStock, quantity: getFloat(dbStock.quantity)})
+                .update(dbStock.id, {...dbStock, quantity: getFloat(dbStock.quantity), alert: getFloat(dbStock.alert), security: getFloat(dbStock.security)})
                 .then(response => {
                     if (response.data.id === stocksToUpdate[stocksToUpdate.length - 1].id) {
                         const newStocks = stocks.map(stock => ({...stock, updated: false}));
@@ -114,33 +148,71 @@ const Stocks = (props) => {
           <CCard>
             <CCardHeader>Etat des stocks</CCardHeader>
             <CCardBody>
-            <CDataTable
-              items={ stocks }
-              fields={ width < 576 ? ['name', 'Niveau'] : fields }
-              bordered
-              itemsPerPage={ stocks.length }
-              pagination={{
-                'pages': Math.ceil(totalItems / itemsPerPage),
-                'activePage': currentPage,
-                'onActivePageChange': page => setCurrentPage(page),
-                'align': 'center',
-                'dots': true,
-                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
-              }}
-              tableFilter
-              onTableFilterChange={ word => setSearch(word) }
-              scopedSlots = {{
-                'name':
-                  item => <td style={{ width: '25%'}}>{ getSignPostName(item) }</td>
-                ,
-                'Sécurité':
-                  item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.security } { item.unit }</td>
-                ,
-                'Alerte':
-                  item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.alert } { item.unit }</td>
-                ,
-                'Niveau':
-                  item => <td>
+                <CRow>
+                    <CCol xs="12" lg="12" className="my-2">
+                        <Select className="mr-2" name="store" label="Stock" value={ isDefined(selectedStore) ? selectedStore.id : mainStore.id } onChange={ handleStoreChange }>
+                            { !Roles.isStoreManager(currentUser) && <option value={ mainStore.id }>{ mainStore.name }</option> }
+                            { isDefinedAndNotVoid(stores) && stores.map(store => <option key={ store.id } value={ store.id }>{ store.seller.name + " - " + store.name }</option>) }
+                        </Select>
+                    </CCol>
+                </CRow>
+                <CDataTable
+                items={ stocks }
+                fields={ width < 576 ? ['name', 'Niveau'] : fields }
+                bordered
+                itemsPerPage={ stocks.length }
+                pagination={{
+                    'pages': Math.ceil(totalItems / itemsPerPage),
+                    'activePage': currentPage,
+                    'onActivePageChange': page => setCurrentPage(page),
+                    'align': 'center',
+                    'dots': true,
+                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                }}
+                tableFilter
+                onTableFilterChange={ word => setSearch(word) }
+                scopedSlots = {{
+                    'name':
+                    item => <td style={{ width: '25%'}}>{ getSignPostName(item) }</td>
+                    ,
+                    'Sécurité':
+                    // item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.security } { item.unit }</td>
+                    item => <td>
+                                <CInputGroup>
+                                    <CInput
+                                        name="security"
+                                        type="number"
+                                        value={ item.security }
+                                        onChange={ e => handleChange(e, item) }
+                                        style={{ maxWidth: '180px'}}
+                                        disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
+                                    />
+                                    <CInputGroupAppend>
+                                        <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                    </CInputGroupAppend>
+                                </CInputGroup>
+                            </td>
+                    ,
+                    'Alerte':
+                    // item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.alert } { item.unit }</td>
+                    item => <td>
+                                <CInputGroup>
+                                    <CInput
+                                        name="alert"
+                                        type="number"
+                                        value={ item.alert }
+                                        onChange={ e => handleChange(e, item) }
+                                        style={{ maxWidth: '180px'}}
+                                        disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
+                                    />
+                                    <CInputGroupAppend>
+                                        <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                    </CInputGroupAppend>
+                                </CInputGroup>
+                            </td>
+                    ,
+                    'Niveau':
+                    item => <td>
                                 <CInputGroup>
                                     <CInput
                                         name="quantity"
@@ -153,9 +225,9 @@ const Stocks = (props) => {
                                         <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
                                     </CInputGroupAppend>
                                 </CInputGroup>
-                        </td>
-              }}
-            />
+                            </td>
+                }}
+                />
             </CCardBody>
             <CCardFooter className="d-flex justify-content-center">
                 <CButton size="sm" color="success" onClick={ handleUpdate } className="my-3" style={{width: '140px', height: '35px'}} disabled={ stocks.findIndex(s => s.updated) === -1 }>

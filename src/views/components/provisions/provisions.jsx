@@ -69,7 +69,7 @@ const Provisions = (props) => {
         setLoading(true);
         const UTCDates = getUTCDates(dates);
         ProvisionActions.findSuppliersBetween(UTCDates, selectedSuppliers, selectedSellers, currentUser)
-                .then(response =>{
+                .then(response => {
                     setProvisions(response);
                     setLoading(false);
                 })
@@ -140,6 +140,16 @@ const Provisions = (props) => {
         const variationName = exists(variation, 'color') ? " - " + variation.color : "";
         const sizeName = exists(size, 'name') ? " " + size.name : "";
         return product.name + variationName + sizeName;
+    };
+
+    const getWarehouseName = provision => {
+        if (isDefined(provision.platform)) {
+            return "Principal";
+        }
+        else if (isDefined(provision.store)) {
+            const store = seller.stores.find(s => s['@id'] === provision.store);
+            return isDefined(store) ? store.name : "";
+        }
     };
 
     const exists = (entity, variable) => {
@@ -224,6 +234,9 @@ const Provisions = (props) => {
                                                     <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >
                                                         { item.seller.name }
                                                         <br/>
+                                                        <span style={{ fontSize: '0.75em', fontStyle: 'italic'}}>
+                                                            { getWarehouseName(item) }
+                                                        </span>
                                                     </Link>
                                                 </td>
                                     ,
