@@ -15,6 +15,7 @@ import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import { getDateFrom } from 'src/helpers/utils';
 import Suppliers from 'src/components/productPages/Suppliers';
+import PlatformContext from 'src/contexts/PlatformContext';
 
 const ProductPage = ({ match, history }) => {
 
@@ -27,11 +28,12 @@ const ProductPage = ({ match, history }) => {
     const [isAdmin, setIsAdmin] = useState(false);
     const { currentUser } = useContext(AuthContext);
     const { products } = useContext(ProductsContext);
+    const { platform } = useContext(PlatformContext);
     const defaultVariant = null;
     const defaultVariantSize = defaultVariant !== null && products[0].variations[0].sizes && products[0].variations[0].sizes.length > 0 ? products[0].variations[0].sizes[0] : null;
     const defaultProduct = {product: products[0], variation: defaultVariant, size: defaultVariantSize};
     const defaultComponent = {...defaultProduct, count: 0, quantity: ""};
-    const defaultStock = {quantity: 0, alert: "", security:""};
+    const defaultStock = {quantity: 0, alert: "", security:"", platform: platform['@id']};
     const defaultVariation = {count: 0, name: "", image: null, sizes: [defaultSize]};
     const [product, setProduct] = useState({name: "", weight:"", contentWeight:"", seller: {id: -1, name: ""}, userGroups: [], catalogs: [], image: null, unit: "Kg", productGroup: "J + 1", fullDescription: "", stock: defaultStock, stockManaged: true, tax: "-1", uniquePrice: true, prices: [], available: true, storeAvailable: true, requireLegalAge: false, requireDeclaration: true, new: true, isMixed: false, categories: [], discount: "", offerEnd: today, department: {id: -1, name: ""}});
     const [errors, setErrors] = useState({name: "", weight: "", contentWeight:"", seller: "", userGroups: "", catalogs: [], image: "", unit: "", productGroup: "", fullDescription: "", stock: {alert: "", security:""}, stockManaged: "", tax: "", uniquePrice: "", prices: [{name: 'BASE', price:""}, {name: 'USER_VIP', price:""}, {name: 'PRO_CHR', price:""}, {name: 'PRO_GC', price:""}, {name: 'PRO_VIP', price:""}], available: "", storeAvailable: "", requireLegalAge: "", new: "", isMixed: "", categories: "", discount: "", offerEnd: "", department: ""});

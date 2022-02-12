@@ -167,10 +167,13 @@ const Products = (props) => {
         <CRow>
         <CCol xs="12" lg="12">
           <CCard>
-            <CCardHeader>
-                Liste des produits
+            <CCardHeader className="d-flex align-items-center">
+                <CCol col="6" sm="6" md="6">
+                    Liste des produits
+                </CCol>
                 <CCol col="6" sm="4" md="2" className="ml-auto">
-                    <Link role="button" to="/components/products/new" block variant="outline" color="success">CRÉER</Link>
+                    <Link role="button" to="/components/products/new" variant="outline" color="success">CRÉER</Link>    
+                    {/* block */}
                 </CCol>
             </CCardHeader>
             <CCardBody>

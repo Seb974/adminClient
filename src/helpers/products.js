@@ -58,10 +58,13 @@ export const getTotalContentWeight = (components) => {
 };
 
 export const getProductToWrite = (product, type, categories, variations, adaptedComponents, components) => {
-    const {image, stock, userGroups, catalogs, ...noImgProduct} = product;
+    const {image, stock, userGroups, catalogs, stocks, ...noImgProduct} = product;
+    const newStocks = isDefinedAndNotVoid(product.stocks) && isDefined(stock["@id"]) ? 
+            product.stocks.map(s => s["@id"] === stock["@id"] ? getFormattedStock(stock, s.quantity) : s) : [getFormattedStock(stock, 0)];
     return {
         ...noImgProduct,
-        stock: type === "simple" ? {...stock, name: noImgProduct.name, unit: type === "mixed" ? "U" : noImgProduct.unit} : null,
+        // stock: type === "simple" ? {...stock, name: noImgProduct.name, unit: type === "mixed" ? "U" : noImgProduct.unit} : null,
+        stocks: type === "simple" ? newStocks : [],
         userGroups: userGroups.map(userGroup => userGroup['@id']),
         catalogs: catalogs.map(catalog => catalog['@id']),
         productGroup: type === "mixed" ? null : product.productGroup,
@@ -86,6 +89,19 @@ export const getProductToWrite = (product, type, categories, variations, adapted
     };
 };
 
+const getFormattedStock = (stock, quantity) => {
+    const { alert, security } = stock;
+    return {...stock, alert: getFloat(alert), security: getFloat(security),  quantity: getFloat(quantity)} 
+};
+
+const getFormattedSizeStock = (stock, product, quantity) => {
+    const { alert, security, platform } = product.stock;
+    return isDefined(stock) ? 
+        {...stock, alert: getFloat(alert), security: getFloat(security), quantity: getFloat(quantity)} :
+        { platform, alert: getFloat(alert), security: getFloat(security), quantity: getFloat(quantity) };
+};
+
+
 export const getComponentsToWrite = (components) => {
     return components.map(component => {
         const { count, variation, size, ...mainVarComponent} = component;
@@ -100,17 +116,21 @@ export const getVariationToWrite = (variation, product) => {
         ...noImgVar,
         color: variation.name,
         sizes: variation.sizes.map(size => {
+            const { stock, ...noStockSize} = size
+            const newStocks = isDefinedAndNotVoid(size.stocks) && isDefined(product.stock["@id"]) ? 
+                size.stocks.map(s => isDefined(s.platform) ? getFormattedSizeStock(s, product, s.quantity) : s) : [getFormattedSizeStock(null, product, 0)];
             return {
-                ...size,
+                ...noStockSize,
                 name: size.name,
-                stock: {
-                    ...size.stock,
-                    name: getProductName(product, variation, size),
-                    unit: product.unit,
-                    quantity: size.stock !== undefined && size.stock !== null && size.stock.quantity ? size.stock.quantity : 0,
-                    alert: parseFloat(product.stock.alert), 
-                    security: parseFloat(product.stock.security)
-                }
+                stocks: newStocks,
+                // stock: {
+                //     ...size.stock,
+                //     name: getProductName(product, variation, size),
+                //     unit: product.unit,
+                //     quantity: size.stock !== undefined && size.stock !== null && size.stock.quantity ? size.stock.quantity : 0,
+                //     alert: parseFloat(product.stock.alert), 
+                //     security: parseFloat(product.stock.security)
+                // }
             }
         })
     };
@@ -131,8 +151,10 @@ export const defineType = (product) => {
 };
 
 export const formatProduct = (product, defaultStock) => {
-    const {prices, categories, stock, variations, discount, offerEnd, storeAvailable} = product;
+    const {prices, categories, stock, variations, discount, offerEnd, storeAvailable, stocks} = product;
     const basePrice = prices !== null && prices !== undefined && prices.length > 0 ? prices[0].amount : "";
+    const viewableStock = isDefinedAndNotVoid(stocks) ? stocks.find(s => isDefined(s.platform)) : 
+        (isDefinedAndNotVoid(variations) && isDefinedAndNotVoid(variations[0].sizes[0].stocks) ? variations[0].sizes[0].stocks.find(s => isDefined(s.platform)) : undefined);
     const formattedProduct = {
         ...product, 
         userGroups: isDefinedAndNotVoid(product.userGroups) ? isDefined(product.userGroups[0].label) ? product.userGroups : product.userGroups.map(group => ({value: group})) : [],
@@ -140,7 +162,8 @@ export const formatProduct = (product, defaultStock) => {
         suppliers: isDefinedAndNotVoid(product.suppliers) ? isDefined(product.suppliers[0].label) ? product.suppliers : product.suppliers.map(supplier => ({...supplier, value: supplier['@id'], label: supplier.name, isFixed: false})) : [],
         categories: categories.map(category => ({value: category.id, label: category.name, isFixed: false})),
         uniquePrice: isDefinedAndNotVoid(prices) ? prices.every(price => price.amount === basePrice) : true,
-        stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock,
+        // stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock,
+        stock: isDefined(viewableStock) ? viewableStock : defaultStock, 
         discount: isDefined(discount) ? discount : "",
         offerEnd: isDefined(offerEnd) ? new Date(offerEnd) : new Date(),
         storeAvailable: isDefined(storeAvailable) ? storeAvailable : true
@@ -172,6 +195,7 @@ export const getWritableProduct = product => {
         seller: isDefined(product.seller) ? product.seller['@id'] : null,
         department: isDefined(product.department) ? product.department['@id'] : null,
         stock: isDefined(product.stock) ? product.stock['@id'] : null,
+        stocks: isDefined(product.stocks) ? product.stocks.map(s => s['@id']) : [],
         tax: isDefined(product.tax) ? product.tax['@id'] : null,
 
 

@@ -249,6 +249,13 @@ function getNav(translation, currentUser)
         _tag: 'CSidebarNavTitle',
         _children: [translation("component.label")]
       },
+    !["ADMIN", "SELLER"].includes(mainRole) ? voidValue :  
+      {
+        _tag: 'CSidebarNavItem',
+        name: translation("products.label"),
+        to: '/components/products',
+        icon: <CIcon name="cil-fastfood" customClasses="c-sidebar-nav-icon"/>,
+      },
     !["ADMIN"].includes(mainRole) ? voidValue :  
         {
           _tag: 'CSidebarNavItem',
@@ -262,13 +269,6 @@ function getNav(translation, currentUser)
           name: translation("departments.label"),
           to: '/components/departments',
           icon: <CIcon name="cil-folder-open" customClasses="c-sidebar-nav-icon"/>,
-        },
-    !["ADMIN", "SELLER"].includes(mainRole) ? voidValue :  
-        {
-          _tag: 'CSidebarNavItem',
-          name: translation("products.label"),
-          to: '/components/products',
-          icon: <CIcon name="cil-fastfood" customClasses="c-sidebar-nav-icon"/>,
         },
     !["ADMIN"].includes(mainRole) ? voidValue :  
         {
