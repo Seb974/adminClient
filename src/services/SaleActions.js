@@ -26,6 +26,14 @@ function findStoreSalesBetween(dates, store) {
         .then(response => response.data['hydra:member'].sort((a, b) => (new Date(a.date) < new Date(b.date)) ? -1 : 1));
 }
 
+function findValidatedSalesBetween(dates, store) {
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `date[after]=${ getStringDate(UTCDates.start) }&date[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/sales?store=${ store }&${ dateLimits }&order[date]=asc`)
+        .then(response => response.data['hydra:member']);
+}
+
 function deleteOrder(order, isAdmin) {
     if (order.isRemains || isAdmin)
         return api.delete('/api/sales/' + order.id)
@@ -67,6 +75,7 @@ export default {
     findAll,
     findSalesBetween,
     findStoreSalesBetween,
+    findValidatedSalesBetween,
     delete: deleteOrder,
     find,
     update,

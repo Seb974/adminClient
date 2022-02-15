@@ -18,6 +18,19 @@ function findWord(word, page = 1, items = 30) {
         .then(response => response.data);
 }
 
+function findFromSupplierAndStore(seller, supplier, enabledIds) {
+    const ids = getIdsList(enabledIds);
+    return api
+        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&${ ids }&storeAvailable=true&order[name]=asc`)
+        .then(response => response.data['hydra:member']);
+}
+
+function findFromSupplierAndPlatform(seller, supplier) {
+    return api
+        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&available=true&order[name]=asc`)
+        .then(response => response.data['hydra:member']);
+}
+
 function deleteProduct(id) {
     return api
         .delete('/api/products/' + id);
@@ -73,10 +86,21 @@ function updateComponent(id, component) {
               .then(response => response.data['@id']);
 }
 
+function getIdsList(ids) {
+    let idsList = "";
+    ids.map((id, i) => {
+        const separator = i < ids.length - 1 ? "&" : "";
+        idsList += "id[]=" + id + separator;
+    });
+    return idsList;
+}
+
 export default { 
     findAll,
     findAllPaginated,
     findWord,
+    findFromSupplierAndStore,
+    findFromSupplierAndPlatform,
     delete: deleteProduct,
     find,
     update,

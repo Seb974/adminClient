@@ -16,7 +16,6 @@ const Costs = (props) => {
     const itemsPerPage = 4;
     const { currentUser } = useContext(AuthContext);
     const fields = ['name', 'Avantageux', 'Coût HT'];
-    // const [stocks, setStocks] = useState([]);
     const { height, width } = useWindowDimensions();
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -74,7 +73,6 @@ const Costs = (props) => {
             displayedProducts
                 .filter(p => hasUpdated(p))
                 .map( async product => {
-                    console.log(product);
                     const writableProduct = getWritableProduct(product)
                     return await ProductActions
                                      .update(product.id, {...writableProduct, costs : product.costs.map(({updated, ...c}) => ({...c, supplier: c.supplier['@id'], value: getFloat(c.value)}))})

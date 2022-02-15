@@ -29,14 +29,6 @@ const Suppliers = (props) => {
     const getSuppliers = (page = 1) => page >=1 ? SupplierActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedSuppliers = (word, page = 1) => SupplierActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     SupplierActions.findAll()
-    //         .then(response => {
-    //           setSuppliers(response);
-    //         })
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalSuppliers = [...suppliers];
         setSuppliers(suppliers.filter(supplier => supplier.id !== id));

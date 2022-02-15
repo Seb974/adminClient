@@ -53,3 +53,9 @@ export const isPastHour = date => {
     const compare = new Date(now.getFullYear(), now.getMonth(), now.getDate(), originalDate.getHours(), originalDate.getMinutes(), 0);
     return compare.getTime() < now.getTime();
 };
+
+export const getUTCDates = dates => {
+    const UTCStart = new Date(dates.start.getFullYear(), dates.start.getMonth(), dates.start.getDate(), 4, 0, 0);
+    const UTCEnd = new Date(dates.end.getFullYear(), dates.end.getMonth(), dates.end.getDate() + 1, 3, 59, 0);
+    return {start: UTCStart, end: UTCEnd};
+};
