@@ -99,23 +99,13 @@ function findRecoveries(dates, seller, page, items) {
         .then(response => response.data);
 }
 
-function findDeliveries(dates, user) {
+function findDeliveries(dates, page, items) {
     const status = `status[]=WAITING&status[]=PRE-PREPARED&status[]=PREPARED`;
     const UTCDates = formatUTC(dates);
     const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
     return api
-        .get(`/api/order_entities?${ status }&${ dateLimits }`)
-        .then(response => {
-            const isAdmin = Roles.hasAdminPrivileges(user);
-            const data = isAdmin ? 
-                response.data['hydra:member'] :
-                response.data['hydra:member'].filter(order => {
-                    return order.items.find(item => {
-                        return item.product.seller.users.find(u => u.id === user.id) !== undefined}) !==undefined;
-                });
-            return data.filter(d => !d.catalog.needsParcel)
-                       .sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
-        });
+        .get(`/api/order_entities?truck=1&${ dateLimits }&${ status }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 };
 
 function findCheckouts(dates, relaypoint) {

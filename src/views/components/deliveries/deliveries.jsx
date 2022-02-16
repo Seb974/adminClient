@@ -19,7 +19,7 @@ import MercureContext from 'src/contexts/MercureContext';
 
 const Deliveries = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 5;
     const fields = ['name', 'date', 'total', 'selection', ' '];
     const { platform } = useContext(PlatformContext);
     const { currentUser, supervisor } = useContext(AuthContext);
@@ -35,6 +35,9 @@ const Deliveries = (props) => {
     const [selectAll, setSelectAll] = useState(false);
     const [deliverers, setDeliverers] = useState([]);
     const [selectedDeliverer, setSelectedDeliverer] = useState(null);
+    const [selection, setSelection] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const shop = getShop(platform);
 
     useEffect(() => {
@@ -56,20 +59,27 @@ const Deliveries = (props) => {
     }, [updatedOrders]);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-    useEffect(() => getOrders(), [dates]);
 
-    const getOrders = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        OrderActions.findDeliveries(UTCDates, currentUser)
-                .then(response =>{
-                    setOrders(response.map(data => ({...data, selected: false})));
+    useEffect(() => getOrders(), [dates]);
+    useEffect(() => getOrders(currentPage), [currentPage]);
+    useEffect(() => isAllSelected(), [orders, selection]);
+
+    const getOrders = (page = 1) => {
+        if (page >= 1) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            OrderActions
+                .findDeliveries(UTCDates, page, itemsPerPage)
+                .then(response => {
+                    setOrders(response['hydra:member']);
+                    setTotalItems(response['hydra:totalItems']);
                     setLoading(false);
                 })
                 .catch(error => {
                     console.log(error);
                     setLoading(false);
                 });
+        }
     }
 
     const fetchDeliverers = () => {
@@ -105,31 +115,44 @@ const Deliveries = (props) => {
         setSelectedDeliverer(newDeliverer);
     };
 
-    const handleSelect = item => {
-        const newOrders = orders.map(order => (order.id === item.id ? {...order, selected: !order.selected} : order));
-        if (item.selected && priorities.includes(item.id))
-            setPriorities(priorities.filter(priority => priority !== item.id));
-        setOrders(newOrders);
-    };
+    const handleSelect = item => updateSelection(item);
 
     const handleSelectAll = () => {
-        const newValue = !selectAll;
-        setSelectAll(newValue);
-        const newOrders = orders.map(order => {
-            if (newValue)
-                return order.status !== "WAITING" && !order.selected ? {...order, selected: true} : order;
-            else
-                return order.status !== "WAITING" && order.selected ? {...order, selected: false} : order;
-        });
-        if (!newValue)
-            setPriorities([]);
-        setOrders(newOrders);
+        let newSelection = [];
+        const newSelectState = !selectAll;
+        if (newSelectState)
+            newSelection = [...new Set([...selection, ...orders.filter(o => o.status !== "WAITING" && !isSelectedOrder(o))])];
+        else 
+            newSelection = selection.filter(s => orders.find(o => isSelectedOrder(o)) === undefined)
+        setSelectAll(newSelectState);
+        setSelection(newSelection);
     };
+
+    const isSelectedOrder = order => {
+        return selection.findIndex(s => s.id === order.id) !== -1;
+    }
+
+    const updateSelection = item => {
+        const select = selection.find(s => s.id === item.id);
+        const newSelection = !isDefined(select) ? [...selection, item] : selection.filter(s => s.id !== item.id);
+        if (isDefined(select) && priorities.includes(select.id))
+            setPriorities(priorities.filter(p => p !== item.id));
+        setSelection(newSelection);
+    };
+
+    const isAllSelected = () => {
+        const preparedOrders = orders.filter(o => o.status !== "WAITING");
+        const hasNotSelected = preparedOrders.find(o => !isSelectedOrder(o));
+        if (preparedOrders.length === 0 || hasNotSelected !== undefined)
+          setSelectAll(false);
+        else 
+          setSelectAll(true);
+      };
 
     const handlePriorities = item => {
         const newPriorities = priorities.includes(item.id) ? priorities.filter(priority => priority !== item.id) : [...priorities, item.id];
         setPriorities(newPriorities);
-        if ( !item.selected )
+        if ( !isSelectedOrder(item) )
             handleSelect(item);
     }
 
@@ -207,8 +230,7 @@ const Deliveries = (props) => {
 
     const createTouring = newTrip => {
         let classifiedPoints = [];
-        const ordersToDeliver = orders.filter(order => order.selected);
-        ordersToDeliver.map(order => {
+        selection.map(order => {
             const waypoint = newTrip.find(tripPoint => isSameWaypoint(tripPoint, order));
             classifiedPoints = [...classifiedPoints, {...order, deliveryPriority: waypoint.deliveryPriority}];
         });
@@ -220,11 +242,13 @@ const Deliveries = (props) => {
                 isOpen: true,
                 deliverer: selectedDeliverer['@id']
             })
-            .then(response => setOrders(orders.filter(o => !o.selected)));
+            .then(response => {
+                setOrders(orders.filter(o => isSelectedOrder(o)));
+                setSelection([]);
+            });
     };
 
     const getOrdersTrip = () => {
-        const selection = orders.filter(order => order.selected);
         const trip = selection.reduce((unique, order) => {
             return unique.find(o => isForSameClient(order, o)) !== undefined ? unique : [...unique, order];
         }, []);
@@ -292,7 +316,14 @@ const Deliveries = (props) => {
                                 fields={ fields }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 scopedSlots = {{
                                     'name':
                                         item => <td>
@@ -327,7 +358,8 @@ const Deliveries = (props) => {
                                                         className="mx-1 my-1"
                                                         type="checkbox"
                                                         name="inline-checkbox"
-                                                        checked={ item.selected }
+                                                        // checked={ item.selected }
+                                                        checked={ isSelectedOrder(item) }
                                                         onClick={ () => handleSelect(item) }
                                                         disabled={ item.status === "WAITING" }
                                                         style={{zoom: 2.3}}
@@ -362,7 +394,7 @@ const Deliveries = (props) => {
                                         { deliverers.map(deliverer => <option key={ deliverer.id } value={ deliverer.id }>{ deliverer.name }</option>) }
                                     </Select>
                                 }
-                                <CButton size="sm" color="success" onClick={ handleCreateTrip } className={ "ml-2" } style={{width: '140px', height: '35px'}} disabled={ orders.findIndex(o => o.selected) === -1 }>
+                                <CButton size="sm" color="success" onClick={ handleCreateTrip } className={ "ml-2" } style={{width: '140px', height: '35px'}} disabled={ selection.length == 0 }>
                                     { tripLoading ?
                                         <Spinner
                                             as="span"
