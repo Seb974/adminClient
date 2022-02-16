@@ -15,12 +15,13 @@ import DayOffActions from 'src/services/DayOffActions';
 import SellerActions from 'src/services/SellerActions';
 import { updateRecoveries } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import MercureContext from 'src/contexts/MercureContext';
+import Select from 'src/components/forms/Select';
 
 const Recoveries = (props) => {
 
-    const itemsPerPage = 30;
-    const fields = ['vendeur', 'commande', 'date', 'statut', ' '];
-    const { currentUser, seller, supervisor } = useContext(AuthContext);
+    const itemsPerPage = 3;
+    const fields = ['commande', 'date', 'statut', ' '];
+    const { currentUser, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
     const [orders, setOrders] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -28,15 +29,15 @@ const Recoveries = (props) => {
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [daysOff, setDaysOff] = useState([]);
     const [sellers, setSellers] = useState([]);
-    const [recoveries, setRecoveries] = useState([]);
     const [details, setDetails] = useState([]);
-    const [currentItems, setCurrentItems] = useState(recoveries)
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedSeller, setSelectedSeller] = useState(null);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         fetchDaysOff();
         fetchSellers();
-        getOrders();
     }, []);
 
     useEffect(() => {
@@ -45,49 +46,27 @@ const Recoveries = (props) => {
     }, [updatedOrders]);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-    useEffect(() => setCurrentItems(recoveries), [recoveries]);
 
-    useEffect(() => {
-        if (sellers.length > 0 && orders.length > 0)
-            getRecoveries();
-    }, [dates, daysOff, sellers, orders]);
+    useEffect(() => getOrders(), [dates, selectedSeller]);
+    useEffect(() => getOrders(currentPage), [currentPage]);
 
-    const getOrders = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        OrderActions
-            .findRecoveries(UTCDates)
-            .then(response =>{
-                setOrders(response);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.log(error);
-                setLoading(false);
-            });
-    }
-
-    const getRecoveries = () => {
-        let newRecoveries = [];
-        sellers.map(seller => {
-            if (isDefined(seller.needsRecovery) && seller.needsRecovery === true) {
-                const sellerOrders = orders.filter(order => order.items.find(item => item.product.seller.id === seller.id));
-                sellerOrders.map(order => {
-                    const recoveryDate = getReverseDeliveryDay(new Date(order.deliveryDate), seller.recoveryDelay);
-                    if (isBetween(recoveryDate, dates.start, dates.end)) {
-                        newRecoveries = [
-                            ...newRecoveries, 
-                            {
-                                seller, 
-                                order: {...order, items: order.items.filter(item => item.product.seller.id === seller.id)},
-                                recoveryDate
-                            }
-                        ];
-                    }
+    const getOrders = (page = 1) => {
+        if (isDefined(selectedSeller) && page >= 1) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            OrderActions
+                .findRecoveries(UTCDates, selectedSeller, page, itemsPerPage)
+                .then(response => {
+                    const newOrders = response['hydra:member'].map(o => ({...o, recoveryDate: getRecoveryDay(new Date(o.deliveryDate), getDelay()) }));
+                    setOrders(newOrders);
+                    setTotalItems(response['hydra:totalItems']);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.log(error);
+                    setLoading(false);
                 });
-            }
-        });
-        setRecoveries(newRecoveries.sort((a, b) => (a.recoveryDate > b.recoveryDate) ? 1 : -1));
+        }
     };
 
     const fetchDaysOff = () => {
@@ -99,9 +78,17 @@ const Recoveries = (props) => {
 
     const fetchSellers = () => {
         SellerActions
-            .findAll()
-            .then(response => setSellers(response))
+            .findSellersNeedingRecovery()
+            .then(response => {
+                setSellers(response);
+                setSelectedSeller(response[0]);
+            })
             .catch(error => console.log(error));
+    };
+
+    const handleSellerChange = ({ currentTarget }) => {
+        const newSeller = sellers.find(seller => seller.id === parseInt(currentTarget.value));
+        setSelectedSeller(newSeller);
     };
 
     const handleDelete = (item) => {
@@ -123,18 +110,33 @@ const Recoveries = (props) => {
         }
     };
 
+    const getDelay = () => isDefined(selectedSeller) && isDefined(selectedSeller.recoveryDelay) ? selectedSeller.recoveryDelay : 0;
+
     const getUTCDates = () => {
-        const UTCStart = new Date(dates.start.getFullYear(), dates.start.getMonth(), dates.start.getDate(), 4, 0, 0);
-        const UTCEnd = new Date(dates.end.getFullYear(), dates.end.getMonth(), dates.end.getDate() + 1, 3, 59, 0);
+        const delay = getDelay();
+        const startSelection = getReverseDeliveryDay(dates.start, delay);
+        const endSelection = getReverseDeliveryDay(dates.end, delay);
+        const UTCStart = new Date(startSelection.getFullYear(), startSelection.getMonth(), startSelection.getDate(), 4, 0, 0);
+        const UTCEnd = new Date(endSelection.getFullYear(), endSelection.getMonth(), endSelection.getDate() + 1, 3, 59, 0);
         return {start: UTCStart, end: UTCEnd};
     }
 
-    const getReverseDeliveryDay = (date, recoveryDelay) => {
+    const getRecoveryDay = (date, recoveryDelay) => {
         let i = 0;
         let dateStart = getDateFrom(date, i - recoveryDelay);
         while ( isOffDay(dateStart) ) {
             i--;
             dateStart = getDateFrom(date, i - recoveryDelay);
+        }
+        return dateStart;
+    };
+
+    const getReverseDeliveryDay = (date, recoveryDelay) => {
+        let i = 0;
+        let dateStart = getDateFrom(date, i + recoveryDelay);
+        while ( isOffDay(dateStart) ) {
+            i++;
+            dateStart = getDateFrom(date, i + recoveryDelay);
         }
         return dateStart;
     };
@@ -160,6 +162,11 @@ const Recoveries = (props) => {
             <CCardHeader>Liste des commandes à récupérer</CCardHeader>
             <CCardBody>
                 <CRow>
+                    <CCol xs="12" sm="6" md="6">
+                        <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
+                            { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                        </Select>
+                    </CCol>
                     <CCol xs="12" md="6">
                     <RangeDatePicker
                         minDate={ dates.start }
@@ -178,49 +185,49 @@ const Recoveries = (props) => {
                     </CRow> 
                     :
                     <CDataTable
-                        items={ recoveries }
+                        items={ orders }
                         fields={ fields }
                         bordered
                         itemsPerPage={ itemsPerPage }
-                        pagination
+                        pagination={{
+                            'pages': Math.ceil(totalItems / itemsPerPage),
+                            'activePage': currentPage,
+                            'onActivePageChange': page => setCurrentPage(page),
+                            'align': 'center',
+                            'dots': true,
+                            'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                        }}
                         hover
                         scopedSlots = {{
-                            'vendeur':
-                                item => <td>
-                                            <Link to="#" onClick={ e => { toggleDetails(item.order.id, e) }}>
-                                                { item.seller.name }
-                                            </Link>
-                                        </td>
-                            ,
                             'commande':
                                 item => <td>
-                                            <Link to="#" onClick={ e => { toggleDetails(item.order.id, e) }}>
-                                                { item.order.name }<br/>
-                                                <small><i>{ 'N°' + item.order.id.toString().padStart(10, '0') }</i></small>
+                                            <Link to="#" onClick={ e => { toggleDetails(item.id, e) }}>
+                                                { item.name }<br/>
+                                                <small><i>{ 'N°' + item.id.toString().padStart(10, '0') }</i></small>
                                             </Link>
                                         </td>
                             ,
                             'date':
                                 item => <td>
-                                            { item.recoveryDate.toLocaleDateString('fr-FR', { timeZone: 'UTC'}) }
+                                            { new Date(item.recoveryDate).toLocaleDateString('fr-FR', { timeZone: 'UTC'}) }
                                         </td>
                             ,
                             'statut':
                                 item => <td>
-                                            { item.order.items.find(elt => !elt.isPrepared) !== undefined ? "EN ATTENTE" : "PRÊT" }
+                                            { item.items.find(elt => !elt.isPrepared) !== undefined ? "EN ATTENTE" : "PRÊT" }
                                         </td>
                             ,
                             ' ':
                                 item => (
                                     <td className="mb-3 mb-xl-0 text-center">
-                                        <CButton color="warning" disabled={ !isAdmin } href={ "#/components/orders/" + item.order.id } className="mx-1 my-1"><i className="fas fa-pen"></i></CButton>
-                                        <CButton color="danger" disabled={ !isAdmin } onClick={ () => handleDelete(item.order) } className="mx-1 my-1"><i className="fas fa-trash"></i></CButton>
+                                        <CButton color="warning" disabled={ !isAdmin } href={ "#/components/orders/" + item.id } className="mx-1 my-1"><i className="fas fa-pen"></i></CButton>
+                                        <CButton color="danger" disabled={ !isAdmin } onClick={ () => handleDelete(item) } className="mx-1 my-1"><i className="fas fa-trash"></i></CButton>
                                     </td>
                                 )
                             ,
                             'details':
-                                item => <CCollapse show={details.includes(item.order.id)}>
-                                            <OrderDetails orders={ orders } order={ item.order } setOrders={ setOrders } isDelivery={ true }/>
+                                item => <CCollapse show={details.includes(item.id)}>
+                                            <OrderDetails orders={ orders } order={ item } setOrders={ setOrders } isDelivery={ true }/>
                                         </CCollapse>
                         }}
                     />

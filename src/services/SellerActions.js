@@ -2,13 +2,19 @@ import api from 'src/config/api';
 
 function findAll() {
     return api
-        .get('/api/sellers')
-        .then(response => response.data['hydra:member'].sort((a, b) => (a.name > b.name) ? 1 : -1));
+        .get('/api/sellers?order[name]=asc')
+        .then(response => response.data['hydra:member']);
+}
+
+function findSellersNeedingRecovery() {
+    return api
+        .get('/api/sellers?needsRecovery=true&order[name]=asc')
+        .then(response => response.data['hydra:member']);
 }
 
 function findAllPaginated(page = 1, items = 30) {
     return api
-        .get(`/api/sellers?&order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .get(`/api/sellers?order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
         .then(response => response.data)
         .catch(error => []);
 }
@@ -49,6 +55,7 @@ function createImage(image) {
 export default {
     findAll,
     findAllPaginated,
+    findSellersNeedingRecovery,
     findWord,
     delete: deleteSeller,
     find,

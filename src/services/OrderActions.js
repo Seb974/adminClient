@@ -90,12 +90,13 @@ function findPaginatedPreparations(dates, page = 1, items = 30) {
         .then(response => response.data);
 }
 
-function findRecoveries(dates) {
+function findRecoveries(dates, seller, page, items) {
     const UTCDates = formatUTC(dates);
     const status = `status[]=WAITING&status[]=PRE-PREPARED`;
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
     return api
-        .get(`/api/order_entities?${ status }`)
-        .then(response => response.data['hydra:member']);
+        .get(`/api/order_entities?recovery=1&seller=${ seller.id }&${ dateLimits }&${ status }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 }
 
 function findDeliveries(dates, user) {

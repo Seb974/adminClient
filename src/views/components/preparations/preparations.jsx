@@ -300,7 +300,7 @@ const Preparations = (props) => {
                             'align': 'center',
                             'dots': true,
                             'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
-                          }}
+                        }}
                         scopedSlots = {{
                             'name':
                                 item => <td>
