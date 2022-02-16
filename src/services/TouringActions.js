@@ -47,13 +47,13 @@ function getTourings(dates, user) {
         .then(response => response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1));
 };
 
-function getOpenedTourings(dates, user) {
+function getOpenedTourings(dates, page = 1, items = 30) {
     const UTCDates = formatUTC(dates);
     const dateLimits = `start[after]=${ getStringDate(UTCDates.start) }&start[before]=${ getStringDate(UTCDates.end) }`
     const open = `isOpen=true`;
     return api
-        .get(`/api/tourings?${ open }&${ dateLimits }`)
-        .then(response => response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1));
+        .get(`/api/tourings?${ open }&${ dateLimits }&order[start]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 };
 
 function getProcessingTourings() {

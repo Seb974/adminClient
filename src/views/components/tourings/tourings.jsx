@@ -18,12 +18,14 @@ import TouringLocation from 'src/components/map/touring/touringLocation';
 
 const Tourings = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 3;
     const fields = ['Livreur', 'Départ', 'Livraisons', 'Terminer', ' '];
     const { currentUser } = useContext(AuthContext);
     const [tourings, setTourings] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [details, setDetails] = useState([]);
     const [playedTouring, setPlayedTouring] = useState(null);
@@ -39,19 +41,24 @@ const Tourings = (props) => {
         setPlayedTouring(null);
     }, [dates]);
 
-    const getTourings = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        TouringActions
-            .getOpenedTourings(UTCDates)
-            .then(response =>{
-                setTourings(response);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.log(error);
-                setLoading(false);
-            });
+    useEffect(() => getTourings(currentPage), [currentPage]);
+
+    const getTourings = (page = 1) => {
+        if (page >= 1) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            TouringActions
+                .getOpenedTourings(UTCDates, page, itemsPerPage)
+                .then(response =>{
+                    setTourings(response['hydra:member']);
+                    setTotalItems(response['hydra:totalItems']);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.log(error);
+                    setLoading(false);
+                });
+        }
     }
 
     const handleDelete = item => {
@@ -145,7 +152,14 @@ const Tourings = (props) => {
                         fields={ fields }
                         bordered
                         itemsPerPage={ itemsPerPage }
-                        pagination
+                        pagination={{
+                            'pages': Math.ceil(totalItems / itemsPerPage),
+                            'activePage': currentPage,
+                            'onActivePageChange': page => setCurrentPage(page),
+                            'align': 'center',
+                            'dots': true,
+                            'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                        }}
                         scopedSlots = {{
                             'Livreur':
                                 item => <td>
@@ -156,7 +170,8 @@ const Tourings = (props) => {
                             ,
                             'Départ':
                                 item => <td>
-                                            { getFormattedDateTime(item.start) }
+                                            { new Date(item.start).toLocaleDateString() }<br/>
+                                            <small>{ getFormattedDateTime(item.start) }</small>
                                         </td>
                             ,
                             'Livraisons':
