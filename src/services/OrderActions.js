@@ -227,6 +227,7 @@ export default {
     findPreparations,
     findRecoveries,
     findPickersPreparations,
+    findPaginatedPreparations,
     findCheckouts,
     findStatusBetween,
     findInWarehouseStatusBetween,

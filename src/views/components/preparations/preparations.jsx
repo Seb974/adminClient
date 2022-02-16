@@ -20,7 +20,7 @@ import api from 'src/config/api';
 
 const Preparations = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 10;
     const fields = ['name', 'date', 'total', 'préparateur', ' '];
     const { currentUser, seller, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
@@ -28,6 +28,8 @@ const Preparations = (props) => {
     const [orders, setOrders] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [labelLoading, setLabelLoading] = useState(false);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [daysOff, setDaysOff] = useState([]);
@@ -48,24 +50,25 @@ const Preparations = (props) => {
     }, [updatedOrders]);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-    useEffect(() => getOrders(), [dates]);
-    useEffect(() => getOrders(), [daysOff]);
+    useEffect(() => getOrders(), [dates, daysOff]);
+    useEffect(() => getOrders(currentPage), [currentPage]);
 
-    const getOrders = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        const request = isAdmin || Roles.isPicker(currentUser) ?
-            OrderActions.findPickersPreparations(UTCDates) :
-            OrderActions.findPreparations(UTCDates, currentUser);
-        request
-            .then(response =>{
-                setOrders(response);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.log(error);
-                setLoading(false);
-            });
+    const getOrders = (page = 1) => {
+        if (page >= 1) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            OrderActions
+                .findPaginatedPreparations(UTCDates, page, itemsPerPage)
+                .then(response => {
+                    setOrders(response['hydra:member']);
+                    setTotalItems(response['hydra:totalItems']);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.log(error);
+                    setLoading(false);
+                });
+        }
     }
 
     const fetchDaysOff = () => {
@@ -131,10 +134,11 @@ const Preparations = (props) => {
 
     const getReverseDeliveryDay = date => {
         let i = 0;
-        let dateStart = getDateFrom(date, i - seller.recoveryDelay);
+        const delay = isDefined(seller.recoveryDelay) ? seller.recoveryDelay : 0;
+        let dateStart = getDateFrom(date, i - delay);
         while ( isOffDay(dateStart) ) {
             i--;
-            dateStart = getDateFrom(date, i - seller.recoveryDelay);
+            dateStart = getDateFrom(date, i - delay);
         }
         return dateStart;
     };
@@ -189,7 +193,6 @@ const Preparations = (props) => {
         OrderActions
             .update(order.id, formattedOrder)
             .then(response => {
-                console.log(response.data);
                 const newOrders = orders.map(o => o.id === order.id ? response.data : o);
                 setOrders(newOrders);
             })
@@ -209,6 +212,28 @@ const Preparations = (props) => {
             preparator: '/api/users/' + currentUser.id
         };
     }
+    const getSign = item => {
+        return item.isRemains ? 
+            <i className="fas fa-sync-alt mr-2"></i> :
+        isDefinedAndNotVoid(item.packages) ? 
+            <i className="fas fa-plane mr-2"></i> :
+            <i className="fas fa-truck mr-2"></i>;
+    };
+
+    const getAddress = item => {
+        return <><br/><small><i>{ item.metas.zipcode } { item.metas.city }</i></small></>;
+    };
+
+    const hasUnpreparedItems = item => {
+        const hasUnprepared = item.items.filter(i => i.product.seller.id === seller.id).find(i => !i.isPrepared) === undefined;
+        return hasUnprepared;
+    }
+ 
+    const getNameContent = item => {
+        const sign = getSign(item);
+        const address = getAddress(item);
+        return <>{ sign }{ item.id + " - " + item.name }{ address }</>;
+    };
 
     return (
         <CRow>
@@ -268,19 +293,21 @@ const Preparations = (props) => {
                         fields={ fields }
                         bordered
                         itemsPerPage={ itemsPerPage }
-                        pagination
+                        pagination={{
+                            'pages': Math.ceil(totalItems / itemsPerPage),
+                            'activePage': currentPage,
+                            'onActivePageChange': page => setCurrentPage(page),
+                            'align': 'center',
+                            'dots': true,
+                            'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                          }}
                         scopedSlots = {{
                             'name':
                                 item => <td>
-                                            <Link to="#" onClick={ e => { toggleDetails(item.id, e) }}>
-                                                { item.isRemains ? 
-                                                        <i className="fas fa-sync-alt mr-2"></i> :
-                                                  isDefinedAndNotVoid(item.packages) ? 
-                                                        <i className="fas fa-plane mr-2"></i> :
-                                                        <i className="fas fa-truck mr-2"></i>
-                                                }{ item.name }<br/>
-                                                <small><i>{ item.metas.zipcode } { item.metas.city }</i></small>
-                                            </Link>
+                                            { Roles.isSeller(currentUser) && isDefined(seller) && hasUnpreparedItems(item) ?
+                                                <p>{ getNameContent(item) }</p> :
+                                                <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >{ getNameContent(item) }</Link>
+                                            }
                                         </td>
                             ,
                             'date':
@@ -301,9 +328,11 @@ const Preparations = (props) => {
                             ,
                             'préparateur': 
                                item => <td>
-                                            { isDefined(item.preparator) ? 
-                                                <span className="mx-1 my-1">{ item.preparator.name }</span> : 
-                                                <CButton color="success" onClick={ () => handleSetPreparator(item) } className="mx-1 my-1"><i className="fas fa-check mr-2"></i>Prendre</CButton>
+                                            { Roles.isSeller(currentUser) && isDefined(seller) && hasUnpreparedItems(item) ?
+                                                 <span className="mx-1 my-1">{ "Prêt" }</span> :
+                                                isDefined(item.preparator) ? 
+                                                    <span className="mx-1 my-1">{ item.preparator.name }</span> : 
+                                                    <CButton color="success" onClick={ () => handleSetPreparator(item) } className="mx-1 my-1"><i className="fas fa-check mr-2"></i>Prendre</CButton>
                                             }
                                         </td>
                             ,
@@ -329,7 +358,7 @@ const Preparations = (props) => {
                             ,
                             'details':
                                 item => <CCollapse show={details.includes(item.id)}>
-                                            <OrderDetails orders={ orders } order={ item } setOrders={ setOrders } id={ item.id }/>
+                                            <OrderDetails orders={ orders } order={ item } setOrders={ setOrders } id={ item.id } toggleDetails={ toggleDetails }/>
                                         </CCollapse>
                         }}
                     />

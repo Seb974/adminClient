@@ -9,7 +9,7 @@ import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import PackageList from './packageList';
 
-const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = false, id = order.id }) => {
+const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = false, id = order.id, toggleDetails }) => {
 
     const { currentUser } = useContext(AuthContext);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -40,11 +40,12 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
         setOrders(newOrders);
     };
 
-    const onSubmit = () => {
+    const onSubmit = e => {
         OrderActions
             .update(viewedOrder.id, getPreparedOrder(viewedOrder, currentUser))
             .then(response => {
                 setOrders(orders.filter(o => o.id !== response.data.id));
+                // toggleDetails(response.data.id, e);
             })
             .catch(error => console.log(error));
     };
