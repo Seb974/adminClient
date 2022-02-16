@@ -78,7 +78,7 @@ export const isSelectable = product => {
 };
 
 export const getTotal = (products, selectedSupplier) => {
-    return products.filter(p => p.selected && p.quantity > 0).reduce((sum, curr) => {
+    return products.filter(p => getFloat(p.quantity) > 0).reduce((sum, curr) => {
         return sum += getSubTotal(curr.product.costs, curr.quantity, selectedSupplier);
     }, 0).toFixed(2);
 };
@@ -102,7 +102,7 @@ export const getSuppliedProducts = (goods, suppliedProducts) => {
 
 export const getGoods = (products, selectedSupplier) => {
     return products
-        .filter(p => p.quantity > 0 && p.selected)
+        .filter(p => getFloat(p.quantity) > 0)
         .map(p => ({
             product: '/api/products/' + p.product.id,
             variation: isDefined(p.variation) ? '/api/variations/' + p.variation.id : null,
@@ -188,7 +188,7 @@ const extractProduct = (element, order, sales) => {
     return sales;
 };
 
-const isItemProduct = (item, element) => {
+export const isItemProduct = (item, element) => {
     const { product, variation, size } = element;
     if (item.product.id === product.id) {
         if (isDefined(variation) && isDefined(item.variation) && variation.id === item.variation.id) {
@@ -200,6 +200,19 @@ const isItemProduct = (item, element) => {
     }
     return false;
 };
+
+export const isSelectedItem = (item, selection) => {
+    return getSelectedItem(item, selection) !== undefined;
+};
+
+export const getSelectedQuantity = (item, selection) => {
+    const selectedItem = getSelectedItem(item, selection);
+    return isDefined(selectedItem) ? selectedItem.quantity : 0;
+}
+
+const getSelectedItem = (item, selection) => {
+    return selection.find(s => isItemProduct(item, s));
+}
 
 const getSuppliedQty = (element, supplied) => {
     const suppliedElt = supplied.find(elt => elt.stock.id === element.stock.id);

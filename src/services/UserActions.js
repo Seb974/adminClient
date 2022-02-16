@@ -14,7 +14,7 @@ function findAll() {
 
 function findAllPaginated(page = 1, items = 30) {
     return api
-        .get(`/api/users?order[name]=asc&page=${ page }&itemsPerPage=${ items }`)
+        .get(`/api/users?pagination=true&order[name]=asc&page=${ page }&itemsPerPage=${ items }`)
         .then(response => response.data);
 }
 

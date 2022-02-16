@@ -10,7 +10,7 @@ import Select from '../forms/Select';
 import PlatformContext from 'src/contexts/PlatformContext';
 import ProvisionActions from 'src/services/ProvisionActions';
 
-const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selectedStore, mainView, supplied, setSupplied, setSelectAll, addToast }) => {
+const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selectedStore, mainView, supplied, setSupplied, selection, setSelection, addToast }) => {
 
     const today = new Date();
     const { platform } = useContext(PlatformContext);
@@ -49,11 +49,11 @@ const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selecte
     };
 
     const handleSubmit = () => {
-        if (displayedProducts.findIndex(p => p.selected) === -1) {
+        if (selection.length === 0) {
             addToast(voidToast);
-        } else if (isDefined(selectedSupplier.provisionMin) && getFloat(getTotal(displayedProducts, selectedSupplier)) < selectedSupplier.provisionMin) {
+        } else if (isDefined(selectedSupplier.provisionMin) && getFloat(getTotal(selection, selectedSupplier)) < selectedSupplier.provisionMin) {
             addToast(minToast);
-        } else if (isDefined(selectedSupplier.deliveryMin) && receiveMode === "livraison" && getFloat(getTotal(displayedProducts, selectedSupplier)) < selectedSupplier.deliveryMin) {
+        } else if (isDefined(selectedSupplier.deliveryMin) && receiveMode === "livraison" && getFloat(getTotal(selection, selectedSupplier)) < selectedSupplier.deliveryMin) {
             addToast(deliveryMinToast);
         } else {
             const provision = getNewProvision();
@@ -61,7 +61,7 @@ const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selecte
                 .create(provision)
                 .then(response => {
                     setToSupplies(provision.goods);
-                    setSelectAll(false);
+                    setSelection([]);
                     addToast(successToast);
                 })
                 .catch(error => addToast(failToast));
@@ -74,7 +74,7 @@ const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selecte
     };
 
     const getNewProvision = () => {
-        const goods = getGoods(displayedProducts, selectedSupplier);
+        const goods = getGoods(selection, selectedSupplier);
         const newProvision = {
             seller: selectedSeller['@id'],
             supplier: selectedSupplier,

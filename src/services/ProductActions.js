@@ -18,17 +18,17 @@ function findWord(word, page = 1, items = 30) {
         .then(response => response.data);
 }
 
-function findFromSupplierAndStore(seller, supplier, enabledIds) {
+function findFromSupplierAndStore(seller, supplier, enabledIds, page = 1, items = 30) {
     const ids = getIdsList(enabledIds);
     return api
-        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&${ ids }&storeAvailable=true&order[name]=asc`)
-        .then(response => response.data['hydra:member']);
+        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&${ ids }&storeAvailable=true&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);       // ['hydra:member']
 }
 
-function findFromSupplierAndPlatform(seller, supplier) {
+function findFromSupplierAndPlatform(seller, supplier, page = 1, items = 30) {
     return api
-        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&available=true&order[name]=asc`)
-        .then(response => response.data['hydra:member']);
+        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&available=true&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);       // ['hydra:member']
 }
 
 function deleteProduct(id) {

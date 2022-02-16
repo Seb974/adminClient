@@ -1,20 +1,24 @@
 import CIcon from '@coreui/icons-react';
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CRow, CValidFeedback, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import Spinner from 'react-bootstrap/Spinner';
 import Needs from 'src/components/supplyingPages/Needs';
 import Purchase from 'src/components/supplyingPages/Purchase';
 import UpdateCost from 'src/components/supplyingPages/UpdateCost';
 import useWindowDimensions from 'src/helpers/screenDimensions';
-import { getCheapestSupplier, getSignPostName, getSubTotalCost, getSupplierCostMessage, getTotal } from 'src/helpers/supplying';
+import { getCheapestSupplier, getSelectedQuantity, getSignPostName, getSubTotalCost, getSupplierCostMessage, getTotal, isItemProduct, isSelectedItem } from 'src/helpers/supplying';
+import { isDefined } from 'src/helpers/utils';
 
 const Supplying = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 3;
     const {  width } = useWindowDimensions();
     const fields = ['Produit', 'Coût', 'Stock', 'Besoin', 'Commande', 'Sélection'];
 
     const [toasts, setToasts] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [mainView, setMainView] = useState(true);
     const [loading, setLoading] = useState(false);
     const [supplied, setSupplied] = useState([]);
@@ -23,24 +27,47 @@ const Supplying = (props) => {
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [selectedSupplier, setSelectedSupplier] = useState(null);
     const [displayedProducts, setDisplayedProducts] = useState([]);
+    const [selection, setSelection] = useState([]);
+
+    useEffect(() => initializeSelections(), [selectedSeller, selectedSupplier, selectedStore, mainView]);
+    useEffect(() => isAllSelected(), [displayedProducts, selection])
 
     const addToast = newToast => setToasts([...toasts, newToast]);
 
-    const handleSelect = item => {
-        let newValue = null;
-        const newProductsList = displayedProducts.map(element => {
-            newValue = !element.selected;
-            return element.id === item.id ? {...element, selected: newValue} : element;
-        });
-        setDisplayedProducts(newProductsList);
-        if (newValue && selectAll)
-            setSelectAll(false);
-    };
+    const handleSelect = item => updateSelection(item);
 
     const handleCommandChange = ({ currentTarget }, item) => {
-        const newProductList = displayedProducts.map(element => (element.id === item.id ? {...element, quantity: currentTarget.value} : element));
+        const newItem = {...item, quantity: currentTarget.value};
+        const newProductList = displayedProducts.map(element => (element.id === newItem.id ? newItem : element));
         setDisplayedProducts(newProductList);
+        updateSelectionQuantity(newItem);
     };
+
+    const updateSelection = item => {
+        const select = selection.find(s => isItemProduct(item, s));
+        const newSelection = !isDefined(select) ? [...selection, item] : selection.filter(s => !isItemProduct(s, item));
+        setSelection(newSelection);
+    };
+
+    const updateSelectionQuantity = item => {
+        const previousItem = selection.find(s => isItemProduct(item, s));
+        if (isDefined(previousItem)) {
+            const newSelection = selection.map(s => isItemProduct(s, item) ? item : s);
+            setSelection(newSelection);
+        }
+    };
+
+    const initializeSelections = () => {
+        setSelection([]);
+        setSelectAll(false);
+    }
+
+    const isAllSelected = () => {
+        if (displayedProducts.length === 0 || displayedProducts.find(p => !isSelectedItem(p, selection)) !== undefined)
+          setSelectAll(false);
+        else 
+          setSelectAll(true);
+      };
 
     const toasters = (()=>{
         return toasts.reduce((toasters, toast) => {
@@ -75,6 +102,13 @@ const Supplying = (props) => {
                             selectAll={ selectAll }
                             setSelectAll={ setSelectAll }
                             addToast={ addToast }
+                            currentPage={ currentPage }
+                            setCurrentPage={ setCurrentPage }
+                            itemsPerPage={ itemsPerPage }
+                            totalItems={ totalItems }
+                            setTotalItems={ setTotalItems }
+                            selection={ selection }
+                            setSelection={ setSelection }
                         />
                         { loading ?
                             <CRow>
@@ -89,7 +123,14 @@ const Supplying = (props) => {
                                     fields={ width < 576 ? ['Produit', 'Commande', 'Sélection'] : fields }
                                     bordered
                                     itemsPerPage={ itemsPerPage }
-                                    pagination
+                                    pagination={{
+                                        'pages': Math.ceil(totalItems / itemsPerPage),
+                                        'activePage': currentPage,
+                                        'onActivePageChange': page => setCurrentPage(page),
+                                        'align': 'center',
+                                        'dots': true,
+                                        'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                      }}
                                     scopedSlots = {{
                                         'Produit':
                                             item => <td style={{width: '25%'}}>
@@ -129,14 +170,14 @@ const Supplying = (props) => {
                                                                 <CInput
                                                                     type="number"
                                                                     name={ item.id }
-                                                                    value={ item.quantity }
+                                                                    value={ !isSelectedItem(item, selection) ? item.quantity : getSelectedQuantity(item, selection) }
                                                                     onChange={ e => handleCommandChange(e, item) }
                                                                 />
                                                                 <CInputGroupAppend>
                                                                     <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
                                                                 </CInputGroupAppend>
                                                                 <CValidFeedback style={{ display: 'block', color: 'black', textAlign: 'end' }}>
-                                                                    { getSubTotalCost(item.product.costs, item.quantity, selectedSupplier) }
+                                                                    { getSubTotalCost(item.product.costs, (!isSelectedItem(item, selection) ? item.quantity : getSelectedQuantity(item, selection)), selectedSupplier) }
                                                                 </CValidFeedback>
                                                             </CInputGroup>
                                                         </CFormGroup>
@@ -148,7 +189,8 @@ const Supplying = (props) => {
                                                             className="mx-1 my-1"
                                                             type="checkbox"
                                                             name="inline-checkbox"
-                                                            checked={ item.selected }
+                                                            // checked={ item.selected }
+                                                            checked={ isSelectedItem(item, selection) }
                                                             onClick={ () => handleSelect(item) }
                                                             disabled={ item.status === "WAITING" }
                                                             style={{zoom: 2.3}}
@@ -158,7 +200,7 @@ const Supplying = (props) => {
                                 />
                                 <CRow className="mb-4" style={{ display: displayedProducts.length === 0 && 'none'}}>
                                     <CCol xs="12" lg="12">
-                                        <p style={{ textAlign: "end", fontWeight: "bold" }}>Total : { getTotal(displayedProducts, selectedSupplier) } €</p>
+                                        <p style={{ textAlign: "end", fontWeight: "bold" }}>Total : { getTotal(selection, selectedSupplier) } €</p>
                                     </CCol>
                                 </CRow>
                                 <Purchase 
@@ -169,8 +211,9 @@ const Supplying = (props) => {
                                     mainView={ mainView }
                                     supplied={ supplied }
                                     setSupplied={ setSupplied }
-                                    setSelectAll={ setSelectAll }
                                     addToast={ addToast }
+                                    selection={ selection }
+                                    setSelection={ setSelection }
                                     />
                             </>
                         }

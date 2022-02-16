@@ -8,8 +8,8 @@ import AuthContext from 'src/contexts/AuthContext';
 import PlatformContext from 'src/contexts/PlatformContext';
 import { getUTCDates } from 'src/helpers/days';
 import { getStatus } from 'src/helpers/orders';
-import { extractSales, getFormattedSales, getProductsAndVariations, isSelectable } from 'src/helpers/supplying';
-import { getEvolutionPoints, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { extractSales, getFormattedSales, getProductsAndVariations, isItemProduct, isSelectable, isSelectedItem } from 'src/helpers/supplying';
+import { getEvolutionPoints, getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import DepartmentActions from 'src/services/DepartmentActions';
 import OrderActions from 'src/services/OrderActions';
 import ProductActions from 'src/services/ProductActions';
@@ -18,8 +18,9 @@ import SellerActions from 'src/services/SellerActions';
 import StoreActions from 'src/services/StoreActions';
 import Supplier from './Supplier';
 
-const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setSelectedSupplier, selectedSeller, setSelectedSeller, addToast,
-                 selectedStore, setSelectedStore, mainView, setMainView, selectAll, setSelectAll, loading, setLoading, supplied }) => 
+const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setSelectedSupplier, selectedSeller, setSelectedSeller,
+                 selectedStore, setSelectedStore, mainView, setMainView, selectAll, setSelectAll, loading, setLoading, supplied,
+                 addToast, currentPage, setCurrentPage, itemsPerPage, setTotalItems, selection, setSelection }) => 
 {
     const rates = getEvolutionPoints();
     const { platform } = useContext(PlatformContext);
@@ -42,9 +43,12 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
 
     useEffect(() => getDependencies(), []);
 
+    useEffect(() => getSelectedProducts(currentPage), [currentPage]);
     useEffect(() => getSelectedProducts(), [selectedSeller, selectedSupplier, selectedStore, mainView]);
     useEffect(() => getSelectedOrders(), [dates, selectedSeller, selectedStore, mainView]);
-    useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied])
+    useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied, selectedDepartments]);
+    useEffect(() => getDisplayedProducts(true), [selectedDepartments]);
+
 
     const getDependencies = () => {
         fetchDepartments();
@@ -52,11 +56,11 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     };
 
     const getSelectedOrders = () => {
-        if (isDefined(selectedSeller) && isDefined(platform) && (mainView || !isDefined(selectedStore))) {
+        if (isDefined(selectedSeller) && (mainView || !isDefined(selectedStore))) {
             setLoading(true);
             const UTCOrderDates = getUTCDates(dates);
             OrderActions
-                .findValidatedOrdersBetween(UTCOrderDates, selectedStatus, platform['@id'])
+                .findValidatedOrdersBetween(UTCOrderDates, selectedStatus, selectedSeller)
                 .then(response => setOrders(response))
                 .catch(error => {
                     setLoading(false);
@@ -75,20 +79,24 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
         }
     };
 
-    const getSelectedProducts = async () => {
-        if (isDefined(selectedSeller) && isDefined(selectedSupplier)) {
+    const getSelectedProducts = async (page = 1) => {
+        if (page >=1 && isDefined(selectedSeller) && isDefined(selectedSupplier)) {
             try {
                 setLoading(true);
-                let newProducts = [];
+                let response = null;
                 if (isDefined(selectedStore) && !mainView) {
                     const hiboutikProducts = await StoreActions.getProducts(selectedStore);
                     const ids = hiboutikProducts.map(p => getInt(p["products_ref_ext"]));
-                    newProducts = await ProductActions.findFromSupplierAndStore(selectedSeller, selectedSupplier, ids);
+                    response = await ProductActions.findFromSupplierAndStore(selectedSeller, selectedSupplier, ids, page, itemsPerPage);
                 } else {
-                    newProducts = await ProductActions.findFromSupplierAndPlatform(selectedSeller, selectedSupplier);
+                    response = await ProductActions.findFromSupplierAndPlatform(selectedSeller, selectedSupplier, page, itemsPerPage);
                 }
-                setProducts(newProducts);
-                getDefaultSelectedDepartments(newProducts);
+                if (isDefined(response)) {
+                    const newProducts = response['hydra:member'];
+                    setProducts(newProducts);
+                    setTotalItems(response['hydra:totalItems']);
+                    getDefaultSelectedDepartments(newProducts);
+                }
             } catch (error) {
                 addToast(failToast);
             }
@@ -149,9 +157,14 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
         }
     };
 
-    const getDisplayedProducts = () => {
+    const getDisplayedProducts = (departmentUpdate = false) => {
         if (isDefinedAndNotVoid(products)) {
-            const productsAndVariations = getProductsAndVariations(products, platform, selectedStore, mainView, currentUser);
+            let productsAndVariations = getProductsAndVariations(products, platform, selectedStore, mainView, currentUser);
+            if (departmentUpdate) {
+                const departmentsSelected = !isDefinedAndNotVoid(productsAndVariations) || !isDefinedAndNotVoid(selectedDepartments) ? [] :
+                    productsAndVariations.filter(p => selectedDepartments.map(d => d.value).includes(p.product.department['@id']));
+                productsAndVariations = [...departmentsSelected];
+            }
             const newDisplayedProducts = isDefinedAndNotVoid(productsAndVariations) ? extractSales(productsAndVariations, orders, evolution, supplied) : [];
             setDisplayedProducts(newDisplayedProducts);
         } 
@@ -187,10 +200,14 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     };
 
     const handleSelectAll = () => {
-        const newSelection = !selectAll;
-        setSelectAll(newSelection);
-        const newProductsList = displayedProducts.map(product => (isSelectable(product) ? {...product, selected: newSelection} : product));
-        setDisplayedProducts(newProductsList);
+        let newSelection = [];
+        const newSelectState = !selectAll;
+        if (newSelectState)
+            newSelection = [...new Set([...selection, ...displayedProducts.filter(p => getFloat(p.quantity) > 0 && !isSelectedItem(p, selection))])];
+        else 
+            newSelection = selection.filter(s => displayedProducts.find(p => isItemProduct(p, s)) === undefined)
+        setSelectAll(newSelectState);
+        setSelection(newSelection);
     };
 
     const handleEvolutionChange = ({ currentTarget }) => setEvolution(parseInt(currentTarget.value));

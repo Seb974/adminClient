@@ -46,23 +46,13 @@ function findInWarehouseStatusBetween(dates, statuses, user, main, Id) {
         });
 }
 
-function findValidatedOrdersBetween(dates, statuses, platform) {
+function findValidatedOrdersBetween(dates, statuses, seller) {
     const status = getStatusList(statuses);
     const UTCDates = formatUTC(dates);
     const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
     return api
-        .get(`/api/order_entities?platform=${ platform }&${ status }&${ dateLimits }&order[deliveryDate]=asc`)
-        .then(response => response.data['hydra:member']
-        //     {
-        //     const data = Roles.hasAdminPrivileges(user) || Roles.isSupervisor(user) ? 
-        //         response.data['hydra:member'] :
-        //         response.data['hydra:member'].filter(order => {
-        //             return order.items.find(item => {
-        //                 return item.product.seller.users.find(u => u.id === user.id) !== undefined}) !== undefined;
-        //         });
-        //     return data.sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
-        // }
-        );
+        .get(`/api/order_entities?seller=${ seller.id }&${ dateLimits }&${ status }&order[deliveryDate]=asc`)
+        .then(response => response.data['hydra:member'].map(o => ({...o, items: o.items.filter(i => i.product.seller['@id'] == seller['@id'])})));
 }
 
 function findPreparations(dates, user) {
@@ -87,8 +77,17 @@ function findPickersPreparations(dates) {
     const UTCDates = formatUTC(dates);
     const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
     return api
-        .get(`/api/order_entities?${ status }&${ dateLimits }`)
-        .then(response => response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1));
+        .get(`/api/order_entities?${ status }&${ dateLimits }&order[deliveryDate]=asc`)
+        .then(response => response.data['hydra:member']);
+}
+
+function findPaginatedPreparations(dates, page = 1, items = 30) {
+    const status = `status[]=WAITING&status[]=PRE-PREPARED`;
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
+    return api
+        .get(`/api/order_entities?${ status }&${ dateLimits }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 }
 
 function findRecoveries(dates) {
