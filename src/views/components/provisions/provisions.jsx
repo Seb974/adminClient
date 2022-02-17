@@ -19,7 +19,7 @@ import { updateSuppliersBetween } from 'src/data/dataProvider/eventHandlers/prov
 
 const Provisions = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 10;
     const fields = ['Vendeur', 'Fournisseur', 'Date', 'Total', ' '];
     const { currentUser, seller } = useContext(AuthContext);
     const [provisions, setProvisions] = useState([]);
@@ -29,6 +29,8 @@ const Provisions = (props) => {
     const [loading, setLoading] = useState(false);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [details, setDetails] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [selectedSuppliers, setSelectedSuppliers] = useState([]);
     const [selectedSellers, setSelectedSellers] = useState([]);
     const { updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
@@ -42,20 +44,8 @@ const Provisions = (props) => {
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => {
-        if (suppliers.length > 0 && !isDefinedAndNotVoid(selectedSuppliers))
-            setSelectedSuppliers(getFormattedEntities(suppliers));
-    }, [suppliers]);
-
-    useEffect(() => {
-        if (sellers.length > 0 && !isDefinedAndNotVoid(selectedSellers))
-            setSelectedSellers(getFormattedEntities(sellers));
-    }, [sellers]);
-
-    useEffect(() => {
-        if (isDefinedAndNotVoid(selectedSuppliers) && isDefinedAndNotVoid(selectedSellers))
-            fetchProvisions()
-    }, [dates, selectedSuppliers, selectedSellers]);
+    useEffect(() => fetchProvisions(), [dates, selectedSuppliers, selectedSellers]);
+    useEffect(() => fetchProvisions(currentPage), [currentPage]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(updatedProvisions) && !mercureOpering) {
@@ -65,31 +55,40 @@ const Provisions = (props) => {
         }
     }, [updatedProvisions]);
 
-    const fetchProvisions = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        ProvisionActions.findSuppliersBetween(UTCDates, selectedSuppliers, selectedSellers, currentUser)
-                .then(response => {
-                    setProvisions(response);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.log(error);
-                    setLoading(false);
-                });
+    const fetchProvisions = (page = 1) => {
+        if (page >= 1 && isDefinedAndNotVoid(selectedSuppliers) && isDefinedAndNotVoid(selectedSellers)) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            ProvisionActions.findPaginatedProvisionsPerSupplier(UTCDates, selectedSuppliers, selectedSellers, page, itemsPerPage)
+                    .then(response => {
+                        setProvisions(response['hydra:member']);
+                        setTotalItems(response['hydra:totalItems']);
+                        setLoading(false);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        setLoading(false);
+                    });
+        }
     };
 
     const fetchSuppliers = () => {
         SupplierActions
             .findAll()
-            .then(response => setSuppliers(response))
+            .then(response => {
+                setSuppliers(response);
+                setSelectedSuppliers(getFormattedEntities(response));
+            })
             .catch(error => console.log(error));
     };
 
     const fetchSellers = () => {
         SellerActions
             .findAll()
-            .then(response => setSellers(response))
+            .then(response => {
+                setSellers(response);
+                setSelectedSellers(getFormattedEntities(response));
+            })
             .catch(error => console.log(error));
     };
 
@@ -143,10 +142,10 @@ const Provisions = (props) => {
     };
 
     const getWarehouseName = provision => {
-        if (isDefined(provision.platform)) {
+        if (!isDefined(provision.store) || !isDefined(seller) || !isDefinedAndNotVoid(seller.stores)) {
             return "Principal";
         }
-        else if (isDefined(provision.store)) {
+        else {
             const store = seller.stores.find(s => s['@id'] === provision.store);
             return isDefined(store) ? store.name : "";
         }
@@ -226,7 +225,14 @@ const Provisions = (props) => {
                                 fields={ fields }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 hover
                                 scopedSlots = {{
                                     'Vendeur':

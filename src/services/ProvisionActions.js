@@ -1,7 +1,7 @@
 import axios from 'axios';
 import api from 'src/config/api';
 import Roles from 'src/config/Roles';
-import { getStringDate } from 'src/helpers/days';
+import { getDateFrom, getStringDate } from 'src/helpers/days';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 
 function findAll() {
@@ -16,10 +16,20 @@ function findSuppliersBetween(dates, suppliers, sellers, user) {
     const UTCDates = formatUTC(dates);
     const dateLimits = `provisionDate[after]=${ getStringDate(UTCDates.start) }&provisionDate[before]=${ getStringDate(UTCDates.end) }`;
     return api
-        .get(`/api/provisions?${ supplierList }&${ sellerList }&${ dateLimits }`)
+        .get(`/api/provisions?${ supplierList }&${ sellerList }&${ dateLimits }&order[provisionDate]=asc`)
         .then(response => {
-            return response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
+            return response.data['hydra:member'];
         });
+}
+
+function findPaginatedProvisionsPerSupplier(dates, suppliers, sellers, page = 1, items = 30) {
+    const supplierList = getSuppliersList(suppliers);
+    const sellerList = getSellersList(sellers);
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `provisionDate[after]=${ getStringDate(UTCDates.start) }&provisionDate[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/provisions?${ supplierList }&${ sellerList }&${ dateLimits }&order[provisionDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
 }
 
 function findBetween(dates, sellers) {
@@ -34,12 +44,11 @@ function findBetween(dates, sellers) {
 };
 
 function findSellerInProgress(seller) {
+    const dateLimit = getDateFrom(new Date(), -60, 0, 4);
+    const formattedDate = new Date(dateLimit.toUTCString())
     return api
-        .get(`/api/provisions?seller[]=${ seller['@id'] }&status[]=ORDERED`)        // &pagination=true&itemsPerPage=${ items }&page=${ page }
+        .get(`/api/provisions?seller[]=${ seller['@id'] }&status[]=ORDERED&provisionDate[after]=${ getStringDate(formattedDate) }`)        // &pagination=true&itemsPerPage=${ items }&page=${ page }
         .then(response => response.data['hydra:member']);
-        // .then(response => {
-        //     return response.data['hydra:member'].sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
-        // });
 }
 
 
@@ -95,6 +104,7 @@ export default {
     findAll,
     findBetween,
     findSuppliersBetween,
+    findPaginatedProvisionsPerSupplier,
     findSellerInProgress,
     delete: deleteProvision,
     find,
