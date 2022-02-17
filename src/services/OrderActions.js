@@ -3,6 +3,7 @@ import api from 'src/config/api';
 import Roles from 'src/config/Roles';
 import { setOrderStatus } from 'src/helpers/checkout';
 import { getStringDate } from 'src/helpers/days';
+import { getExportStatuses } from 'src/helpers/orders';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 
 function findAll() {
@@ -120,6 +121,26 @@ function findCheckouts(dates, relaypoint) {
         });
 };
 
+function findPaginatedCheckouts(dates, relaypoint, page = 1, items = 30) {
+    const selectedStatus = ['WAITING', 'PRE_PREPARED', 'PREPARED', 'ON_TRUCK', 'COLLECTABLE'];
+    const status = getStatusList(selectedStatus);
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
+    return api
+        .get(`/api/order_entities?relayPosition=${ relaypoint.metas.id }&${ status }&${ dateLimits }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+};
+
+function findPaginatedExports(dates, page = 1, items = 30) {
+    const selectedStatus = getExportStatuses();
+    const status = getStatusList(selectedStatus);
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
+    return api
+        .get(`/api/order_entities?truck=0&${ status }&${ dateLimits }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+};
+
 function getOptimizedTrip(positions, distributionsKeys)
 {
     let trip = ""; 
@@ -197,7 +218,7 @@ function getStatusList(status) {
     let statusList = "";
     status.map((s, i) => {
         const separator = i < status.length - 1 ? "&" : "";
-        statusList += "status[]=" + s.value + separator;
+        statusList += "status[]=" + (isDefined(s.value) ? s.value : s) + separator;
     });
     return statusList;
 }
@@ -220,6 +241,8 @@ export default {
     findPickersPreparations,
     findPaginatedPreparations,
     findCheckouts,
+    findPaginatedCheckouts,
+    findPaginatedExports,
     findStatusBetween,
     findInWarehouseStatusBetween,
     findValidatedOrdersBetween,

@@ -18,7 +18,7 @@ import { getExportStatuses } from 'src/helpers/orders';
 
 const Collects = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 10;
     const exportStatuses = getExportStatuses();
     const fields = ['commande', 'date', 'terminer', ' '];
     const { currentUser, supervisor } = useContext(AuthContext);
@@ -30,6 +30,8 @@ const Collects = (props) => {
     const [selectedRelaypoint, setSelectedRelaypoint] = useState(null);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [details, setDetails] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [mercureOpering, setMercureOpering] = useState(false);
     const [relaypointView, setRelaypointView] = useState(true);
 
@@ -51,35 +53,44 @@ const Collects = (props) => {
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => {
-        if (isDefinedAndNotVoid(relaypoints))
-            setSelectedRelaypoint(relaypoints[0]);
-    }, [relaypoints]);
-
     useEffect(() => fetchOrders(), [selectedRelaypoint, dates, relaypointView]);
+    useEffect(() => fetchOrders(currentPage), [currentPage]);
 
-    const fetchOrders = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        const request = relaypointView ? 
-            OrderActions.findCheckouts(UTCDates, selectedRelaypoint) : 
-            OrderActions.findStatusBetween(UTCDates, exportStatuses, currentUser)
-                        .then(response => response.filter(o => o.catalog.needsParcel));
-        request
-            .then(response =>{
-                setOrders(response.map(data => ({...data, selected: false})));
-                setLoading(false);
-            })
-            .catch(error => {
+    const fetchOrders = async (page = 1) => {
+        if (page >= 1) {
+            try {
+                setLoading(true);
+                const UTCDates = getUTCDates(dates);
+                const response = relaypointView ? await fetchRelaypointCollects(UTCDates, page) : await fetchExportsOrders(UTCDates, page);
+                if (isDefined(response)) {
+                    setOrders(response['hydra:member']);
+                    setTotalItems(response['hydra:totalItems']);
+                    setLoading(false);
+                }
+            } catch (error) {
                 console.log(error);
                 setLoading(false);
-            });
+            }
+        }
+    };
+
+    const fetchRelaypointCollects = async (UTCDates, page = 1) => {
+        if (isDefined(selectedRelaypoint))
+            return await OrderActions.findPaginatedCheckouts(UTCDates, selectedRelaypoint, page, itemsPerPage);
+        return new Promise((resolve, reject) => resolve(null));
+    };
+
+    const fetchExportsOrders = async (UTCDates, page = 1) => {
+        return await OrderActions.findPaginatedExports(UTCDates, page, itemsPerPage);
     };
 
     const fetchRelaypoints = () => {
         RelaypointActions
             .findAll()
-            .then(response => setRelaypoints(response))
+            .then(response => {
+                setRelaypoints(response);
+                setSelectedRelaypoint(response[0]);
+            })
             .catch(error => console.log(error));
     };
 
@@ -115,7 +126,7 @@ const Collects = (props) => {
             .then(response => setOrders(orders.filter(o => o.id !== order.id)));
     };
 
-    const handleCheckBoxes = ({ currentTarget }) => setRelaypointView(!relaypointView);
+    const handleViewChange = ({ currentTarget }) => setRelaypointView(currentTarget.value === "relaypoint");
 
     const getUTCDates = () => {
         const UTCStart = new Date(dates.start.getFullYear(), dates.start.getMonth(), dates.start.getDate(), 4, 0, 0);
@@ -144,7 +155,7 @@ const Collects = (props) => {
                     </CCardHeader>
                     <CCardBody>
                         <CRow>
-                            <CCol xs="12" md="6" lg="6">
+                            <CCol xs="12" md="6" lg="6" className="my-3">
                                 <RangeDatePicker
                                     minDate={ dates.start }
                                     maxDate={ dates.end }
@@ -154,21 +165,17 @@ const Collects = (props) => {
                                 />
                             </CCol>
                             { isAdmin &&
-                                <CCol xs="12" md="6" className="mt-4">
-                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
-                                        <CCol xs="1" sm="1" md="1">
-                                            <CSwitch name="available" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ relaypointView } onChange={ handleCheckBoxes }/>
-                                        </CCol>
-                                        <CCol tag="label" xs="10" sm="10" md="10" className="col-form-label ml-2">
-                                            { relaypointView ? "Récupérations Chronopost" : "Récupérations en points relais"}
-                                        </CCol>
-                                    </CFormGroup>
+                                <CCol xs="12" md="6" lg="6" className="my-3">
+                                    <Select className="mr-2" name="available" label="Tye de récupération" onChange={ handleViewChange } style={{height: '35px'}} value={ relaypointView ? "relaypoint" : "export" }>
+                                        <option value="relaypoint">Points relais</option>
+                                        <option value="export">Chronopost</option>
+                                    </Select>
                                 </CCol>
                             }
                             { relaypointView &&
                                 <CCol xs="12" lg="6" className="my-3">
-                                    <Select className="mr-2" name="deliverer" label="Point relais" onChange={ handleRelaypointChange } style={{height: '35px'}}>
-                                        { relaypoints.map(relaypoint => <option value={ relaypoint.id }>{ relaypoint.name }</option>) }
+                                    <Select className="mr-2" name="deliverer" label="Point relais" onChange={ handleRelaypointChange } style={{height: '35px'}} value={ isDefined(selectedRelaypoint) ? selectedRelaypoint.id : 1 }>
+                                        { relaypoints.map(relaypoint => <option key={ relaypoint.id } value={ relaypoint.id }>{ relaypoint.name }</option>) }
                                     </Select>
                                 </CCol>
                             }
@@ -185,7 +192,14 @@ const Collects = (props) => {
                                 fields={ fields }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 scopedSlots = {{
                                     'commande':
                                         item => <td>
@@ -241,3 +255,14 @@ const Collects = (props) => {
 }
 
 export default Collects;
+
+                    //             // <CCol xs="12" md="6" className="mt-4">
+                    //                // {/* <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                    //                <CCol xs="1" sm="1" md="1">
+                    //                <CSwitch name="available" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ relaypointView } onChange={ handleCheckBoxes }/>
+                    //            </CCol>
+                    //            <CCol tag="label" xs="10" sm="10" md="10" className="col-form-label ml-2">
+                    //                { relaypointView ? "Récupérations Chronopost" : "Récupérations en points relais"}
+                    //            </CCol>
+                    //        </CFormGroup> */}
+                    //    // </CCol>
