@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import Select from 'src/components/forms/Select';
 import Roles from 'src/config/Roles';
 import AuthContext from 'src/contexts/AuthContext';
+import PlatformContext from 'src/contexts/PlatformContext';
 import { getArchiveDate, isSameDate } from 'src/helpers/days';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
@@ -18,6 +19,7 @@ const InProgress = (props) => {
     const itemsPerPage = 30;
     const { width } = useWindowDimensions();
     const { currentUser } = useContext(AuthContext);
+    const  { platform } = useContext(PlatformContext);
     const fields = ['Produit', 'Quantité', 'Date de réception'];
     const [loading, setLoading] = useState(false);
     const [sellers, setSellers] = useState([]);
@@ -33,9 +35,9 @@ const InProgress = (props) => {
 
     useEffect(() => fetchSellers(), []);
 
-    useEffect(() => fetchProvisions(), [selectedSeller]);
+    useEffect(() => fetchProvisions(), [selectedSeller, selectedStore]);
 
-    useEffect(() => setDisplayedProducts(getProducts()), [provisions, selectedStore]);
+    useEffect(() => setDisplayedProducts(getProducts()), [provisions]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(displayedProducts))
@@ -57,9 +59,12 @@ const InProgress = (props) => {
     const fetchProvisions = () => {
         if (isDefined(selectedSeller)) {
             setLoading(true);
+            const main = !isDefined(selectedStore) || selectedStore.id === mainStore.id;
+            const entity = main ? platform['@id'] : selectedStore['@id'];
             ProvisionActions
-                .findSellerInProgress(selectedSeller)
+                .findSellerInProgress(selectedSeller, main, entity)
                 .then(response => {
+                    console.log(response);
                     setProvisions(response);
                     setLoading(false);
                 })
@@ -72,7 +77,6 @@ const InProgress = (props) => {
         if (isDefinedAndNotVoid(provisions)) {
             let products = [];
             provisions
-                .filter(p => (isDefined(p.store) && p.store === selectedStore['@id']) || (selectedStore.id === mainStore.id && isDefined(p.platform)))
                 .map(p => {
                     products = [...products, ...p.goods.map(g => ({...g, provisionDate: p.provisionDate, supplier: p.supplier.name}))]
                 });

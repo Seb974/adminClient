@@ -43,11 +43,12 @@ function findBetween(dates, sellers) {
         });
 };
 
-function findSellerInProgress(seller) {
+function findSellerInProgress(seller, main, entity) {
     const dateLimit = getDateFrom(new Date(), -60, 0, 4);
-    const formattedDate = new Date(dateLimit.toUTCString())
+    const formattedDate = new Date(dateLimit.toUTCString());
+    const entitySelection = main ? `platform=${ entity }` : `store=${ entity }`;
     return api
-        .get(`/api/provisions?seller[]=${ seller['@id'] }&status[]=ORDERED&provisionDate[after]=${ getStringDate(formattedDate) }`)        // &pagination=true&itemsPerPage=${ items }&page=${ page }
+        .get(`/api/provisions?seller[]=${ seller['@id'] }&${ entitySelection }&status[]=ORDERED&provisionDate[after]=${ getStringDate(formattedDate) }`)        // &pagination=true&itemsPerPage=${ items }&page=${ page }
         .then(response => response.data['hydra:member']);
 }
 
