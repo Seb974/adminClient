@@ -61,6 +61,7 @@ const Provisions = (props) => {
             const UTCDates = getUTCDates(dates);
             ProvisionActions.findPaginatedProvisionsPerSupplier(UTCDates, selectedSuppliers, selectedSellers, page, itemsPerPage)
                     .then(response => {
+                        console.log(response['hydra:member']);
                         setProvisions(response['hydra:member']);
                         setTotalItems(response['hydra:totalItems']);
                         setLoading(false);
@@ -238,7 +239,7 @@ const Provisions = (props) => {
                                     'Vendeur':
                                         item => <td>
                                                     <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >
-                                                        { item.seller.name }
+                                                        { isDefined(item.store) ? item.store.name : item.seller.name }
                                                         <br/>
                                                         <span style={{ fontSize: '0.75em', fontStyle: 'italic'}}>
                                                             { getWarehouseName(item) }

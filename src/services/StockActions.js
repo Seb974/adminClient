@@ -6,9 +6,11 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.id > b.id) ? 1 : -1));
 }
 
-function findAllPaginated(page = 1, items = 30) {
+// &productSearch=1
+function findAllPaginated(main, entity, page = 1, items = 30) {
+    const entitySelection = main ? `platform=${ entity }` : `store=${ entity }`;
     return api
-        .get(`/api/stocks?&order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .get(`/api/stocks?${ entitySelection }&order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
         .then(response => response.data)
         .catch(error => []);
 }

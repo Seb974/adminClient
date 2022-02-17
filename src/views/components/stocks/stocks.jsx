@@ -10,44 +10,49 @@ import useWindowDimensions from 'src/helpers/screenDimensions';
 import StockActions from 'src/services/StockActions';
 import StoreActions from 'src/services/StoreActions';
 import ProductsContext from 'src/contexts/ProductsContext';
+import PlatformContext from 'src/contexts/PlatformContext';
 import Select from 'src/components/forms/Select';
 
 const Stocks = (props) => {
 
-    const itemsPerPage = 4;
+    const itemsPerPage = 6;
     const { currentUser, seller } = useContext(AuthContext);
+    const { platform } = useContext(PlatformContext);
     const mainStore = { id: -1, name: "Principal" };
     const fields = ['name', 'Sécurité', 'Alerte', 'Niveau'];
     const [stocks, setStocks] = useState([]);
-    const { height, width } = useWindowDimensions();
-    const [displayedProducts, setDisplayedProducts] = useState([]);
+    const { width } = useWindowDimensions();
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
     const [stores, setStores] = useState([]);
-    const [selectedStore, setSelectedStore] = useState(mainStore);
+    const initialStore = isDefined(currentUser) && Roles.isStoreManager(currentUser) && isDefined(seller) && isDefinedAndNotVoid(seller.stores) ? seller.stores[0] : mainStore;
+    const [selectedStore, setSelectedStore] = useState(initialStore);
 
     useEffect(() => {
         getStores();
-        getDisplayedProducts();
         if (Roles.isStoreManager(currentUser))
             setSelectedStore(seller.stores[0]);
     }, []);
 
-    useEffect(() => getDisplayedProducts(), [search]);
-    useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
-    useEffect(() => setStocks(defineStocks(displayedProducts)), [displayedProducts, selectedStore]);
 
-    const getDisplayedProducts = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedProducts(search, page) : await getProducts(page);
-        if (isDefined(response)) {
-            setDisplayedProducts(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
+    useEffect(() => getStocks(), [platform, selectedStore])
+    useEffect(() => getStocks(currentPage), [currentPage]);
+
+    const getStocks = async (page = 1) => {
+        if (page >=1 && isDefined(platform) && isDefined(selectedStore)) {
+            const main = !isDefined(selectedStore) || selectedStore.id === mainStore.id;
+            const entity = main ? platform['@id'] : selectedStore['@id'];
+            const response = page >=1 ? await StockActions.findAllPaginated(main, entity, page, itemsPerPage) : null;
+            if (isDefined(response)) {
+                const newStocks = response['hydra:member']
+                        .map(s => ({...s, name: getStockName(s), unit: getUnit(s), updated: false}))
+                        .sort((a, b) => (a.name > b.name) ? 1 : -1);
+                setStocks(newStocks);
+                setTotalItems(response['hydra:totalItems']);
+            }
         }
-    };
-
-    const getProducts = (page = 1) => page >=1 ? ProductActions.findAllPaginated(page, itemsPerPage) : undefined;
-    const getSearchedProducts = (word, page = 1) => ProductActions.findWord(word, page, itemsPerPage);
+    }; 
 
     const getStores = () => {
         StoreActions
@@ -56,43 +61,32 @@ const Stocks = (props) => {
             .catch(error => console.log(error));
     };
 
-    const defineStocks = products => {
-        let newStocks = [];
-        products.map(product => {
-            newStocks = getStock(product, newStocks);
-        });
-        return newStocks;
+    const getDefaultStock = () => {
+        return Roles.isStoreManager(currentUser) && isDefined(seller) && isDefinedAndNotVoid(seller.stores) ? seller.stores[0] : mainStore;
     };
 
-    const getStock = (product, stocks) => {
-        if (isDefinedAndNotVoid(product.stocks)) {
-            const searchedProduct = getStockFromSelectedStore(product);
-            stocks = isDefined(searchedProduct) ? [...stocks, {...searchedProduct, name: product.name, unit: product.unit, updated: false }] : stocks;
-        } else if (isDefinedAndNotVoid(product.variations)) {
-            product.variations.map(variation => {
-                if (isDefinedAndNotVoid(variation.sizes)) {
-                    variation.sizes.map(size => {
-                        const searchedSize = getStockFromSelectedStore(size);
-                        stocks = isDefined(searchedSize) ? [...stocks, {...searchedSize, name: getProductName(product, variation, size), unit: product.unit, updated: false}] : stocks;
-                    });
-                }
-            });
+    const getStockName = stock => {
+        const { product, size } = stock;
+        if (isDefined(size)) {
+            const { variation } = size;
+            const sizeName = exists(size, size.name) ? size.name : "";
+            const variationName = exists(variation, variation.color) ? variation.color : "";
+            const productName = exists(variation.product, variation.product.name) ? variation.product.name : ""; 
+            return productName + " "  + variationName + " " + sizeName;
+        } else {
+            return isDefined(product) ? product.name : "";
         }
-        return stocks;
     };
 
-    const getStockFromSelectedStore = element => {
-        if (selectedStore.id === mainStore.id)
-            return element.stocks.find(s => isDefined(s.platform));
-        else
-            return element.stocks.find(s => s.store === selectedStore['@id']);
-    };
-
-    const getProductName = (product, variation, size) => {
-        const variationName = exists(variation, variation.color) ? " - " + variation.color : "";
-        const sizeName = exists(size, size.name) ? " " + size.name : "";
-        return product.name + variationName + sizeName;
-    };
+    const getUnit = stock  => {
+        const { product, size} = stock;
+        if (isDefined(product)) {
+            return product.unit;
+        } else {
+            return isDefined(size) && isDefined(size.variation) && isDefined(size.variation.product) ? 
+                    size.variation.product.unit : 'U';
+        }
+    }
 
     const exists = (entity, entityName) => {
         return isDefined(entity) && isDefined(entityName) && entityName.length > 0 && entityName !== " ";
@@ -176,7 +170,6 @@ const Stocks = (props) => {
                     item => <td style={{ width: '25%'}}>{ getSignPostName(item) }</td>
                     ,
                     'Sécurité':
-                    // item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.security } { item.unit }</td>
                     item => <td>
                                 <CInputGroup>
                                     <CInput
@@ -194,7 +187,6 @@ const Stocks = (props) => {
                             </td>
                     ,
                     'Alerte':
-                    // item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.alert } { item.unit }</td>
                     item => <td>
                                 <CInputGroup>
                                     <CInput
