@@ -29,6 +29,15 @@ function findStatusBetween(dates, statuses, user) {
         });
 }
 
+function findPaginatedOrdersWithStatus(dates, statuses, page = 1, items = 30) {
+    const status = getStatusList(statuses);
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/order_entities?${ status }&${ dateLimits }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
 function findInWarehouseStatusBetween(dates, statuses, user, main, Id) {
     const status = getStatusList(statuses);
     const UTCDates = formatUTC(dates);
@@ -238,6 +247,7 @@ export default {
     findDeliveries,
     findPreparations,
     findRecoveries,
+    findPaginatedOrdersWithStatus,
     findPickersPreparations,
     findPaginatedPreparations,
     findCheckouts,

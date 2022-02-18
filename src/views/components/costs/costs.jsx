@@ -166,27 +166,6 @@ const Costs = (props) => {
                                     }}
                                 />
                             </CCollapse>
-            //     'Sécurité':
-            //       item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.security } { item.unit }</td>
-            //     ,
-            //     'Alerte':
-            //       item => <td className="d-none d-sm-table-cell d-md-table-cell d-lg-table-cell d-xl-table-cell" style={{ width: '20%'}}>{ item.alert } { item.unit }</td>
-            //     ,
-            //     'Niveau':
-            //       item => <td>
-            //                     <CInputGroup>
-            //                         <CInput
-            //                             name="quantity"
-            //                             type="number"
-            //                             value={ item.quantity }
-            //                             onChange={ e => handleChange(e, item) }
-            //                             style={{ maxWidth: '180px'}}
-            //                         />
-            //                         <CInputGroupAppend>
-            //                             <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-            //                         </CInputGroupAppend>
-            //                     </CInputGroup>
-            //             </td>
               }}
             />
             </CCardBody>

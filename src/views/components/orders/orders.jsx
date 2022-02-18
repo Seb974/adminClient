@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup, CInputCheckbox, CLabel, CWidgetIcon, CCardFooter } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CWidgetIcon, CCardFooter } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -9,7 +9,6 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { isSameDate, getDateFrom, getArchiveDate } from 'src/helpers/days';
 import Spinner from 'react-bootstrap/Spinner'
 import OrderDetails from 'src/components/preparationPages/orderDetails';
-import PlatformContext from 'src/contexts/PlatformContext';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
 import { getStatus, getStatusName } from 'src/helpers/orders';
 import CIcon from '@coreui/icons-react';
@@ -18,15 +17,16 @@ import MercureContext from 'src/contexts/MercureContext';
 
 const Orders = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 20;
     const fields = ['Client', 'Date', 'Total', 'Statut', ' '];
-    const { platform } = useContext(PlatformContext);
     const { currentUser, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
     const [mercureOpering, setMercureOpering] = useState(false);
     const [orders, setOrders] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [details, setDetails] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState(getStatus().filter(s => !["ON_PAYMENT", "ABORTED"].includes(s.value)));
@@ -34,11 +34,8 @@ const Orders = (props) => {
 
     const csvCode = 'data:text/csv;charset=utf-8,SEP=,%0A' + encodeURIComponent(csvContent);
 
-    useEffect(() => {
-        const isUserAdmin = Roles.hasAdminPrivileges(currentUser);
-        setIsAdmin(isUserAdmin);
-        getOrders();
-    }, []);
+    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
+    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(updatedOrders)&& !mercureOpering) {
@@ -48,29 +45,30 @@ const Orders = (props) => {
         }
     }, [updatedOrders]);
 
-    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-    useEffect(() => {
-        if (isDefinedAndNotVoid(selectedStatus))
-            getOrders();
-    }, [dates, selectedStatus]);
+    
+    useEffect(() => getOrders(), [dates, selectedStatus]);
+    useEffect(() => getOrders(currentPage), [currentPage]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(orders))
             setCsvContent(getCsvContent());
     },[orders])
 
-    const getOrders = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        OrderActions.findStatusBetween(UTCDates, selectedStatus, currentUser)
-                .then(response =>{
-                    setOrders(response.map(data => ({...data, selected: false})));
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.log(error);
-                    setLoading(false);
-                });
+    const getOrders = (page = 1) => {
+        if (page >= 1 && isDefinedAndNotVoid(selectedStatus)) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            OrderActions.findPaginatedOrdersWithStatus(UTCDates, selectedStatus, page, itemsPerPage)
+                    .then(response => {
+                        setOrders(response['hydra:member']);
+                        setTotalItems(response['hydra:totalItems']);
+                        setLoading(false);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        setLoading(false);
+                    });
+        }
     }
 
     const handleDelete = item => {
@@ -181,7 +179,14 @@ const Orders = (props) => {
                                 fields={ fields }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 scopedSlots = {{
                                     'Client':
                                         item => <td>
