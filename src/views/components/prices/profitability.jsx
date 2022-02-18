@@ -84,6 +84,7 @@ const Profitability = (props) => {
                 });
     };
 
+    // A PAGINER
     const fetchProducts = () => {
         ProductActions
             .findAll()

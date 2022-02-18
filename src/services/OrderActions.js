@@ -29,6 +29,16 @@ function findStatusBetween(dates, statuses, user) {
         });
 }
 
+function findStatusForSellerBetween(dates, statuses, seller, regulation, page = 1, items = 30) {
+    const status = getStatusList(statuses);
+    const UTCDates = formatUTC(dates);
+    const regulated = isDefined(regulation) ? `regulated=${ regulation }&` : '';
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/order_entities?seller[]=${ seller.id }&${ status }&${ dateLimits }&${ regulated }order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
 function findPaginatedOrdersWithStatus(dates, statuses, page = 1, items = 30) {
     const status = getStatusList(statuses);
     const UTCDates = formatUTC(dates);
@@ -61,7 +71,7 @@ function findValidatedOrdersBetween(dates, statuses, seller) {
     const UTCDates = formatUTC(dates);
     const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
     return api
-        .get(`/api/order_entities?seller=${ seller.id }&${ dateLimits }&${ status }&order[deliveryDate]=asc`)
+        .get(`/api/order_entities?seller[]=${ seller.id }&${ dateLimits }&${ status }&order[deliveryDate]=asc`)
         .then(response => response.data['hydra:member'].map(o => ({...o, items: o.items.filter(i => i.product.seller['@id'] == seller['@id'])})));
 }
 
@@ -105,7 +115,7 @@ function findRecoveries(dates, seller, page, items) {
     const status = `status[]=WAITING&status[]=PRE-PREPARED`;
     const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`
     return api
-        .get(`/api/order_entities?recovery=1&seller=${ seller.id }&${ dateLimits }&${ status }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .get(`/api/order_entities?recovery=1&seller[]=${ seller.id }&${ dateLimits }&${ status }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
         .then(response => response.data);
 }
 
@@ -232,6 +242,15 @@ function getStatusList(status) {
     return statusList;
 }
 
+function getSellerList(sellers) {
+    let sellerList = "";
+    sellers.map((s, i) => {
+        const separator = i < sellers.length - 1 ? "&" : "";
+        sellerList += "seller[]=" + (isDefined(s.id) ? s.id : s) + separator;
+    });
+    return sellerList;
+}
+
 function sendToAxonaut(orders) {
     return api.post('/api/accounting/invoices', orders);
 }
@@ -247,6 +266,7 @@ export default {
     findDeliveries,
     findPreparations,
     findRecoveries,
+    findStatusForSellerBetween,
     findPaginatedOrdersWithStatus,
     findPickersPreparations,
     findPaginatedPreparations,
