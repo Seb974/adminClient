@@ -48,6 +48,16 @@ function findPaginatedOrdersWithStatus(dates, statuses, page = 1, items = 30) {
         .then(response => response.data);
 }
 
+function findPaginatedOrdersFromUser(dates, statuses, emails, page = 1, items = 30) {
+    const status = getStatusList(statuses);
+    const UTCDates = formatUTC(dates);
+    const emailList = isDefinedAndNotVoid(emails) ? getEmailList(emails) + '&' : "";
+    const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/order_entities?${ emailList }${ status }&${ dateLimits }&order[deliveryDate]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
 function findInWarehouseStatusBetween(dates, statuses, user, main, Id) {
     const status = getStatusList(statuses);
     const UTCDates = formatUTC(dates);
@@ -251,6 +261,15 @@ function getSellerList(sellers) {
     return sellerList;
 }
 
+function getEmailList(emails) {
+    let emailList = "";
+    emails.map((s, i) => {
+        const separator = i < emails.length - 1 ? "&" : "";
+        emailList += "email[]=" + s + separator;
+    });
+    return emailList;
+}
+
 function sendToAxonaut(orders) {
     return api.post('/api/accounting/invoices', orders);
 }
@@ -268,6 +287,7 @@ export default {
     findRecoveries,
     findStatusForSellerBetween,
     findPaginatedOrdersWithStatus,
+    findPaginatedOrdersFromUser,
     findPickersPreparations,
     findPaginatedPreparations,
     findCheckouts,

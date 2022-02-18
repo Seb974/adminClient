@@ -244,7 +244,7 @@ const SellerAccount = (props) => {
           setSelectAll(false);
         else 
           setSelectAll(true);
-      };
+    };
 
     return (
         <CCard>

@@ -12,11 +12,11 @@ import { updateStatusBetween } from 'src/data/dataProvider/eventHandlers/orderEv
 import MercureContext from 'src/contexts/MercureContext';
 import { getDeliveredStatus } from 'src/helpers/orders';
 import UserActions from 'src/services/UserActions';
-import Select from 'src/components/forms/Select';
+import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 
 const Accounting = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 6;
     const fields = ['name', 'date', 'CodePaiement', 'Etat', 'selection', ' '];
     const deliveredStatus = getDeliveredStatus();
     const { currentUser, supervisor } = useContext(AuthContext);
@@ -29,11 +29,13 @@ const Accounting = (props) => {
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [selectAll, setSelectAll] = useState(false);
     const [users, setUsers] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selection, setSelection] = useState([]);
     const [selectedUser, setSelectedUser] = useState(-1);
 
     useEffect(() => {
-        const isUserAdmin = Roles.hasAdminPrivileges(currentUser);
-        setIsAdmin(isUserAdmin);
+        setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         getOrders();
     }, []);
 
@@ -46,34 +48,32 @@ const Accounting = (props) => {
     }, [updatedOrders]);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-    useEffect(() => getOrders(), [dates]);
 
-    const getOrders = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates();
-        OrderActions.findStatusBetween(UTCDates, deliveredStatus, currentUser)
-                .then(response =>{
-                    setOrders(response.map(data => ({...data, selected: false})));
-                    getUsers(response);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.log(error);
-                    setLoading(false);
-                });
+    useEffect(() => {
+        getOrders();
+        setSelection([]);
+    }, [dates, users]);
+
+    useEffect(() => getOrders(currentPage), [currentPage]);
+    useEffect(() => isAllSelected(), [orders, selection]);
+
+    const getOrders = (page = 1) => {
+        if (page >= 1) {
+            setLoading(true);
+            const UTCDates = getUTCDates();
+            const emails = users.map(u => u.email);
+            OrderActions.findPaginatedOrdersFromUser(UTCDates, deliveredStatus, emails, page, itemsPerPage)
+                    .then(response => {
+                        setLoading(false);
+                        setOrders(response['hydra:member'].map(data => ({...data, selected: false})));
+                        setTotalItems(response['hydra:totalItems']);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        setLoading(false);
+                    });
+        }
     };
-
-    const getUsers = orders => {
-        let finalUsers = [];
-        orders.map(o => {
-            if (finalUsers.find(u => u.email === o.email) === undefined) {
-                finalUsers = [...finalUsers, { name: o.name, email: o.email }];
-            }
-        });
-        setUsers(finalUsers);
-    };
-
-    const handleUserChange = ({ currentTarget }) => setSelectedUser(currentTarget.value);
 
     const handleDelete = item => {
         const originalOrders = [...orders];
@@ -93,22 +93,36 @@ const Accounting = (props) => {
         }
     };
 
-    const handleSelect = item => {
-        let newValue = null;
-        const newOrders = orders.map(element => {
-            newValue = !element.selected;
-            return element.id === item.id && !element.invoiced ? {...element, selected: !element.selected} : element;
-        });
-        setOrders(newOrders);
-        if (!newValue && selectAll)
-            setSelectAll(false);
-    };
+    const handleSelect = item => updateSelection(item);
 
     const handleSelectAll = () => {
-        const newSelection = !selectAll;
-        const newOrders = orders.map(element => element.invoiced ? element : ({...element, selected: newSelection}));
-        setSelectAll(newSelection);
-        setOrders(newOrders);
+        let newSelection = [];
+        const newSelectState = !selectAll;
+        if (newSelectState)
+            newSelection = [...new Set([...selection, ...orders.filter(o => !o.invoiced && !isSelectedOrder(o))])];
+        else 
+            newSelection = selection.filter(s => orders.find(o => s.id === o.id && isSelectedOrder(o)) === undefined)
+        setSelectAll(newSelectState);
+        setSelection(newSelection);
+    };
+
+    const updateSelection = item => {
+        const select = selection.find(s => s.id === item.id);
+        const newSelection = !isDefined(select) ? [...selection, item] : selection.filter(s => s.id !== item.id);
+        setSelection(newSelection);
+    };
+
+    const isSelectedOrder = order => {
+        return selection.findIndex(s => s.id === order.id) !== -1;
+    };
+
+    const isAllSelected = () => {
+        const notInvoicedOrders = orders.filter(o => !o.invoiced);
+        const hasNotSelected = notInvoicedOrders.find(o => !isSelectedOrder(o)) !== undefined;
+        if (notInvoicedOrders.length === 0 || hasNotSelected)
+          setSelectAll(false);
+        else 
+          setSelectAll(true);
     };
 
     const getUTCDates = () => {
@@ -121,11 +135,11 @@ const Accounting = (props) => {
         setBillingLoading(true);
         getInvoices()
             .then(response => {
-                console.log(response);
                 OrderActions.sendToAxonaut(response)
                             .then(r => {
-                                const updatedOrders = orders.map(o => o.selected ? {...o, invoiced: true, selected: false} : o);
+                                const updatedOrders = orders.map(o => isSelectedOrder(o) ? {...o, invoiced: true} : o);
                                 setOrders(updatedOrders);
+                                setSelection([]);
                                 setBillingLoading(false);
                             })
                             .catch(error => {
@@ -137,16 +151,12 @@ const Accounting = (props) => {
                 setBillingLoading(false);
                 console.log(error);
             });
-        // const ordersToBill = getGroupedOrders();
-        // OrderActions.sendToAxonaut(ordersToBill)
-        //             .then(r => console.log(r));
     };
 
     const getGroupedOrders = () => {
-        const filteredOrders = orders.filter(o => o.selected);
-        const associatedUsers = filteredOrders.map(o => o.email);
+        const associatedUsers = selection.map(o => o.email);
         return [...new Set(associatedUsers)].map(u => {
-            const userOrders = filteredOrders.filter(o => o.email === u);
+            const userOrders = selection.filter(o => o.email === u);
             return { orders: userOrders, metas: userOrders[0].metas };
         })
     }
@@ -193,14 +203,13 @@ const Accounting = (props) => {
                                 </CFormGroup>
                             </CCol>
                         </CRow>
-                        <CRow>
-                            <CCol xs="12" lg="12" className="my-2">
-                                <Select className="mr-2" name="priceGroup" label="Client" value={ selectedUser } onChange={ handleUserChange }>         {/* onChange={ handleInputChange } */}
-                                    <option value="-1">Tous</option>
-                                    { users.map(p => <option key={ p.email } value={ p.email }>{ p.name }</option>)}
-                                </Select>
-                            </CCol>
-                        </CRow>
+                        <UserSearchMultiple 
+                            users={ users } 
+                            setUsers={ setUsers }
+                            title="Utilisateurs"
+                            label="Filtrer par utilisateurs"
+                            noUserMessage="Aucun utilisateur sélectionné"
+                        />
                         { loading ? 
                             <CRow>
                                 <CCol xs="12" lg="12" className="text-center">
@@ -213,7 +222,14 @@ const Accounting = (props) => {
                                 fields={ fields }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 scopedSlots = {{
                                     'name':
                                         item => <td>
@@ -248,7 +264,7 @@ const Accounting = (props) => {
                                                         className="mx-1 my-1"
                                                         type="checkbox"
                                                         name="inline-checkbox"
-                                                        checked={ item.selected }
+                                                        checked={ isSelectedOrder(item) }
                                                         onClick={ () => handleSelect(item) }
                                                         disabled={ item.invoiced }
                                                         style={{zoom: 2.3}}
