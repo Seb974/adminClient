@@ -8,65 +8,87 @@ import Spinner from 'react-bootstrap/Spinner';
 import Select from 'src/components/forms/Select';
 import CIcon from '@coreui/icons-react';
 import { getArchiveDate } from 'src/helpers/days';
-import ProductsContext from 'src/contexts/ProductsContext';
+import ProductActions from 'src/services/ProductActions';
 
 const Prices = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 4;
     const { currentUser, selectedCatalog, supervisor } = useContext(AuthContext);
     const [priceGroups, setPriceGroups] = useState([]);
-    const { products } = useContext(ProductsContext);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [selectedPriceGroup, setSelectedPriceGroup] = useState(null);
-    const [viewedProducts, setViewedProducts] = useState([]);
     const [viewedPriceGroups, setViewedPriceGroups] = useState([]);
     const [csvContent, setCsvContent] = useState("");
+    const [userGroups, setUserGroups] = useState([]);
+    const [displayedProducts, setDisplayedProducts] = useState([]);
 
     const csvCode = 'data:text/csv;charset=utf-8,SEP=,%0A' + encodeURIComponent(csvContent);
 
-    useEffect(() => {
-        setIsAdmin(Roles.hasAdminPrivileges(currentUser));
-        fetchPriceGroup();
-    }, []);
-
+    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
+    
+    useEffect(() => fetchPriceGroup(), []);
+
+    useEffect(() => getDisplayedProducts(), [userGroups]);
+    useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
+    useEffect(() => definePriceGroups(), [priceGroups, selectedPriceGroup]);
 
     useEffect(() => {
-        if (isDefinedAndNotVoid(priceGroups) && !isDefined(selectedPriceGroup)) {
-            if (Roles.isSupervisor(currentUser)) {
-                const supervisorRoles = getSupervisorRoles(supervisor.users);
-                const supervisorGroups = getAssociatedGroups(supervisorRoles);
-                setViewedPriceGroups(supervisorGroups);
-                setSelectedPriceGroup(supervisorGroups[0]);
-            } else {
-                setViewedPriceGroups(priceGroups);
-                setSelectedPriceGroup(priceGroups[0]);
-            }
-        }
-    }, [priceGroups, selectedPriceGroup]);
-
-    useEffect(() => {
-        if (isDefinedAndNotVoid(products)) {
-            if (Roles.isSupervisor(currentUser)) {
-                const supervisorRoles = getSupervisorRoles(supervisor.users);
-                const supervisorProducts = getProductGroups(supervisorRoles);
-                setViewedProducts(supervisorProducts);
-            } else
-                setViewedProducts(products);
-        }
-    }, [products]);
-
-    useEffect(() => {
-        if (isDefinedAndNotVoid(viewedProducts) && isDefined(selectedPriceGroup))
+        if (isDefinedAndNotVoid(displayedProducts) && isDefined(selectedPriceGroup))
             setCsvContent(getCsvContent());
-    }, [viewedProducts, selectedPriceGroup]);
+    }, [displayedProducts, selectedPriceGroup]);
 
     const fetchPriceGroup = () => {
         PriceGroupActions
             .findAll()
             .then(response => setPriceGroups(response))
             .catch(error => console.log(error));
+    };
+
+    const getDisplayedProducts = async (page = 1) => {
+        try {
+            setLoading(true);
+            const response = await getProducts(page);
+            if (isDefined(response)) {
+                setDisplayedProducts(response['hydra:member']);
+                setTotalItems(response['hydra:totalItems']);
+            }
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            console.log(error);
+        }
+    };
+
+    const getProducts = async (page = 1) => {
+        if (page >= 1) {
+            if (Roles.isSupervisor(currentUser)) {
+                if (isDefinedAndNotVoid(userGroups))
+                    return await ProductActions.findAvailablePaginated(userGroups, page, itemsPerPage);
+            } else {
+                return await ProductActions.findAllPaginated(page, itemsPerPage);
+            }
+        }
+        return new Promise((resolve, reject) => resolve(null));
+    };
+
+    const definePriceGroups = () => {
+        if (isDefinedAndNotVoid(priceGroups) && !isDefined(selectedPriceGroup)) {
+            if (Roles.isSupervisor(currentUser)) {
+                const supervisorRoles = getSupervisorRoles(supervisor.users);
+                const supervisorGroups = getAssociatedGroups(supervisorRoles);
+                setUserGroups(supervisorRoles);
+                setViewedPriceGroups(supervisorGroups);
+                setSelectedPriceGroup(supervisorGroups[0]);
+            } else {
+                setUserGroups([]);
+                setViewedPriceGroups(priceGroups);
+                setSelectedPriceGroup(priceGroups[0]);
+            }
+        }
     };
 
     const handlePriceGroupChange = ({ currentTarget }) => {
@@ -100,11 +122,7 @@ const Prices = (props) => {
         return priceGroups.filter(p => p.userGroup.find(u => roles.includes(u.value)));
     };
 
-    const getProductGroups = roles => {
-        return products.filter(p => p.available && p.userGroups.find(u => roles.includes(u.value)));
-    };
-
-    const getCsvContent = () => viewedProducts.map(item => [item.name, getPriceHT(item), "euros"].join(',')).join('\n');
+    const getCsvContent = () => displayedProducts.map(item => [item.name, getPriceHT(item), "euros"].join(',')).join('\n');
 
     return !isDefined(selectedPriceGroup) ? <></> : (
         <CRow>
@@ -136,11 +154,18 @@ const Prices = (props) => {
                             </CRow>
                             :
                             <CDataTable
-                                items={ viewedProducts }
+                                items={ displayedProducts }
                                 fields={ ['Produit', 'Prix HT'] }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 hover
                                 scopedSlots = {{
                                     'Produit':
@@ -158,7 +183,6 @@ const Prices = (props) => {
                         }
                     </CCardBody>
                     <CCardFooter className="d-flex justify-content-center">
-
                     </CCardFooter>
                 </CCard>
             </CCol>

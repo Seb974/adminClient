@@ -6,6 +6,20 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.name > b.name) ? 1 : -1));
 }
 
+function findAvailablePaginated(userGroups, page = 1, items = 30) {
+    const groups = userGroups.length > 0 ? getGroupsList(userGroups) + '&' : '';
+    return api
+        .get(`/api/products?available=true&${ groups }order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data);
+}
+
+function findAvailableWord(word, userGroups, page = 1, items = 30) {
+    const groups = userGroups.length > 0 ? getGroupsList(userGroups) + '&' : '';
+    return api
+        .get(`/api/products?available=true&${ groups }name[]=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
 function findAllPaginated(page = 1, items = 30) {
     return api
         .get(`/api/products?&order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
@@ -95,10 +109,20 @@ function getIdsList(ids) {
     return idsList;
 }
 
+function getGroupsList(groups) {
+    let groupsList = "";
+    groups.map((group, i) => {
+        const separator = i < groups.length - 1 ? "&" : "";
+        groupsList += "group[]=" + group + separator;
+    });
+    return groupsList;
+}
+
 export default { 
     findAll,
     findAllPaginated,
     findWord,
+    findAvailablePaginated,
     findFromSupplierAndStore,
     findFromSupplierAndPlatform,
     delete: deleteProduct,

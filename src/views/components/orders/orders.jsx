@@ -45,7 +45,6 @@ const Orders = (props) => {
         }
     }, [updatedOrders]);
 
-    
     useEffect(() => getOrders(), [dates, selectedStatus]);
     useEffect(() => getOrders(currentPage), [currentPage]);
 

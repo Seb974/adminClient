@@ -143,18 +143,18 @@ const Profitability = (props) => {
 
     const getStock = product => {
         let total = 0;
-        const { isMixed, stock, variations } = product;
-        if (!isDefined(isMixed) || !isMixed) {
-            if (isDefinedAndNotVoid(variations)) {
-                variations.map(variation => {
-                    variation.sizes.map(size => {
-                        total += size.stock.quantity;
-                    })
-                });
-            } else if (isDefined(stock)) {
-                total = stock.quantity;
-            }
-        }
+        // const { isMixed, stock, variations } = product;
+        // if (!isDefined(isMixed) || !isMixed) {
+        //     if (isDefinedAndNotVoid(variations)) {
+        //         variations.map(variation => {
+        //             variation.sizes.map(size => {
+        //                 total += size.stock.quantity;
+        //             })
+        //         });
+        //     } else if (isDefined(stock)) {
+        //         total = stock.quantity;
+        //     }
+        // }
         return total.toFixed(2);
     };
 
