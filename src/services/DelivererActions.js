@@ -13,6 +13,12 @@ function findAllPaginated(page = 1, items = 30) {
         .catch(error => []);
 }
 
+function findExterns() {
+    return api
+        .get('/api/deliverers?isIntern=false&order[name]=asc')
+        .then(response => response.data['hydra:member']);
+}
+
 function findWord(word, page = 1, items = 30) {
     return api
         .get(`/api/deliverers?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
@@ -41,6 +47,7 @@ function create(deliverer) {
 export default {
     findAll,
     findAllPaginated,
+    findExterns,
     findWord,
     delete: deleteDeliverer,
     find,

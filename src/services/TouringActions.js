@@ -21,6 +21,15 @@ function findDelivererBetween(dates, deliverer) {
         });
 }
 
+function findPaginatedTouringsBetween(dates, deliverer, regulation, page = 1, items = 30) {
+    const UTCDates = formatUTC(dates);
+    const regulated = isDefined(regulation) ? `regulated=${ regulation }&` : '';
+    const dateLimits = `end[after]=${ getStringDate(UTCDates.start) }&${ regulated }end[before]=${ getStringDate(UTCDates.end) }`;
+    return api
+        .get(`/api/tourings?deliverer=${ deliverer['@id'] }&${ dateLimits }&order[end]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
 function deleteTouring(id) {
     return api.delete('/api/tourings/' + id);
 }
@@ -91,22 +100,11 @@ function patch(id, touring) {
     return api.patch('/api/tourings/' + id, touring);
 }
 
-// function formatUTC(dates) {
-//     return {
-//         start: new Date(dates.start.toUTCString()), 
-//         end: new Date(dates.end.toUTCString())
-//     };
-// }
-
-// function updateFromMercure(data) {
-//     const filteredProducts = products.filter(item => item.id !== product.id);
-//     return [...filteredProducts, product].sort((a, b) => (a.name > b.name) ? 1 : -1);
-// }
-
 export default {
     findAll,
     findDelivererBetween,
     delete: deleteTouring,
+    findPaginatedTouringsBetween,
     find,
     patch,
     update,
@@ -116,5 +114,4 @@ export default {
     getProcessingTourings,
     closeTouring,
     updateTruckPosition,
-    // updateFromMercure
 }

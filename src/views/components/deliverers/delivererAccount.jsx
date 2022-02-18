@@ -1,23 +1,18 @@
-import { CButton, CCard, CCardBody, CCardHeader, CCol, CCollapse, CDataTable, CFormGroup, CRow, CWidgetIcon } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardHeader, CCol, CDataTable, CFormGroup, CRow, CWidgetIcon } from '@coreui/react';
 import React, { useContext, useEffect, useState } from 'react';
 import Select from 'src/components/forms/Select';
-import { Link } from 'react-router-dom';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import AuthContext from 'src/contexts/AuthContext';
-import { getDeliveredStatus } from 'src/helpers/orders';
-import OrderActions from 'src/services/OrderActions';
-import { getDateFrom, isSameDate } from 'src/helpers/days';
 import Roles from 'src/config/Roles';
 import DelivererActions from 'src/services/DelivererActions';
 import TouringActions from 'src/services/TouringActions';
 import CIcon from '@coreui/icons-react';
-
+import { Spinner } from 'react-bootstrap';
 
 const DelivererAccount = (props) => {
 
-    const itemsPerPage = 30;
-    const status = getDeliveredStatus();
+    const itemsPerPage = 3;
     const { currentUser } = useContext(AuthContext);
     const [isAdmin, setIsAdmin] = useState(false);
     const [details, setDetails] = useState([]);
@@ -28,45 +23,54 @@ const DelivererAccount = (props) => {
     const [viewedDeliveries, setViewedDeliveries] = useState([]);
     const [selectedDeliverer, setSelectedDeliverer] = useState(null);
     const [priceView, setPriceView] = useState("HT");
-    const [selectedStatus, setSelectedStatus] = useState("false");
+    const [selectedStatus, setSelectedStatus] = useState("all");
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selection, setSelection] = useState([]);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
 
     useEffect(() => {
-        setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         fetchDeliverers();
+        setIsAdmin(Roles.hasAdminPrivileges(currentUser));
     }, []);
 
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
+    useEffect(() => fetchTourings(currentPage), [currentPage]);
     useEffect(() => {
-        if (!isDefined(selectedDeliverer) && isDefinedAndNotVoid(deliverers))
-            setSelectedDeliverer(deliverers[0]);
-    }, [selectedDeliverer, deliverers]);
-
-    useEffect(() => {
-        if (isDefined(selectedDeliverer))
             fetchTourings();
-    }, [selectedDeliverer, dates]);
+            setSelection([]);
+    }, [selectedDeliverer, dates, selectedStatus]);
 
+    useEffect(() => isAllSelected(), [viewedDeliveries, selection]);
     useEffect(() => setViewedDeliveries(getDeliveries()), [tourings, selectedStatus]);
 
-    const fetchTourings = () => {
-        const UTCDates = getUTCDates(dates);
-        TouringActions.findDelivererBetween(UTCDates, selectedDeliverer)
-                .then(response =>{
-                    setTourings(response);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.log(error);
-                    setLoading(false);
-                });
+    const fetchTourings = (page = 1) => {
+        if (page >= 1 && isDefined(selectedDeliverer)) {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            const regulation = selectedStatus == "all" ? null : selectedStatus == "true" ? true : false;
+            TouringActions.findPaginatedTouringsBetween(UTCDates, selectedDeliverer, regulation, page, itemsPerPage)
+                    .then(response => {
+                        setSelectAll(false);
+                        setLoading(false);
+                        setTourings(response['hydra:member']);
+                        setTotalItems(response['hydra:totalItems']);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        setLoading(false);
+                    });
+        }
     };
 
     const fetchDeliverers = () => {
         DelivererActions
-            .findAll()
-            .then(response => setDeliverers(response.filter(d => !d.isIntern)))
+            .findExterns()
+            .then(response => {
+                setDeliverers(response);
+                setSelectedDeliverer(response[0]);
+            })
             .catch(error => console.log(error));
     };
 
@@ -88,15 +92,19 @@ const DelivererAccount = (props) => {
     const handleStatusChange = ({ currentTarget }) => setSelectedStatus(currentTarget.value);
 
     const handlePay = () => {
-        const paidDeliveries = viewedDeliveries.filter(delivery => delivery.selected);
-        const newTourings = paidDeliveries.map(delivery => {
-            const touring = tourings.find(touring => touring.id === parseInt(delivery.id));
-            return {...touring, regulated: true, orderEntities: touring.orderEntities.map(o => o['@id']), deliverer: touring.deliverer['@id']};
+        const newTourings = selection.map(({id, totalHT, totalTTC, totalToPay, totalToPayTTC, count, ...touring}) => {
+            return {
+                ...touring, 
+                regulated: true, 
+                orderEntities: touring.orderEntities.map(o => o['@id']), 
+                deliverer: touring.deliverer['@id']
+            };
         });
+        console.log(newTourings);
         updateTourings(newTourings)
             .then(response => {
                 const newDeliveries = viewedDeliveries.map(delivery => {
-                    const index = response.findIndex(update => update.data.id === delivery.id);
+                    const index = response.findIndex(update => update.data['@id'] === delivery['@id']);
                     return index !== -1 ? response[index].data : delivery;
                 });
                 const filteredDeliveries = getFilteredResults(newDeliveries);
@@ -104,22 +112,36 @@ const DelivererAccount = (props) => {
             });
     };
 
-    const handleSelect = item => {
-        let newValue = null;
-        const newDeliveryList = viewedDeliveries.map(element => {
-            newValue = !element.selected;
-            return element.id === item.id ? {...element, selected: !element.selected} : element;
-        });
-        setViewedDeliveries(newDeliveryList);
-        if (!newValue && selectAll)
-            setSelectAll(false);
-    };
+    const handleSelect = item => updateSelection(item);
 
     const handleSelectAll = () => {
-        const newSelection = !selectAll;
-        setSelectAll(newSelection);
-        const newDeliveryList = viewedDeliveries.map(element => ({...element, selected: newSelection}));
-        setViewedDeliveries(newDeliveryList);
+        let newSelection = [];
+        const newSelectState = !selectAll;
+        if (newSelectState)
+            newSelection = [...new Set([...selection, ...viewedDeliveries.filter(d => !d.regulated && !isSelectedDelivery(d))])];
+        else 
+            newSelection = selection.filter(s => viewedDeliveries.find(d => s.id === d.id && isSelectedDelivery(d)) === undefined)
+        setSelectAll(newSelectState);
+        setSelection(newSelection);
+    };
+
+    const updateSelection = item => {
+        const select = selection.find(s => s.id === item.id);
+        const newSelection = !isDefined(select) ? [...selection, item] : selection.filter(s => s.id !== item.id);
+        setSelection(newSelection);
+    };
+
+    const isSelectedDelivery = delivery => {
+        return selection.findIndex(s => s.id === delivery.id) !== -1;
+    };
+
+    const isAllSelected = () => {
+        const notRegulatedDeliveries = viewedDeliveries.filter(d => !d.regulated);
+        const hasNotSelected = notRegulatedDeliveries.find(d => !isSelectedDelivery(d)) !== undefined;
+        if (notRegulatedDeliveries.length === 0 || hasNotSelected)
+          setSelectAll(false);
+        else 
+          setSelectAll(true);
     };
 
     const getUTCDates = () => {
@@ -130,21 +152,17 @@ const DelivererAccount = (props) => {
 
     const getDeliveries = () => {
         const selectedTourings = tourings.map(touring => {
-            const { id, start, end, regulated } = touring;
             const totalHT = getTotalHT(touring);
             const totalTTC = getTotalTTC(touring);
             const ownerPart = selectedDeliverer.ownerRate;
             return {
-                id: id.toString().padStart(10, '0'),
-                start,
-                end,
+                ...touring,
+                id: touring.id.toString().padStart(10, '0'),
                 totalHT,
                 totalTTC,
-                regulated,
                 totalToPay: getPartToPay(totalHT, ownerPart),
                 totalToPayTTC: getPartToPay(totalTTC, ownerPart),
                 count: touring.orderEntities.length,
-                selected: false
             };
         });
         return getFilteredResults(selectedTourings);
@@ -280,59 +298,76 @@ const DelivererAccount = (props) => {
                         </CFormGroup>
                     </CCol>
                 </CRow>
-                <CDataTable
-                    items={ viewedDeliveries }
-                    fields={ ['Date', 'Commandes', 'Total', 'Total Net', 'Selection'] }
-                    bordered
-                    itemsPerPage={ itemsPerPage }
-                    pagination
-                    hover
-                    scopedSlots = {{
-                        'Date':
-                            item => <td>
-                                        { item.regulated ? 
-                                            <i className="far fa-check-circle mr-2 text-success"></i> :
-                                            <i className="far fa-times-circle mr-2 text-warning"></i>
-                                        }
-                                        { (new Date(item.start)).toLocaleString('fr-FR', { timeZone: 'UTC'}) }
-                                    </td>
-                        ,
-                        'Commandes':
-                            item => <td>
-                                        { item.count }
-                                    </td>
-                        ,
-                        'Total':
-                            item => <td>
-                                        { priceView === "HT" ? item.totalHT.toFixed(2) : item.totalTTC.toFixed(2) } €
-                                    </td>
-                        ,
-                        'Total Net':
-                            item => <td>
-                                        { priceView === "HT" ? item.totalToPay.toFixed(2): item.totalToPayTTC.toFixed(2) } €
-                                    </td>
-                        ,
-                        'Selection':
-                            item => <td style={{width: '10%', textAlign: 'center'}}>
-                                        <input
-                                            className="mx-1 my-1"
-                                            type="checkbox"
-                                            name="inline-checkbox"
-                                            checked={ item.selected }
-                                            onClick={ () => handleSelect(item) }
-                                            style={{zoom: 2.3}}
-                                            disabled={ item.regulated }
-                                        />
-                                    </td>
-                        }}
-                    />
-                    { isAdmin && viewedDeliveries.filter(d => !d.regulated).length > 0 &&
-                        <CRow className="mt-4 d-flex justify-content-center align-items-start">
-                            <CButton size="sm" color="success" onClick={ handlePay } style={{width: '140px', height: '35px'}} disabled={ viewedDeliveries.findIndex(p => p.selected) === -1 }>
-                                Clôturer
-                            </CButton>
-                        </CRow>
-                    }
+                { loading ?
+                    <CRow>
+                        <CCol xs="12" lg="12" className="text-center">
+                            <Spinner animation="border" variant="danger"/>
+                        </CCol>
+                    </CRow>
+                :
+                    <>
+                        <CDataTable
+                            items={ viewedDeliveries }
+                            fields={ ['Date', 'Commandes', 'Total', 'Total Net', 'Selection'] }
+                            bordered
+                            itemsPerPage={ itemsPerPage }
+                            pagination={{
+                                'pages': Math.ceil(totalItems / itemsPerPage),
+                                'activePage': currentPage,
+                                'onActivePageChange': page => setCurrentPage(page),
+                                'align': 'center',
+                                'dots': true,
+                                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                            }}
+                            hover
+                            scopedSlots = {{
+                                'Date':
+                                    item => <td>
+                                                { item.regulated ? 
+                                                    <i className="far fa-check-circle mr-2 text-success"></i> :
+                                                    <i className="far fa-times-circle mr-2 text-warning"></i>
+                                                }
+                                                { (new Date(item.start)).toLocaleString('fr-FR', { timeZone: 'UTC'}) }
+                                            </td>
+                                ,
+                                'Commandes':
+                                    item => <td>
+                                                { item.count }
+                                            </td>
+                                ,
+                                'Total':
+                                    item => <td>
+                                                { priceView === "HT" ? item.totalHT.toFixed(2) : item.totalTTC.toFixed(2) } €
+                                            </td>
+                                ,
+                                'Total Net':
+                                    item => <td>
+                                                { priceView === "HT" ? item.totalToPay.toFixed(2): item.totalToPayTTC.toFixed(2) } €
+                                            </td>
+                                ,
+                                'Selection':
+                                    item => <td style={{width: '10%', textAlign: 'center'}}>
+                                                <input
+                                                    className="mx-1 my-1"
+                                                    type="checkbox"
+                                                    name="inline-checkbox"
+                                                    checked={ isSelectedDelivery(item) }
+                                                    onClick={ () => handleSelect(item) }
+                                                    style={{zoom: 2.3}}
+                                                    disabled={ item.regulated }
+                                                />
+                                            </td>
+                                }}
+                        />
+                        { isAdmin && viewedDeliveries.filter(d => !d.regulated).length > 0 &&
+                            <CRow className="mt-4 d-flex justify-content-center align-items-start">
+                                <CButton size="sm" color="success" onClick={ handlePay } style={{width: '140px', height: '35px'}} disabled={ selection.length === 0 }>
+                                    Clôturer
+                                </CButton>
+                            </CRow>
+                        }
+                    </>
+                }
             </CCardBody>
         </CCard>
     );

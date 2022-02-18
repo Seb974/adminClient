@@ -105,7 +105,11 @@ const SellerAccount = (props) => {
                 metas: isDefined(order.metas) ? order.metas['@id'] : null, 
                 touring: isDefined(order.touring) ? order.touring['@id'] : null,
                 platform: isDefined(order.platform) ? order.platform['@id'] : null,
+                store: isDefined(order.store) ? order.store['@id'] : null,
                 promotion: isDefined(order.promotion) ? order.promotion['@id'] : null,
+                user: isDefined(order.user) ? order.user['@id'] : null,
+                appliedCondition: isDefined(order.appliedCondition) ? order.appliedCondition['@id'] : null,
+                preparator: isDefined(order.preparator) ? order.preparator['@id'] : null,
             };
         });
         updateOrders(newOrders)
