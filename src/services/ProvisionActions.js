@@ -52,6 +52,15 @@ function findSellerInProgress(seller, main, entity) {
         .then(response => response.data['hydra:member']);
 }
 
+function findFromSuppliersForSeller(dates, seller, suppliers) {
+    const UTCDates = formatUTC(dates);
+    const dateLimits = `provisionDate[after]=${ getStringDate(UTCDates.start) }&provisionDate[before]=${ getStringDate(UTCDates.end) }`;
+    const suppliersList = suppliers.length > 0 ? '&' + getSuppliersList(suppliers) : '';
+    return api
+        .get(`/api/provisions?seller=${ seller['@id'] }&${ dateLimits }${ suppliersList }`)
+        .then(response => response.data['hydra:member']);
+}
+
 
 function deleteProvision(id) {
     return api.delete('/api/provisions/' + id);
@@ -75,14 +84,14 @@ function create(provision) {
     return api.post('/api/provisions', {...provision});
 }
 
-function getSuppliersList(suppliers) {
-    let suppliersList = "";
-    suppliers.map((s, i) => {
-        const separator = i < suppliers.length - 1 ? "&" : "";
-        suppliersList += "supplier[]=" + s.value + separator;
-    });
-    return suppliersList;
-}
+// function getSuppliersList(suppliers) {
+//     let suppliersList = "";
+//     suppliers.map((s, i) => {
+//         const separator = i < suppliers.length - 1 ? "&" : "";
+//         suppliersList += "supplier[]=" + s.value + separator;
+//     });
+//     return suppliersList;
+// }
 
 function getSellersList(sellers) {
     let sellersList = "";
@@ -92,6 +101,16 @@ function getSellersList(sellers) {
         sellersList += "seller[]=" + value + separator;
     });
     return sellersList;
+}
+
+function getSuppliersList(suppliers) {
+    let suppliersList = "";
+    suppliers.map((s, i) => {
+        const separator = i < suppliers.length - 1 ? "&" : "";
+        const value = ('value' in s) ? s.value : (isDefined(s['@id']) ? s['@id'] : s);
+        suppliersList += "supplier[]=" + value + separator;
+    });
+    return suppliersList;
 }
 
 function formatUTC(dates) {
@@ -105,6 +124,7 @@ export default {
     findAll,
     findBetween,
     findSuppliersBetween,
+    findFromSuppliersForSeller,
     findPaginatedProvisionsPerSupplier,
     findSellerInProgress,
     delete: deleteProvision,

@@ -12,6 +12,12 @@ function findSellersNeedingRecovery() {
         .then(response => response.data['hydra:member']);
 }
 
+function findActiveSellers() {
+    return api
+        .get('/api/sellers?isActive=true&order[name]=asc')
+        .then(response => response.data['hydra:member']);
+}
+
 function findAllPaginated(page = 1, items = 30) {
     return api
         .get(`/api/sellers?order[name]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
@@ -55,6 +61,7 @@ function createImage(image) {
 export default {
     findAll,
     findAllPaginated,
+    findActiveSellers,
     findSellersNeedingRecovery,
     findWord,
     delete: deleteSeller,

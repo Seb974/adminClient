@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
-import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Spinner from 'react-bootstrap/Spinner';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
 import ProductActions from 'src/services/ProductActions';
@@ -16,9 +16,10 @@ import GroupRateModal from 'src/components/pricePages/groupRateModal';
 import ProductsContext from 'src/contexts/ProductsContext';
 import MercureContext from 'src/contexts/MercureContext';
 import { updateBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
+import SupplierActions from 'src/services/SupplierActions';
 
 const Profitability = (props) => {
-    const itemsPerPage = 30;
+    const itemsPerPage = 6;
     const fields = ['Vendeur', 'Fournisseur', 'Date', 'Total', ' '];
     const { currentUser, seller } = useContext(AuthContext);
     const {products, setProducts} = useContext(ProductsContext);
@@ -35,25 +36,29 @@ const Profitability = (props) => {
     const [viewedProducts, setViewedProducts] = useState([]);
     const [updated, setUpdated] = useState([]);
     const [mercureOpering, setMercureOpering] = useState(false);
+    
+    const [suppliers, setSuppliers] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedSeller, setSelectedSeller] = useState(null);
+    const [selectedSuppliers, setSelectedSuppliers] = useState([]);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         fetchPriceGroup();
-        fetchProducts();
         fetchSellers();
     }, []);
 
+    useEffect(() => {
+        setValuation("LAST");
+        getProducts();
+        fetchSuppliers();
+    }, [selectedSeller]);
+
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
 
-    useEffect(() => {
-        if (sellers.length > 0 && !isDefinedAndNotVoid(selectedSellers))
-            setSelectedSellers(getFormattedEntities(sellers));
-    }, [sellers]);
-
-    useEffect(() => {
-        if (valuation === "AVERAGE" && isDefinedAndNotVoid(selectedSellers))
-            fetchProvisions();
-    }, [dates, selectedSellers, valuation]);
+    useEffect(() => getProducts(currentPage), [currentPage]);
+    useEffect(() => fetchProvisions(), [dates, selectedSuppliers, valuation]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(products) && isDefinedAndNotVoid(selectedSellers)) {
@@ -71,10 +76,13 @@ const Profitability = (props) => {
     }, [updatedProvisions]);
 
     const fetchProvisions = () => {
-        setLoading(true);
-        const UTCDates = getUTCDates(dates);
-        ProvisionActions.findBetween(UTCDates, selectedSellers)
+        if (isDefined(selectedSeller) && isDefinedAndNotVoid(selectedSuppliers) && valuation === "AVERAGE") {
+            setLoading(true);
+            const UTCDates = getUTCDates(dates);
+            ProvisionActions
+                .findFromSuppliersForSeller(UTCDates,selectedSeller, selectedSuppliers)
                 .then(response => {
+                    console.log(response);
                     setProvisions(response);
                     setLoading(false);
                 })
@@ -82,20 +90,29 @@ const Profitability = (props) => {
                     console.log(error);
                     setLoading(false);
                 });
+        }
     };
 
-    // A PAGINER
-    const fetchProducts = () => {
-        ProductActions
-            .findAll()
-            .then(response => setProducts(response))
-            .catch(error => console.log(error));
+    const getProducts = (page = 1) => {
+        if (page >= 1 && isDefined(selectedSeller)) {
+            ProductActions
+                .findPaginatedFromSeller(selectedSeller, page, itemsPerPage)
+                .then(response => {
+                    console.log(response['hydra:member']);
+                    setProducts(response['hydra:member']);
+                    setTotalItems(response['hydra:totalItems']);
+                })
+        }
     };
 
     const fetchSellers = () => {
         SellerActions
-            .findAll()
-            .then(response => setSellers(response))
+            .findActiveSellers()
+            .then(response => {
+                setSellers(response);
+                setSelectedSeller(response[0]);
+                setSelectedSellers(getFormattedEntities(response));
+            })
             .catch(error => console.log(error));
     };
 
@@ -104,6 +121,19 @@ const Profitability = (props) => {
             .findAll()
             .then(response => setPriceGroups(response))
             .catch(error => console.log(error));
+    };
+
+    const fetchSuppliers = () => {
+        if (isDefined(selectedSeller)) {
+            SupplierActions
+                .findSuppliersForSeller(selectedSeller)
+                .then(response => {
+                    const formattedSuppliers = getFormattedEntities(response);
+                    setSuppliers(formattedSuppliers);
+                    setSelectedSuppliers(formattedSuppliers);
+                })
+                .catch(error => console.log(error));
+        }
     };
 
     const handleDateChange = datetime => {
@@ -117,8 +147,6 @@ const Profitability = (props) => {
     const handleValuationChange = ({ currentTarget }) => {
         setValuation(currentTarget.value);
     };
-
-    const handleSellersChange = sellers => setSelectedSellers(sellers);
 
     const getUTCDates = () => {
         const UTCStart = new Date(dates.start.getFullYear(), dates.start.getMonth(), dates.start.getDate(), 4, 0, 0);
@@ -138,26 +166,37 @@ const Profitability = (props) => {
         setDetails(newDetails);
     };
 
-    const getFormattedEntities = sellers => {
-        return sellers.map(seller => ({ value: seller['@id'], label: seller.name, isFixed: false }));
+    const getFormattedEntities = entities => {
+        return entities.map(entity => ({ value: entity['@id'], label: entity.name, isFixed: false }));
     };
 
     const getStock = product => {
         let total = 0;
-        // const { isMixed, stock, variations } = product;
-        // if (!isDefined(isMixed) || !isMixed) {
-        //     if (isDefinedAndNotVoid(variations)) {
-        //         variations.map(variation => {
-        //             variation.sizes.map(size => {
-        //                 total += size.stock.quantity;
-        //             })
-        //         });
-        //     } else if (isDefined(stock)) {
-        //         total = stock.quantity;
-        //     }
-        // }
+        const { isMixed, stocks, variations } = product;
+        if (!isDefined(isMixed) || !isMixed) {
+            if (isDefinedAndNotVoid(variations)) {
+                variations.map(variation => {
+                    variation.sizes.map(size => {
+                        const sizeStock = getOnlineStock(size.stocks);
+                        total += isDefined(sizeStock) ? sizeStock.quantity : 0;
+                    })
+                });
+            } else if (isDefined(stocks)) {
+                const productStock = getOnlineStock(stocks);
+                total = isDefined(productStock) ? productStock.quantity : 0;
+            }
+        }
         return total.toFixed(2);
     };
+
+    const getOnlineStock = stocks => stocks.find(s => isDefined(s.platform));
+
+    const handleSellerChange = ({ currentTarget }) => {
+        const newSeller = sellers.find(s => s.id === getInt(currentTarget.value));
+        setSelectedSeller(newSeller);
+    };
+
+    const handleSuppliersChange = newSuppliers => setSelectedSuppliers(newSuppliers);
 
     const handlePriceChange = ({ currentTarget }, product, price) => {
         const newProducts = products.map(p => p.id === product.id ? getNewProduct(product, price, currentTarget.value) : p);
@@ -287,8 +326,10 @@ const Profitability = (props) => {
                     </CCardHeader>
                     <CCardBody>
                         <CRow className="mb-2">
-                            <CCol xs="12" lg="6">
-                                <SelectMultiple name="sellers" label="Vendeurs" value={ selectedSellers } onChange={ handleSellersChange } data={ getFormattedEntities(sellers) }/>
+                            <CCol xs="12" sm="6" md="6">
+                                <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
+                                    { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                                </Select>
                             </CCol>
                             <CCol xs="12" lg="4">
                                 <Select className="mr-2" name="valuation" label="Type de valorisation" value={ valuation } onChange={ handleValuationChange }>
@@ -302,6 +343,9 @@ const Profitability = (props) => {
                         </CRow>
                         { valuation === "AVERAGE" &&
                             <CRow className="mb-2">
+                                <CCol xs="12" lg="6">
+                                    <SelectMultiple name="suppliers" label="Fournisseurs" value={ selectedSuppliers } onChange={ handleSuppliersChange } data={ suppliers }/>
+                                </CCol>
                                 <CCol xs="12" lg="6">
                                     <RangeDatePicker
                                         minDate={ dates.start }
@@ -325,7 +369,14 @@ const Profitability = (props) => {
                                 fields={ ['Produit', 'Coût U', 'Qté', 'Valeur'] }     // fields
                                 bordered
                                 itemsPerPage={ itemsPerPage }
-                                pagination
+                                pagination={{
+                                    'pages': Math.ceil(totalItems / itemsPerPage),
+                                    'activePage': currentPage,
+                                    'onActivePageChange': page => setCurrentPage(page),
+                                    'align': 'center',
+                                    'dots': true,
+                                    'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                                }}
                                 hover
                                 scopedSlots = {{
                                     'Produit':

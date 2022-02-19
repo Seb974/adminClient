@@ -32,6 +32,12 @@ function findWord(word, page = 1, items = 30) {
         .then(response => response.data);
 }
 
+function findPaginatedFromSeller(seller, page = 1, items = 30) {
+    return api
+        .get(`/api/products?seller=${ seller['@id'] }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .then(response => response.data);
+}
+
 function findFromSupplierAndStore(seller, supplier, enabledIds, page = 1, items = 30) {
     const ids = getIdsList(enabledIds);
     return api
@@ -123,6 +129,7 @@ export default {
     findAllPaginated,
     findWord,
     findAvailablePaginated,
+    findPaginatedFromSeller,
     findFromSupplierAndStore,
     findFromSupplierAndPlatform,
     delete: deleteProduct,
