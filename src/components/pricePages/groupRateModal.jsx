@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { CButton, CCol, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CRow } from '@coreui/react';
 
-const GroupRateModal = ({ priceGroups, setPriceGroups }) => {
+const GroupRateModal = ({ priceGroups, setPriceGroups, mainView = true }) => {
 
     const itemsPerPage = 10;
     const [modalShow, setModalShow] = useState(false);
@@ -16,7 +16,7 @@ const GroupRateModal = ({ priceGroups, setPriceGroups }) => {
 
     return (
         <>
-            <CButton size="sm" color="warning" onClick={ () => setModalShow(true) } className="mx-1 my-1" style={{ height: '35px' }}>Editer les marges</CButton>
+            <CButton size="sm" color="warning" onClick={ () => setModalShow(true) } className="mx-1 my-1" style={{ height: '35px' }} disabled={ !mainView }>Editer les marges</CButton>
 
             <Modal show={ modalShow } onHide={ () => setModalShow(false) } size="md" aria-labelledby="contained-modal-title-vcenter" centered backdrop="static">
                 <Modal.Header closeButton>

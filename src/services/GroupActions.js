@@ -6,6 +6,12 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.isFixed > b.isFixed) ? -1 : 1));
 }
 
+function findGroupsWithStoreAccess() {
+    return api
+        .get('/api/groups?hasStoreAccess=true&order[label]=asc')
+        .then(response => response.data['hydra:member']);
+}
+
 function findAllPaginated(page = 1, items = 30) {
     return api
         .get(`/api/groups?order[label]=asc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
@@ -42,6 +48,7 @@ export default {
     findAll,
     findAllPaginated,
     findWord,
+    findGroupsWithStoreAccess,
     delete: deleteGroup,
     find,
     update,

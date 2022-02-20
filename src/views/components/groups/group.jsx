@@ -13,8 +13,8 @@ const Group = ({ match, history }) => {
     const today = new Date();
     const { id = "new" } = match.params;
     const [editing, setEditing] = useState(false);
-    const [group, setGroup] = useState({ label: "", hasAdminAccess: false, hasShopAccess: true, subjectToTaxes: true, dayInterval: 0, onlinePayment: true, hourLimit: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 0), soldOutNotification: false});
-    const [errors, setErrors] = useState({label: "", hasAdminAccess: "", hasShopAccess: "", subjectToTaxes: "", onlinePayment: "", dayInterval: "", hourLimit: ""});
+    const [group, setGroup] = useState({ label: "", hasAdminAccess: false, hasShopAccess: true, hasStoreAccess: false, subjectToTaxes: true, dayInterval: 0, onlinePayment: true, hourLimit: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 0), soldOutNotification: false});
+    const [errors, setErrors] = useState({label: "", hasAdminAccess: "", hasShopAccess: "", hasStoreAccess: "", subjectToTaxes: "", onlinePayment: "", dayInterval: "", hourLimit: ""});
 
     useEffect(() => fetchGroup(id), []);
     useEffect(() => fetchGroup(id), [id]);
@@ -31,6 +31,7 @@ const Group = ({ match, history }) => {
                         ...response,
                         hasAdminAccess: isDefined(response.hasAdminAccess) ? response.hasAdminAccess : group.hasAdminAccess,
                         hasShopAccess: isDefined(response.hasShopAccess) ? response.hasShopAccess : group.hasShopAccess,
+                        hasStoreAccess: isDefined(response.hasStoreAccess) ? response.hasStoreAccess : group.hasStoreAccess,
                         subjectToTaxes: isDefined(response.subjectToTaxes) ? response.subjectToTaxes : group.subjectToTaxes,
                         onlinePayment: isDefined(response.onlinePayment) ? response.onlinePayment : group.onlinePayment,
                         dayInterval: isDefined(response.dayInterval) ? response.dayInterval : group.dayInterval,
@@ -92,7 +93,7 @@ const Group = ({ match, history }) => {
                     <CCardBody>
                         <CForm onSubmit={ handleSubmit }>
                             <CRow className="mx-1">
-                                <CCol xs="12" sm="12" md="6">
+                                <CCol xs="12" sm="12" md="12">
                                     <CFormGroup>
                                         <CLabel htmlFor="label">Nom</CLabel>
                                         <CInput
@@ -106,7 +107,9 @@ const Group = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.label }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" sm="12" md="3" className="d-flex align-items-center">
+                            </CRow>
+                            <CRow className="mx-1">
+                                <CCol xs="12" sm="12" md="4" className="d-flex align-items-center">
                                     <CFormGroup row className="mb-0 mt-4 d-flex align-items-center">
                                         <CCol xs="3" sm="2" md="3">
                                             <CSwitch name="hasAdminAccess" color="dark" shape="pill" variant="opposite" checked={ group.hasAdminAccess } onChange={ handleCheckBoxes }/>
@@ -116,13 +119,23 @@ const Group = ({ match, history }) => {
                                         </CCol>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" sm="12" md="3" className="d-flex align-items-center">
+                                <CCol xs="12" sm="12" md="4" className="d-flex align-items-center">
+                                    <CFormGroup row className="mb-0 mt-4 d-flex align-items-center">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="hasStoreAccess" color="dark" shape="pill" variant="opposite" checked={ group.hasStoreAccess } onChange={ handleCheckBoxes }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                            Accès aux boutiques
+                                        </CCol>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol xs="12" sm="12" md="4" className="d-flex align-items-center">
                                     <CFormGroup row className="mb-0 mt-4 d-flex align-items-center">
                                         <CCol xs="3" sm="2" md="3">
                                             <CSwitch name="hasShopAccess" color="dark" shape="pill" variant="opposite" checked={ group.hasShopAccess } onChange={ handleCheckBoxes }/>
                                         </CCol>
                                         <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
-                                            Accès au shop
+                                            Accès au e-commerce
                                         </CCol>
                                     </CFormGroup>
                                 </CCol>

@@ -47,8 +47,14 @@ function sendCategories(store) {
     return api.post('/api/hiboutik/' + store.id + '/categories');
 }
 
-function getProducts(store) {
-    return api.get('/api/hiboutik/' + store.id + '/products')
+function getProducts(store, page = 0) {
+    const pageSelection = page !== 0 ? `/${ page }`  : '';
+    return api.get(`/api/hiboutik/${ store.id }/products${ pageSelection }`)
+              .then(response => response.data);
+}
+
+function getTaxes(store) {
+    return api.get(`/api/hiboutik/${ store.id }/taxes`)
               .then(response => response.data);
 }
 
@@ -70,6 +76,11 @@ function getTurnover(store, dates) {
               .then(response => response.data);
 }
 
+function updateProductPrice(store, product) {
+    return api.put('/api/hiboutik/' + store.id + '/products', product)
+              .then(response => response.data);
+}
+
 function formatUTC(dates) {
     return {
         start: new Date(dates.start.toUTCString()), 
@@ -82,9 +93,11 @@ export default {
     findAllPaginated,
     findWord,
     delete: deleteStore,
+    updateProductPrice,
     find,
     update,
     create,
+    getTaxes,
     getProducts,
     sendProducts,
     sendSelectedProducts,

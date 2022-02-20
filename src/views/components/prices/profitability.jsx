@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ProvisionActions from '../../../services/ProvisionActions';
 import PriceGroupActions from '../../../services/PriceGroupActions';
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CInputGroup, CInput, CInputGroupAppend, CInputGroupText, CCardFooter } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CInputGroup, CInput, CInputGroupAppend, CInputGroupText, CCardFooter, CFormGroup, CSwitch } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -17,12 +17,15 @@ import ProductsContext from 'src/contexts/ProductsContext';
 import MercureContext from 'src/contexts/MercureContext';
 import { updateBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
 import SupplierActions from 'src/services/SupplierActions';
+import PlatformContext from 'src/contexts/PlatformContext';
+import StoreActions from 'src/services/StoreActions';
 
 const Profitability = (props) => {
-    const itemsPerPage = 6;
-    const fields = ['Vendeur', 'Fournisseur', 'Date', 'Total', ' '];
+    // const itemsPerPage = 6;
+    const [itemsPerPage, setItemsPerPage] = useState(6);
+    const fields = ['Produit', 'Coût U', 'Qté', 'Valeur', 'Prix de vente TTC', 'Marge'];
     const { currentUser, seller } = useContext(AuthContext);
-    const {products, setProducts} = useContext(ProductsContext);
+    const { platform } = useContext(PlatformContext);
     const { updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
     const [provisions, setProvisions] = useState([]);
     const [priceGroups, setPriceGroups] = useState([]);
@@ -32,16 +35,22 @@ const Profitability = (props) => {
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [details, setDetails] = useState([]);
     const [valuation, setValuation] = useState("LAST");
-    const [selectedSellers, setSelectedSellers] = useState([]);
     const [viewedProducts, setViewedProducts] = useState([]);
     const [updated, setUpdated] = useState([]);
     const [mercureOpering, setMercureOpering] = useState(false);
     
+    const [stores, setStores] = useState([]);
+    const [mainView, setMainView] = useState(true);
     const [suppliers, setSuppliers] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedStore, setSelectedStore] = useState(null);
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+    const [hasIndependencies, setHasIndependencies] = useState(false);
+    const [storeProducts, setStoreProducts] = useState([]);
+    const [storeTaxes, setStoreTaxes] = useState([]);
+    const [updateLoading, setUpdateLoading] = useState(false);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
@@ -49,23 +58,29 @@ const Profitability = (props) => {
         fetchSellers();
     }, []);
 
+    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
+
     useEffect(() => {
         setValuation("LAST");
-        getProducts();
         fetchSuppliers();
     }, [selectedSeller]);
 
-    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
-
-    useEffect(() => getProducts(currentPage), [currentPage]);
-    useEffect(() => fetchProvisions(), [dates, selectedSuppliers, valuation]);
+    useEffect(() => {
+        const limit = mainView ? 6 : 250;
+        setItemsPerPage(limit);
+        setValuation("LAST");
+    }, [mainView]);
 
     useEffect(() => {
-        if (isDefinedAndNotVoid(products) && isDefinedAndNotVoid(selectedSellers)) {
-            const filteredProducts = products.filter(p => selectedSellers.findIndex(s => s.value === p.seller['@id']) !== -1);
-            setViewedProducts(filteredProducts);
-        }
-    }, [products, selectedSellers]);
+        setUpdated([]);
+        getProducts();
+    }, [selectedSeller, mainView, selectedStore]);
+    
+    useEffect(() => getProducts(currentPage), [currentPage]);
+    useEffect(() => getStoreTaxes(), [selectedStore]);
+    useEffect(() => getViewedProductsFromStore(), [storeProducts, storeTaxes]);
+    useEffect(() => getProductsWithCosts(viewedProducts), [valuation, provisions]);
+    useEffect(() => fetchProvisions(), [dates, selectedSuppliers, valuation, mainView, selectedStore]);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(updatedProvisions) && !mercureOpering) {
@@ -79,10 +94,10 @@ const Profitability = (props) => {
         if (isDefined(selectedSeller) && isDefinedAndNotVoid(selectedSuppliers) && valuation === "AVERAGE") {
             setLoading(true);
             const UTCDates = getUTCDates(dates);
+            const entity = !mainView && isDefined(selectedStore) ? selectedStore['@id'] : platform['@id'];
             ProvisionActions
-                .findFromSuppliersForSeller(UTCDates,selectedSeller, selectedSuppliers)
+                .findFromSuppliersForSeller(UTCDates,selectedSeller, selectedSuppliers, mainView, entity)
                 .then(response => {
-                    console.log(response);
                     setProvisions(response);
                     setLoading(false);
                 })
@@ -95,13 +110,64 @@ const Profitability = (props) => {
 
     const getProducts = (page = 1) => {
         if (page >= 1 && isDefined(selectedSeller)) {
-            ProductActions
-                .findPaginatedFromSeller(selectedSeller, page, itemsPerPage)
+            if (mainView || !isDefined(selectedStore))
+                getOnlineProducts(page);
+            else
+                getStoreProducts(page);
+        }
+    };
+
+    const getOnlineProducts = (page = 1) => {
+        setLoading(true);
+        ProductActions
+            .findPaginatedFromSeller(selectedSeller, page, itemsPerPage)
+            .then(response => {
+                getProductsWithCosts(response['hydra:member']);
+                setTotalItems(response['hydra:totalItems']);
+                setLoading(false);
+            })
+            .catch(error => {
+                setLoading(false);
+                console.log(error);
+            });
+    };
+
+    const getStoreProducts = (page = 1) => {
+        setLoading(true);
+        StoreActions
+            .getProducts(selectedStore, page)
+            .then(response => {
+                setStoreProducts(response);
+                setLoading(false);
+            })
+            .catch(error => {
+                setLoading(false);
+                console.log(error);
+            });
+    };
+
+    const getStoreTaxes = () => {
+        if (isDefined(selectedStore)) {
+            StoreActions
+                .getTaxes(selectedStore)
                 .then(response => {
-                    console.log(response['hydra:member']);
-                    setProducts(response['hydra:member']);
-                    setTotalItems(response['hydra:totalItems']);
+                    setStoreTaxes(response);
                 })
+                .catch(error => {
+                    console.log(error);
+                });
+        }
+    };
+
+    const getViewedProductsFromStore = () => {
+        if (!mainView)
+            setViewedProducts(getFormattedProducts());
+    };
+
+    const getProductsWithCosts = products => {
+        if (isDefinedAndNotVoid(products)) {
+            const newProducts = products.map(p => ({...p, cost: getSignedCost(p)}));
+            setViewedProducts(newProducts);
         }
     };
 
@@ -111,7 +177,7 @@ const Profitability = (props) => {
             .then(response => {
                 setSellers(response);
                 setSelectedSeller(response[0]);
-                setSelectedSellers(getFormattedEntities(response));
+                defineStores(response[0]);
             })
             .catch(error => console.log(error));
     };
@@ -136,6 +202,46 @@ const Profitability = (props) => {
         }
     };
 
+    const defineStores = seller => {
+        if (isDefined(seller) && isDefinedAndNotVoid(seller.stores)) {
+            const independantStores = seller.stores.filter(s => !s.main);
+            const hasIndependency = independantStores.length > 0;
+            setStores(independantStores)
+            setSelectedStore(independantStores[0]);
+            setHasIndependencies(hasIndependency);
+        } else {
+            setStores([]);
+            setSelectedStore(null);
+            setHasIndependencies(false);
+            setMainView(true);
+        }
+    };
+
+    const getFormattedProducts = () => {
+        if (isDefinedAndNotVoid(storeProducts) && isDefinedAndNotVoid(storeTaxes)) {
+            return storeProducts.map(p => {
+                const tax = storeTaxes.find(t => t['tax_id'] === p['product_vat']);
+                const priceHT = getPriceHT(p, tax);
+                return {
+                    id: getInt(p['products_ref_ext']),
+                    name: p['product_model'],
+                    lastCost: getFloat(p['product_supply_price']),
+                    priceTTC: getFloat(p['product_price']),
+                    priceHT: priceHT,
+                    tax: getFloat(tax['tax_value']),
+                    hiboutikId: p['product_id'],
+                    cost: getFloat(p['product_supply_price']),
+                };
+            });
+        }
+        return [];
+    };
+
+    const getPriceHT = (product, tax) => {
+        return isDefined(product) && isDefined(tax) && isDefined(product['product_price']) && isDefined(tax['tax_value']) ?
+            getFloat((getFloat(product['product_price']) * (1 - getFloat(tax['tax_value']))).toFixed(2)) : 0;
+    };
+
     const handleDateChange = datetime => {
         if (isDefined(datetime[1])) {
             const newStart = new Date(datetime[0].getFullYear(), datetime[0].getMonth(), datetime[0].getDate(), 0, 0, 0);
@@ -144,8 +250,11 @@ const Profitability = (props) => {
         }
     };
 
-    const handleValuationChange = ({ currentTarget }) => {
-        setValuation(currentTarget.value);
+    const handleValuationChange = ({ currentTarget }) => setValuation(currentTarget.value);
+
+    const handleStoreChange= ({ currentTarget }) => {
+        const newStore = stores.find(store => store.id === parseInt(currentTarget.value));
+        setSelectedStore(newStore);
     };
 
     const getUTCDates = () => {
@@ -194,35 +303,55 @@ const Profitability = (props) => {
     const handleSellerChange = ({ currentTarget }) => {
         const newSeller = sellers.find(s => s.id === getInt(currentTarget.value));
         setSelectedSeller(newSeller);
+        defineStores(newSeller)
     };
+
+    const handleView = ({ currentTarget }) => setMainView(!mainView);
 
     const handleSuppliersChange = newSuppliers => setSelectedSuppliers(newSuppliers);
 
     const handlePriceChange = ({ currentTarget }, product, price) => {
-        const newProducts = products.map(p => p.id === product.id ? getNewProduct(product, price, currentTarget.value) : p);
-        setProducts(newProducts);
+        const newProducts = viewedProducts.map(p => p.id === product.id ? getNewProduct(product, price, currentTarget.value) : p);
+        setViewedProducts(newProducts);
         if (!updated.includes(product.id))
             setUpdated([...updated, product.id]);
     };
 
-    const handleUpdate = () => {
-        const updatedProducts = products.filter(p => updated.includes(p.id));
-        const productsToWrite = getProductsToWrite(updatedProducts);
-        updatePrices(productsToWrite).then(response => console.log(productsToWrite));
+    const handleUpdate = async () => {
+        try {
+            setUpdateLoading(true);
+            let response = null;
+            const updatedProducts = viewedProducts.filter(p => updated.includes(p.id));
+            if (mainView) {
+                const productsToWrite = getProductsToWrite(updatedProducts);
+                response = await updatePrices(productsToWrite);
+            } else {
+                response = await updateStorePrices(updatedProducts);
+            }
+            setUpdated([]);
+            setUpdateLoading(false);
+        } catch (error) {
+            console.log(error);
+            setUpdateLoading(false);
+        }
+        
     };
 
     const getProductsToWrite = filteredProducts => {
         return filteredProducts.map(product => {
-            const { catalogs, categories, components, image, prices, seller, stock, tax, userGroups, variations, ...rest } = product;
+            const { catalogs, categories, components, image, prices, seller, stocks, tax, userGroups, variations, suppliers, costs, department, ...rest } = product;
             return {
                 ...rest,
                 catalogs: isDefinedAndNotVoid(catalogs) ? catalogs.map(c => c['@id']) : [],
                 categories: isDefinedAndNotVoid(categories) ? categories.map(c => c['@id']) : [],
                 components: isDefinedAndNotVoid(components) ? components.map(c => c['@id']) : [],
+                suppliers: isDefinedAndNotVoid(suppliers) ? suppliers.map(s => s['@id']) : [],
+                stocks: isDefinedAndNotVoid(stocks) ? stocks.map(s => s['@id']) : [],
+                costs: isDefinedAndNotVoid(costs) ? costs.map(c => c['@id']) : [],
                 image: isDefined(image) ? image['@id'] : null,
                 seller: isDefined(seller) ? seller['@id'] : null,
-                stock: isDefined(stock) ? stock['@id'] : null,
                 tax: isDefined(tax) ? tax['@id'] : null,
+                department: isDefined(department) ? department['@id'] : null,
                 userGroups: isDefinedAndNotVoid(userGroups) ? userGroups.map(u => u['@id']) : [],
                 variations: isDefinedAndNotVoid(variations) ? variations.map(v => v['@id']) : [],
                 prices: product.prices.map(p => ({...p, priceGroup: p.priceGroup['@id'], amount: getFloat(p.amount)}))
@@ -235,6 +364,13 @@ const Profitability = (props) => {
             return await ProductActions.update(product.id, product);
         }));
         return savedProducts;
+    };
+
+    const updateStorePrices = async (newProducts) => {
+        const savedProducts = await Promise.all(newProducts.map( async product => {
+            return await StoreActions.updateProductPrice(selectedStore, product);
+        }));
+        return  savedProducts;
     };
 
     const getNewProduct = (product, price, amount) => {
@@ -250,25 +386,19 @@ const Profitability = (props) => {
                 }
             })
         });
-        return costs.length > 0 ? (costs.reduce((sum, current) => sum += current, 0) / costs.length).toFixed(2) : "-";
+        return costs.length > 0 ? (costs.reduce((sum, current) => sum += current, 0) / costs.length).toFixed(2) : 0;
     };
 
-    const getCostWithLastCost = product => {
-        return isDefined(product.lastCost) ? product.lastCost.toFixed(2) : "-"
-    };
+    const getCostWithLastCost = product => isDefined(product.lastCost) ? getFloat(product.lastCost).toFixed(2) : 0;
 
-    const getCost = product => {
-        return valuation === "LAST" ? getCostWithLastCost(product) : getCostWithAverage(product);
-    };
+    const getCost = product => valuation === "LAST" ? getCostWithLastCost(product) : getCostWithAverage(product);
 
     const getSignedCost = product => {
         const cost = getCost(product);
-        return isNaN(cost) ? "-" : cost + ' €';
+        return isNaN(cost) ? 0 : cost;
     };
 
-    const getGainWithLastCost = (product, price) => {
-        return isDefined(product.lastCost) ? ((price.amount - product.lastCost) * 100 / product.lastCost).toFixed(2) : "-";
-    };
+    const getGainWithLastCost = (product, price) => isDefined(product.lastCost) ? ((price.amount - product.lastCost) * 100 / product.lastCost).toFixed(2) : "-";
 
     const getGainWithAverage = (product, price) => {
         const cost = getCostWithAverage(product);
@@ -278,12 +408,15 @@ const Profitability = (props) => {
     const getGain = (product, price) => valuation === "LAST" ? getGainWithLastCost(product, price) : getGainWithAverage(product, price);
 
     const getSignedGain = (product, price) => {
-        const gain = getGain(product, price);
-        return isNaN(gain) ? "-" : gain + '%';
+        const { cost } = product;
+        const { amount } = price;
+        const gain = isDefined(cost) && isDefined(amount) && getFloat(amount) > 0 && getFloat(cost) > 0 ? 
+                    getFloat((getFloat(amount) - getFloat(cost)) * 100 / getFloat(amount)) : 0;
+        return gain > 0 ? gain.toFixed(2) + ' %' : '-';
     };
 
     const getIdealPrice = (product, price) => {
-        const cost = valuation === "LAST" ? getCostWithLastCost(product) : getCost(product);
+        const { cost } = product;
         const group = priceGroups.find(group => group.id === price.priceGroup.id);
         const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100 : 0;
         return isNaN(cost) ? "-" : idealPrice + " €";
@@ -299,14 +432,17 @@ const Profitability = (props) => {
 
     const getSignedProductName = (product) => {
         let gainLevel = 0;
-        product.prices.map(price => {
-            const priceLevel = getGainLevelInformation(product, price);
-            gainLevel = priceLevel > gainLevel ? priceLevel : gainLevel;
-        });
-        return <>{ gainLevel == 1 ? <i className="fas fa-info-circle mr-2 text-warning"/> : 
-                   gainLevel == 2 ? <i className="fas fa-exclamation-triangle mr-2 text-danger"/> : "" }
-                 { product.name }
-               </>;
+        if (isDefinedAndNotVoid(product.prices)) {
+            product.prices.map(price => {
+                const priceLevel = getGainLevelInformation(product, price);
+                gainLevel = priceLevel > gainLevel ? priceLevel : gainLevel;
+            });
+            return <>{ gainLevel == 1 ? <i className="fas fa-info-circle mr-2 text-warning"/> : 
+                    gainLevel == 2 ? <i className="fas fa-exclamation-triangle mr-2 text-danger"/> : "" }
+                    { product.name }
+                </>;
+        }
+        return product.name;
     };
 
     const getGainLevelInformation = (product, price) => {
@@ -315,6 +451,27 @@ const Profitability = (props) => {
         const minRate = isDefined(group) ? group.rate : 0;
         const maxRate = isDefined(group) ? (group.rate + 15) : 15;
         return isNaN(gain) || (gain >= minRate && gain <= maxRate) ? 0 : gain < minRate ? 2 : 1;
+    };
+
+    const getShopGain = product => {
+        const { tax, cost, priceTTC } = product;
+        const gain = isDefined(tax) && isDefined(cost) && isDefined(priceTTC) && getFloat(priceTTC) > 0 && getFloat(cost) > 0 ? 
+                    getFloat((getFloat(priceTTC) - (getFloat(cost) * (1 + getFloat(tax)))) * 100 / getFloat(priceTTC)) : 0;
+        return gain > 0 ? gain.toFixed(2) + ' %' : '-';
+    }
+
+    const handlePriceStoreChange = ({ currentTarget }) => {
+        const updatedProduct = viewedProducts.find(p => p.id === parseInt(currentTarget.name));
+        const updatedProducts = viewedProducts.map(p => p.id == updatedProduct.id ? {...updatedProduct, priceTTC: currentTarget.value} : p);   // , updated: true
+        setViewedProducts(updatedProducts);
+        if (!updated.includes(updatedProduct.id))
+            setUpdated([...updated, updatedProduct.id]);
+    };
+
+    const handleCostChange = ({ currentTarget }) => {
+        const updatedProduct = viewedProducts.find(p => p.id === parseInt(currentTarget.name));
+        const updatedProducts = viewedProducts.map(p => p.id == updatedProduct.id ? {...updatedProduct, cost: currentTarget.value} : p);
+        setViewedProducts(updatedProducts);
     };
 
     return (
@@ -338,9 +495,30 @@ const Profitability = (props) => {
                                 </Select>
                             </CCol>
                             <CCol xs="12" lg="2" className="mt-4">
-                                <GroupRateModal priceGroups={ priceGroups } setPriceGroups={ setPriceGroups }/>
+                                <GroupRateModal priceGroups={ priceGroups } setPriceGroups={ setPriceGroups } mainView={ mainView }/>
                             </CCol>
                         </CRow>
+                        { !Roles.isStoreManager(currentUser) &&
+                            <CRow className="mt-2">
+                                <CCol xs="12" md="5" className="my-4">
+                                    <CFormGroup row className="mb-0 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="requireDeclaration" className="mr-0" color="dark" shape="pill" variant="opposite" checked={ mainView } onChange={ handleView } disabled={ !hasIndependencies }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                            Stock principal
+                                        </CCol>
+                                    </CFormGroup>
+                                </CCol>
+                                { hasIndependencies && !mainView &&
+                                    <CCol xs="12" md="7">
+                                        <Select className="mr-2" name="selectedStore" label="Boutique" onChange={ handleStoreChange } value={ isDefined(selectedStore) ? selectedStore.id : 0 }>
+                                            { stores.map(store => <option key={ store.id } value={ store.id }>{ store.name }</option>) }
+                                        </Select>
+                                    </CCol>
+                                }
+                            </CRow>
+                        }
                         { valuation === "AVERAGE" &&
                             <CRow className="mb-2">
                                 <CCol xs="12" lg="6">
@@ -366,7 +544,10 @@ const Profitability = (props) => {
                             :
                             <CDataTable
                                 items={ viewedProducts }
-                                fields={ ['Produit', 'Coût U', 'Qté', 'Valeur'] }     // fields
+                                fields={ mainView ? 
+                                    fields.filter(f => f !== 'Prix de vente TTC'&& f !== 'Marge') : 
+                                    fields.filter(f => f !== 'Qté' && f !== 'Valeur') 
+                                }
                                 bordered
                                 itemsPerPage={ itemsPerPage }
                                 pagination={{
@@ -380,23 +561,58 @@ const Profitability = (props) => {
                                 hover
                                 scopedSlots = {{
                                     'Produit':
-                                        item => <td>
+                                        item => !mainView ? <td>{ item.name }</td> : 
+                                                <td>
                                                     <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >
                                                         { getSignedProductName(item) }
                                                     </Link>
                                                 </td>
                                     ,
                                     'Coût U':
-                                        item => <td>{ isDefined(item.isMixed) && item.isMixed ? "-" : getSignedCost(item) }</td>
+                                        item => <td>
+                                                    <CInputGroup>
+                                                        <CInput
+                                                            type="number"
+                                                            name={ item.id }
+                                                            value={ item.cost }
+                                                            onChange={ handleCostChange }
+                                                            style={{ maxWidth: '180px'}}
+                                                            disabled={ isDefined(item.isMixed) && item.isMixed  }
+                                                        />
+                                                        <CInputGroupAppend>
+                                                            <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
+                                                        </CInputGroupAppend>
+                                                    </CInputGroup>
+                                                </td>
+
                                     ,
                                     'Qté':
-                                        item => <td>{ getStock(item) + " " + item.unit }</td>
+                                        item => <td>{ isDefined(item.isMixed) && item.isMixed ? "-" : getStock(item) + " " + item.unit }</td>
                                     ,
                                     'Valeur':
-                                        item => <td>{ (isDefined(item.isMixed) && item.isMixed || isNaN(getCost(item))) ? "-" : (getStock(item) * getCost(item)).toFixed(2) + " €" }</td>
+                                        item => <td>{ (isDefined(item.isMixed) && item.isMixed || isNaN(getCost(item))) ? "-" : (getStock(item) * getFloat(item.cost)).toFixed(2) + " €" }</td>
+                                    ,
+                                    'Prix de vente TTC': 
+                                        item => <td>
+                                                    <CInputGroup>
+                                                        <CInput
+                                                            type="number"
+                                                            name={ item.id }
+                                                            value={ item.priceTTC }
+                                                            onChange={ handlePriceStoreChange }
+                                                            style={{ maxWidth: '180px'}}
+                                                        />
+                                                        <CInputGroupAppend>
+                                                            <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
+                                                        </CInputGroupAppend>
+                                                    </CInputGroup>
+                                                </td>
+                                    ,
+                                    'Marge':
+                                        item => <td>{ getShopGain(item) }</td>
                                     ,
                                     'details':
-                                        item => <CCollapse show={details.includes(item.id)}>
+                                        item => !mainView ? <></> : <CCollapse show={details.includes(item.id)}>
                                                     <CDataTable
                                                         items={ item.prices }
                                                         fields={ [
@@ -443,7 +659,7 @@ const Profitability = (props) => {
                     </CCardBody>
                     <CCardFooter className="d-flex justify-content-center">
                         <CButton size="sm" color="success" onClick={ handleUpdate } className="my-3" style={{width: '140px', height: '35px'}} disabled={ updated.length <= 0 }>
-                            Mettre à jour
+                            { updateLoading ? <Spinner animation="border" variant="light" size="sm"/> : "Mettre à jour" }
                         </CButton>
                     </CCardFooter>
                 </CCard>

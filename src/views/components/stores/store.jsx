@@ -12,6 +12,7 @@ import Select from 'src/components/forms/Select';
 import SellerActions from 'src/services/SellerActions';
 import PlatformContext from 'src/contexts/PlatformContext';
 import { Spinner } from 'react-bootstrap';
+import GroupActions from 'src/services/GroupActions';
 
 const Store = ({ match, history }) => {
 
@@ -21,13 +22,15 @@ const Store = ({ match, history }) => {
     const [editing, setEditing] = useState(false);
     const initialInformations =  AddressPanel.getInitialInformations();
     const [informations, setInformations] = useState(initialInformations);
-    const defaultErrors = {name:"", main: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", user: "", apiKey: "", url: "" };
-    const [store, setStore] = useState({ name: "", main: false, user: "", apiKey: "", url: "" });
+    const defaultErrors = {name:"", main: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", user: "", apiKey: "", url: "", storeGroup: "" };
+    const [store, setStore] = useState({ name: "", main: false, user: "", apiKey: "", url: "", storeGroup: null });
     const [sellers, setSellers] = useState([]);
     const [managers, setManagers] = useState([]);
+    const [groups, setGroups] = useState([]);
     const [errors, setErrors] = useState(defaultErrors);
     const [intern, setIntern] = useState(!Roles.isSeller(currentUser));
     const [selectedSeller, setSelectedSeller] = useState(null);
+    const [selectedGroup, setSelectedGroup] = useState(null);
     const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [productsLoading, setProductsLoading] = useState(false);
     const [toasts, setToasts] = useState([]);
@@ -40,6 +43,7 @@ const Store = ({ match, history }) => {
     useEffect(() => {
         fetchStore(id);
         fetchSellers();
+        fetchGroups();
     }, []);
 
     useEffect(() => fetchStore(id), [id]);
@@ -60,6 +64,19 @@ const Store = ({ match, history }) => {
             .catch(error => console.log(error));
     };
 
+    const fetchGroups = () => {
+        GroupActions
+            .findGroupsWithStoreAccess()
+            .then(response => {
+                setGroups(response);
+                if (!isDefined(selectedGroup))
+                    setSelectedGroup(response[0]);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    };
+
     const fetchStore = id => {
         if (id !== "new") {
             setEditing(true);
@@ -74,6 +91,8 @@ const Store = ({ match, history }) => {
                         setManagers(response.managers);
                     if (isDefined(response.seller))
                         setSelectedSeller(response.seller);
+                    if (isDefined(response.storeGroup))
+                        setSelectedGroup(response.storeGroup);
                 })
                 .catch(error => {
                     console.log(error);
@@ -90,7 +109,8 @@ const Store = ({ match, history }) => {
             metas: {...informations, isRelaypoint: false}, 
             managers: isDefinedAndNotVoid(managers) ? managers.map(u => u['@id']) : [],
             platform : intern ? platform['@id'] : null,
-            seller: !intern ? selectedSeller['@id'] : null
+            seller: !intern ? selectedSeller['@id'] : null,
+            storeGroup: selectedGroup['@id']
         }
         return isDefined(apiKey) && apiKey.length > 0 ? {...newStore, apiKey} : newStore;
     };
@@ -98,6 +118,11 @@ const Store = ({ match, history }) => {
     const handleSellerChange= ({ currentTarget }) => {
         const newSeller = sellers.find(seller => seller.id === parseInt(currentTarget.value));
         setSelectedSeller(newSeller);
+    };
+
+    const handleGroupChange = ({ currentTarget }) => {
+        const newGroup = groups.find(g => g.id ===  parseInt(currentTarget.value));
+        setSelectedGroup(newGroup);
     };
 
     const handleSubmit = (e) => {
@@ -231,9 +256,14 @@ const Store = ({ match, history }) => {
                             </CFormGroup>
                             { !intern &&
                                 <CRow className="mt-4 my-2">
-                                    <CCol xs="12" sm="12" md="12">
+                                    <CCol xs="12" sm="12" md="6">
                                         <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
                                             { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                                        </Select>
+                                    </CCol>
+                                    <CCol xs="12" sm="12" md="6">
+                                        <Select name="storeGroup" label="Catégorie tarifaire" value={ isDefined(selectedGroup) ? selectedGroup.id : 1 } onChange={ handleGroupChange }>
+                                            { groups.map(role => <option key={ role.id } value={ role.id }>{ role.label }</option> ) }
                                         </Select>
                                     </CCol>
                                 </CRow>

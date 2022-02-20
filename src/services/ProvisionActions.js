@@ -52,12 +52,13 @@ function findSellerInProgress(seller, main, entity) {
         .then(response => response.data['hydra:member']);
 }
 
-function findFromSuppliersForSeller(dates, seller, suppliers) {
+function findFromSuppliersForSeller(dates, seller, suppliers, main, entity) {
     const UTCDates = formatUTC(dates);
+    const entitySelection = main ? `platform=${ entity }` : `store=${ entity }`;
     const dateLimits = `provisionDate[after]=${ getStringDate(UTCDates.start) }&provisionDate[before]=${ getStringDate(UTCDates.end) }`;
     const suppliersList = suppliers.length > 0 ? '&' + getSuppliersList(suppliers) : '';
     return api
-        .get(`/api/provisions?seller=${ seller['@id'] }&${ dateLimits }${ suppliersList }`)
+        .get(`/api/provisions?seller=${ seller['@id'] }&${ dateLimits }${ suppliersList }&${ entitySelection }`)
         .then(response => response.data['hydra:member']);
 }
 

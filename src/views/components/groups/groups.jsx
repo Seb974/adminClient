@@ -29,15 +29,6 @@ const Groups = (props) => {
     const getGroups = (page = 1) => page >=1 ? GroupActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedGroups = (word, page = 1) => GroupActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     GroupActions.findAll()
-    //         .then(response => {
-    //           console.log(response);
-    //           setGroups(response);
-    //         })
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalGroups = [...groups];
         setGroups(groups.filter(group => group.id !== id));
