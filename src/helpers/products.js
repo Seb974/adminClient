@@ -70,7 +70,7 @@ export const getProductToWrite = (product, type, categories, variations, adapted
         productGroup: type === "mixed" ? null : product.productGroup,
         tax: typeof product.tax === 'string' ? product.tax : product.tax['@id'],
         seller: noImgProduct.seller['@id'],
-        department: noImgProduct.department['@id'],
+        department: isDefined(noImgProduct.department) ? noImgProduct.department['@id'] : null,
         suppliers: isDefinedAndNotVoid(product.suppliers) ? product.suppliers.map(s => s.value) : [],
         discount: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? getFloat(product.discount) : null,
         offerEnd: product.discount.toString().length > 0 && getFloat(product.discount) > 0 ? product.offerEnd : null,
