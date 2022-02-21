@@ -13,7 +13,6 @@ import ProductActions from 'src/services/ProductActions';
 import SellerActions from 'src/services/SellerActions';
 import Select from 'src/components/forms/Select';
 import GroupRateModal from 'src/components/pricePages/groupRateModal';
-import ProductsContext from 'src/contexts/ProductsContext';
 import MercureContext from 'src/contexts/MercureContext';
 import { updateBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
 import SupplierActions from 'src/services/SupplierActions';
@@ -21,7 +20,6 @@ import PlatformContext from 'src/contexts/PlatformContext';
 import StoreActions from 'src/services/StoreActions';
 
 const Profitability = (props) => {
-    // const itemsPerPage = 6;
     const [itemsPerPage, setItemsPerPage] = useState(6);
     const fields = ['Produit', 'Coût U', 'Qté', 'Valeur', 'Prix de vente TTC', 'Marge'];
     const { currentUser, seller } = useContext(AuthContext);
@@ -40,7 +38,7 @@ const Profitability = (props) => {
     const [mercureOpering, setMercureOpering] = useState(false);
     
     const [stores, setStores] = useState([]);
-    const [mainView, setMainView] = useState(true);
+    const [mainView, setMainView] = useState(!Roles.isStoreManager(currentUser));
     const [suppliers, setSuppliers] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -75,9 +73,14 @@ const Profitability = (props) => {
         setUpdated([]);
         getProducts();
     }, [selectedSeller, mainView, selectedStore]);
+
+    useEffect(() => {
+        setStoreTaxes([]);
+        getStoreTaxes();
+    }, [selectedStore]);
     
     useEffect(() => getProducts(currentPage), [currentPage]);
-    useEffect(() => getStoreTaxes(), [selectedStore]);
+    
     useEffect(() => getViewedProductsFromStore(), [storeProducts, storeTaxes]);
     useEffect(() => getProductsWithCosts(viewedProducts), [valuation, provisions]);
     useEffect(() => fetchProvisions(), [dates, selectedSuppliers, valuation, mainView, selectedStore]);
@@ -110,9 +113,9 @@ const Profitability = (props) => {
 
     const getProducts = (page = 1) => {
         if (page >= 1 && isDefined(selectedSeller)) {
-            if (mainView || !isDefined(selectedStore))
+            if (mainView )      // || !isDefined(selectedStore)
                 getOnlineProducts(page);
-            else
+            else if (isDefined(selectedStore))
                 getStoreProducts(page);
         }
     };
@@ -219,14 +222,16 @@ const Profitability = (props) => {
 
     const getFormattedProducts = () => {
         if (isDefinedAndNotVoid(storeProducts) && isDefinedAndNotVoid(storeTaxes)) {
+            const { isTaxIncluded } = selectedStore;
             return storeProducts.map(p => {
                 const tax = storeTaxes.find(t => t['tax_id'] === p['product_vat']);
-                const priceHT = getPriceHT(p, tax);
-                return {
+                const priceHT = isDefined(isTaxIncluded) && !isTaxIncluded ? getFloat(p['product_price']) : getPriceHT(p, tax);
+                const priceTTC = isDefined(isTaxIncluded) && !isTaxIncluded ? getPriceTTC(p, tax) : getFloat(p['product_price']);
+                return !isDefined(tax) ? null : {
                     id: getInt(p['products_ref_ext']),
                     name: p['product_model'],
                     lastCost: getFloat(p['product_supply_price']),
-                    priceTTC: getFloat(p['product_price']),
+                    priceTTC: priceTTC,
                     priceHT: priceHT,
                     tax: getFloat(tax['tax_value']),
                     hiboutikId: p['product_id'],
@@ -240,6 +245,11 @@ const Profitability = (props) => {
     const getPriceHT = (product, tax) => {
         return isDefined(product) && isDefined(tax) && isDefined(product['product_price']) && isDefined(tax['tax_value']) ?
             getFloat((getFloat(product['product_price']) * (1 - getFloat(tax['tax_value']))).toFixed(2)) : 0;
+    };
+
+    const getPriceTTC = (product, tax) => {
+        return isDefined(product) && isDefined(tax) && isDefined(product['product_price']) && isDefined(tax['tax_value']) ?
+            getFloat((getFloat(product['product_price']) * (1 + getFloat(tax['tax_value']))).toFixed(2)) : 0;
     };
 
     const handleDateChange = datetime => {
@@ -462,7 +472,11 @@ const Profitability = (props) => {
 
     const handlePriceStoreChange = ({ currentTarget }) => {
         const updatedProduct = viewedProducts.find(p => p.id === parseInt(currentTarget.name));
-        const updatedProducts = viewedProducts.map(p => p.id == updatedProduct.id ? {...updatedProduct, priceTTC: currentTarget.value} : p);   // , updated: true
+        const updatedProducts = viewedProducts.map(p => p.id !== updatedProduct.id ? p : ({
+            ...updatedProduct, 
+            priceTTC: currentTarget.value, 
+            priceHT: getHTPrice(updatedProduct, currentTarget.value)
+        }));
         setViewedProducts(updatedProducts);
         if (!updated.includes(updatedProduct.id))
             setUpdated([...updated, updatedProduct.id]);
@@ -474,6 +488,8 @@ const Profitability = (props) => {
         setViewedProducts(updatedProducts);
     };
 
+    const getHTPrice = ({ tax }, TTCPrice) => getFloat(getFloat(TTCPrice) * (1 - getFloat(tax))).toFixed(2);
+
     return (
         <CRow>
             <CCol xs="12" lg="12">
@@ -484,19 +500,27 @@ const Profitability = (props) => {
                     <CCardBody>
                         <CRow className="mb-2">
                             <CCol xs="12" sm="6" md="6">
-                                <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
-                                    { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
-                                </Select>
+                                { !Roles.isStoreManager(currentUser) ?
+                                    <Select className="mr-2" name="seller" label="Vendeur" onChange={ handleSellerChange } value={ isDefined(selectedSeller) ? selectedSeller.id : 0 }>
+                                        { sellers.map(seller => <option key={ seller.id } value={ seller.id }>{ seller.name }</option>) }
+                                    </Select>
+                                    :
+                                    <Select className="mr-2" name="selectedStore" label="Boutique" onChange={ handleStoreChange } value={ isDefined(selectedStore) ? selectedStore.id : 0 }>
+                                        { stores.map(store => <option key={ store.id } value={ store.id }>{ store.name }</option>) }
+                                    </Select>
+                                }
                             </CCol>
-                            <CCol xs="12" lg="4">
+                            <CCol xs="12" lg={ Roles.isStoreManager(currentUser) ? "6" : "4"}>
                                 <Select className="mr-2" name="valuation" label="Type de valorisation" value={ valuation } onChange={ handleValuationChange }>
                                     <option value={ "LAST" }>Dernier coût d'achat</option>
                                     <option value={ "AVERAGE" }>Coût moyen d'achat</option>
                                 </Select>
                             </CCol>
-                            <CCol xs="12" lg="2" className="mt-4">
-                                <GroupRateModal priceGroups={ priceGroups } setPriceGroups={ setPriceGroups } mainView={ mainView }/>
-                            </CCol>
+                            { !Roles.isStoreManager(currentUser) && 
+                                <CCol xs="12" lg="2" className="mt-4">
+                                    <GroupRateModal priceGroups={ priceGroups } setPriceGroups={ setPriceGroups } mainView={ mainView }/>
+                                </CCol>
+                            }
                         </CRow>
                         { !Roles.isStoreManager(currentUser) &&
                             <CRow className="mt-2">

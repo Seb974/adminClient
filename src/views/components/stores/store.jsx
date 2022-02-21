@@ -22,8 +22,8 @@ const Store = ({ match, history }) => {
     const [editing, setEditing] = useState(false);
     const initialInformations =  AddressPanel.getInitialInformations();
     const [informations, setInformations] = useState(initialInformations);
-    const defaultErrors = {name:"", main: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", user: "", apiKey: "", url: "", storeGroup: "" };
-    const [store, setStore] = useState({ name: "", main: false, user: "", apiKey: "", url: "", storeGroup: null });
+    const defaultErrors = {name:"", main: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", user: "", apiKey: "", url: "", storeGroup: "", isTaxIncluded: "" };
+    const [store, setStore] = useState({ name: "", main: false, user: "", apiKey: "", url: "", storeGroup: null, isTaxIncluded: true });
     const [sellers, setSellers] = useState([]);
     const [managers, setManagers] = useState([]);
     const [groups, setGroups] = useState([]);
@@ -83,8 +83,8 @@ const Store = ({ match, history }) => {
             StoreActions.find(id)
                 .then( response => {
                     console.log(response);
-                    const {metas, ...dbStore} = response;
-                    setStore(dbStore);
+                    const {metas, isTaxIncluded, ...dbStore} = response;
+                    setStore({...dbStore, isTaxIncluded: isDefined(isTaxIncluded) ? isTaxIncluded : store.isTaxIncluded});
                     setInformations(metas);
                     setIntern(isDefined(response.platform));
                     if (isDefinedAndNotVoid(response.managers))
@@ -114,6 +114,8 @@ const Store = ({ match, history }) => {
         }
         return isDefined(apiKey) && apiKey.length > 0 ? {...newStore, apiKey} : newStore;
     };
+
+    const handleTaxInclusion = e => setStore({...store, isTaxIncluded: !store.isTaxIncluded});
 
     const handleSellerChange= ({ currentTarget }) => {
         const newSeller = sellers.find(seller => seller.id === parseInt(currentTarget.value));
@@ -274,8 +276,8 @@ const Store = ({ match, history }) => {
                                     <CLabel>Lien à une caisse <span className="text-primary font-weight-bold">Hiboutik</span></CLabel>
                                 </CCol>
                             </CRow>
-                            <CRow>
-                                <CCol xs="12" sm="12" md="4">
+                            <CRow className="mt-4">
+                                <CCol xs="12" sm="12" md="6">
                                     <CFormGroup>
                                         <CLabel htmlFor="url">URL du compte</CLabel>
                                         <CInput
@@ -289,7 +291,19 @@ const Store = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.url }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" sm="12" md="4">
+                                <CCol xs="12" md="6" className="my-4">
+                                    <CFormGroup row className="mb-0 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="isTaxIncluded" className="mr-0" color="dark" shape="pill" variant="opposite" checked={ store.isTaxIncluded } onChange={ handleTaxInclusion }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">
+                                            TVA incluse dans les prix de la caisse
+                                        </CCol>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" sm="12" md="6">
                                     <CFormGroup>
                                         <CLabel htmlFor="user">Utilisateur</CLabel>
                                         <CInput
@@ -303,7 +317,7 @@ const Store = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.user }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" sm="12" md="4">
+                                <CCol xs="12" sm="12" md="6">
                                     <CFormGroup>
                                         <CLabel htmlFor="apiKey">Clé API</CLabel>
                                         <CInput
@@ -319,6 +333,7 @@ const Store = ({ match, history }) => {
                                     </CFormGroup>
                                 </CCol>
                             </CRow>
+                            
                             <CRow className="mt-4">
                                 <CCol xs="12" sm="12" md="4">
                                     <CLabel>Mettre à jour les données</CLabel>
@@ -326,7 +341,7 @@ const Store = ({ match, history }) => {
                             </CRow>
                             <CRow>
                                 <CCol xs="12" sm="12" md="6" className="text-center">
-                                    <CButton size="sm" color="warning" onClick={ HandleUpdateCategories } style={{width: "98px", minWidth: "98px", height: "30.2px", minHeight: "30.2px"}}>
+                                    <CButton size="sm" color="warning" onClick={ HandleUpdateCategories } style={{width: "110px", minWidth: "110px", height: "30.2px", minHeight: "30.2px"}}>
                                         { categoriesLoading ?
                                             <>
                                                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
@@ -337,7 +352,7 @@ const Store = ({ match, history }) => {
                                     </CButton>
                                 </CCol>
                                 <CCol xs="12" sm="12" md="6" className="text-center">
-                                    <CButton size="sm" color="warning" onClick={ HandleUpdateProducts } style={{width: "98px", minWidth: "98px", height: "30.2px", minHeight: "30.2px"}}>
+                                    <CButton size="sm" color="warning" onClick={ HandleUpdateProducts } style={{width: "110px", minWidth: "110px", height: "30.2px", minHeight: "30.2px"}}>
                                         { productsLoading ?
                                             <>
                                                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/>

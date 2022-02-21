@@ -86,7 +86,6 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
                 let response = null;
                 if (isDefined(selectedStore) && !mainView) {
                     const hiboutikProducts = await StoreActions.getProducts(selectedStore);
-                    console.log(hiboutikProducts);
                     const ids = hiboutikProducts.map(p => getInt(p["products_ref_ext"]));
                     response = await ProductActions.findFromSupplierAndStore(selectedSeller, selectedSupplier, ids, page, itemsPerPage);
                 } else {

@@ -62,21 +62,6 @@ function getNav(translation, currentUser)
         to: '/components/about-us',
         icon: <CIcon name="cil-book" customClasses="c-sidebar-nav-icon"/>,
       },
-    // !["ADMIN"].includes(mainRole) ? voidValue : 
-    //   {
-    //     _tag: 'CSidebarNavItem',
-    //     name: translation("colors.label"),
-    //     to: '/theme/colors',
-    //     icon: 'cil-drop',
-    //   },
-    // !["ADMIN"].includes(mainRole) ? voidValue : 
-    //   {
-    //     _tag: 'CSidebarNavItem',
-    //     name: translation("typography.label"),
-    //     to: '/theme/typography',
-    //     icon: 'cil-pencil',
-    //   },
-
       !["ADMIN"].includes(mainRole) ? voidValue : 
       {
         _tag: 'CSidebarNavTitle',
@@ -178,7 +163,7 @@ function getNav(translation, currentUser)
         to: '/components/costs',
         icon: <CIcon name="cil-chart" customClasses="c-sidebar-nav-icon"/>,
       },
-    !["ADMIN"].includes(mainRole) ? voidValue :  
+    !["ADMIN", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
       {
         _tag: 'CSidebarNavItem',
         name: translation("profitability.label"),
