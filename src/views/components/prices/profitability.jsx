@@ -337,6 +337,7 @@ const Profitability = (props) => {
                 response = await updatePrices(productsToWrite);
             } else {
                 response = await updateStorePrices(updatedProducts);
+                StoreActions.notifyProductPriceUpdates(selectedStore, updatedProducts.map(p => p['hiboutikId']))
             }
             setUpdated([]);
             setUpdateLoading(false);

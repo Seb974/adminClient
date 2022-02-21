@@ -81,6 +81,11 @@ function updateProductPrice(store, product) {
               .then(response => response.data);
 }
 
+function notifyProductPriceUpdates(store, productIds) {
+    return api.post('/api/hiboutik/' + store.id + '/products/notify', productIds)
+              .then(response => response.data);
+}
+
 function formatUTC(dates) {
     return {
         start: new Date(dates.start.toUTCString()), 
@@ -104,5 +109,6 @@ export default {
     getCategories,
     sendCategories,
     sendSelectedCategories,
+    notifyProductPriceUpdates,
     getTurnover
 }
