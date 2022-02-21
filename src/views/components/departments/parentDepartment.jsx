@@ -4,35 +4,23 @@ import DepartmentActions from 'src/services/DepartmentActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import ParentDepartmentActions from 'src/services/ParentDepartmentActions';
-import Select from 'src/components/forms/Select';
-import { isDefined } from 'src/helpers/utils';
 
 
-const DepartmentPage = ({ match, history }) => {
+const ParentDepartmentPage = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const [editing, setEditing] = useState(false);
-    const [department, setDepartment] = useState({ name: "", parentDepartment: null });
-    const [parentDepartments, setParentDepartments] = useState([]);
-    const [selectedParent, setSelectedParent] = useState(null);
-    const [errors, setErrors] = useState({ name: "", parentDepartment: "" });
+    const [parentDepartment, setParentDepartment] = useState({ name: "" });
+    const [errors, setErrors] = useState({ name: "" });
 
-    useEffect(() => {
-        fetchDepartment(id);
-        fetchParentDepartment();
-    }, []);
+    useEffect(() => fetchParentDepartment(id), []);
+    useEffect(() => fetchParentDepartment(id), [id]);
 
-    useEffect(() => fetchDepartment(id), [id]);
-
-    const fetchDepartment = id => {
+    const fetchParentDepartment = id => {
         if (id !== "new") {
             setEditing(true);
-            DepartmentActions.find(id)
-                .then(response =>{ 
-                    setDepartment(response);
-                    if (isDefined(response.parentDepartment))
-                        setSelectedParent(response.parentDepartment);
-                })
+            ParentDepartmentActions.find(id)
+                .then(response => setParentDepartment(response))
                 .catch(error => {
                     console.log(error);
                     // TODO : Notification flash d'une erreur
@@ -41,31 +29,11 @@ const DepartmentPage = ({ match, history }) => {
         }
     };
 
-    const fetchParentDepartment = id => {
-        if (id !== "new") {
-            ParentDepartmentActions.findAll()
-                .then(response => {
-                    setParentDepartments(response);
-                    if (!isDefined(selectedParent))
-                        setSelectedParent(response[0]);
-                })
-                .catch(error => {
-                    console.log(error);
-                });
-        }
-    };
-
-    const handleChange = ({ currentTarget }) => setDepartment({...department, [currentTarget.name]: currentTarget.value});
-
-    const handleParentChange = ({ currentTarget }) =>  {
-        const newParent = parentDepartments.find(p => p.id === parseInt(currentTarget.value));
-        setSelectedParent(newParent);
-    };
+    const handleChange = ({ currentTarget }) => setParentDepartment({...parentDepartment, [currentTarget.name]: currentTarget.value});
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const newDepartment = {...department, parentDepartment: selectedParent['@id']};
-        const request = !editing ? DepartmentActions.create(newDepartment) : DepartmentActions.update(id, newDepartment);
+        const request = !editing ? ParentDepartmentActions.create(parentDepartment) : ParentDepartmentActions.update(id, parentDepartment);
         request.then(response => {
                     setErrors({name: "", });
                     //TODO : Flash notification de succès
@@ -89,29 +57,24 @@ const DepartmentPage = ({ match, history }) => {
             <CCol xs="12" sm="12">
                 <CCard>
                     <CCardHeader>
-                        <h3>{!editing ? "Créer un rayon" : "Modifier le rayon " + department.name }</h3>
+                        <h3>{!editing ? "Créer un département" : "Modifier le département " + parentDepartment.name }</h3>
                     </CCardHeader>
                     <CCardBody>
                         <CForm onSubmit={ handleSubmit }>
                             <CRow className="mb-3">
-                                <CCol xs="12" sm="12" md="6">
+                                <CCol xs="12" sm="12">
                                     <CFormGroup>
                                         <CLabel htmlFor="name">Nom</CLabel>
                                         <CInput
                                             id="name"
                                             name="name"
-                                            value={ department.name }
+                                            value={ parentDepartment.name }
                                             onChange={ handleChange }
-                                            placeholder="Nom de la catégorie"
+                                            placeholder="Nom du département"
                                             invalid={ errors.name.length > 0 } 
                                         />
                                         <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                     </CFormGroup>
-                                </CCol>
-                                <CCol xs="12" sm="12" md="6">
-                                    <Select className="mr-2" name="store" label="Département" value={ isDefined(selectedParent) ? selectedParent.id : 1 } onChange={ handleParentChange }>
-                                        { parentDepartments.map(p => <option key={ p.id } value={ p.id }>{ p.name }</option>) }
-                                    </Select>
                                 </CCol>
                             </CRow>
                             <CRow className="mt-4 d-flex justify-content-center">
@@ -128,4 +91,4 @@ const DepartmentPage = ({ match, history }) => {
     );
 }
  
-export default DepartmentPage;
+export default ParentDepartmentPage;

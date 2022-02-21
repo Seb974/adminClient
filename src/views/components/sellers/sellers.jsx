@@ -36,15 +36,6 @@ const Sellers = (props) => {
     const getSellers = (page = 1) => page >=1 ? SellerActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedSellers = (word, page = 1) => SellerActions.findWord(word, page, itemsPerPage);  
 
-    // useEffect(() => {
-    //     SellerActions.findAll()
-    //         .then(response => {
-    //             console.log(response);
-    //             setSellers(response);
-    //         })
-    //         .catch(error => console.log(error));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalSellers = [...sellers];
         setSellers(sellers.filter(city => city.id !== id));

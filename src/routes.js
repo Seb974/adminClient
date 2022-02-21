@@ -8,6 +8,7 @@ const Categories = React.lazy(() => import('./views/components/categories/catego
 const Category = React.lazy(() => import('./views/components/categories/category'));
 const Departments = React.lazy(() => import('./views/components/departments/departments'));
 const Department = React.lazy(() => import('./views/components/departments/department'));
+const ParentDepartment = React.lazy(() => import('./views/components/departments/parentDepartment'));
 const Groups = React.lazy(() => import('./views/components/groups/groups'));
 const Group = React.lazy(() => import('./views/components/groups/group'));
 const Containers = React.lazy(() => import('./views/components/containers/containers'));
@@ -130,6 +131,7 @@ const routes = [
   { path: '/components/agents', name: 'Agents', component: Agents },
   { path: '/components/categories/:id', name: 'Category', component: Category },
   { path: '/components/categories', name: 'Categories', component: Categories },
+  { path: '/components/departments/parent/:id', name: 'Department', component: ParentDepartment },
   { path: '/components/departments/:id', name: 'Department', component: Department },
   { path: '/components/departments', name: 'Departments', component: Departments },
   { path: '/components/groups/:id', name: 'Group', component: Group },

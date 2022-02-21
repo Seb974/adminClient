@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import DepartmentActions from '../../../services/DepartmentActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
+import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CToaster, CToast, CToastHeader, CToastBody, CCollapse } from '@coreui/react';
 import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Spinner from 'react-bootstrap/Spinner';
 import StoreActions from 'src/services/StoreActions';
 import Select from 'src/components/forms/Select';
+import ParentDepartmentActions from 'src/services/ParentDepartmentActions';
+import Item from 'src/components/preparationPages/Item';
 
 const Departments = (props) => {
 
     const itemsPerPage = 20;
-    const fields = ['name', 'partagé', ' '];
+    const fields = ['name', ' '];
+    const [details, setDetails] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,9 +31,11 @@ const Departments = (props) => {
     const successMessage = "Les catégories ont bien été envoyés.";
     const failMessage = "Un problème est survenu lors de l'envoi des catégories à la boutique.\n";
     const failLoadingMessage = "Un problème est survenu lors du chargement des données. Vérifiez l'état de votre connexion.\n";
+    const notThrowableMessage = "Le département ne peut être supprimé car celui-ci contient des rayons.\n";
     const successToast = { position: 'top-right', autohide: 3000, closeButton: true, fade: true, color: 'success', messsage: successMessage, title: 'Succès' };
     const failToast = { position: 'top-right', autohide: 7000, closeButton: true, fade: true, color: 'warning', messsage: failMessage, title: 'Echec de l\'envoi' };
     const failLoadingToast = { position: 'top-right', autohide: 7000, closeButton: true, fade: true, color: 'warning', messsage: failLoadingMessage, title: 'Echec du chargement' };
+    const notThrowableToast = { position: 'top-right', autohide: 7000, closeButton: true, fade: true, color: 'danger', messsage: notThrowableMessage, title: 'Suppression impossible' };
 
     useEffect(() => {
       fetchStores();
@@ -53,13 +58,13 @@ const Departments = (props) => {
     const getSearchedDepartments = (word, page = 1) => fetchDepartmentsContainingWord(word, page);
 
     const fetchPaginatedDepartments = (page) => {
-      return DepartmentActions
+      return ParentDepartmentActions
                 .findAllPaginated(page, itemsPerPage)
                 .catch(error => addToast(failLoadingToast));
   };
 
     const fetchDepartmentsContainingWord = (word, page) => {
-        return DepartmentActions
+        return ParentDepartmentActions
                   .findWord(word, page, itemsPerPage)
                   .catch(error => addToast(failLoadingToast));
     };
@@ -106,7 +111,10 @@ const Departments = (props) => {
 
   const handleSelectAll = () => {
     const newSelection = !selectAll;
-    const displayedIds = departments.map(d => d.id);
+    let displayedIds = [];
+    departments.map(p => {
+        displayedIds = [...displayedIds, ...p.departments.map(d => d.id)];
+    });
     setSelectAll(newSelection);
 
     if (newSelection) {
@@ -118,19 +126,38 @@ const Departments = (props) => {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDeleteDepartment = (departmentId, parentDepartmentId) => {
       const originalDepartments = [...departments];
-      setDepartments(departments.filter(category => category.id !== id));
-      DepartmentActions.delete(id)
-                      .catch(error => {
-                          setDepartments(originalDepartments);
-                          console.log(error.response);
-                      });
+      const newDepartment = departments.find(d => d.id === parseInt(parentDepartmentId));
+      setDepartments(departments.map(d => d.id === newDepartment.id ? {...newDepartment, departments: newDepartment.departments.filter(d => d.id !== parseInt(departmentId))} : d));
+      DepartmentActions
+          .delete(departmentId)
+          .catch(error => {
+              setDepartments(originalDepartments);
+              console.log(error.response);
+          });
   };
+
+  const handleDeleteParent = (id) => {
+    const parentToDelete = departments.find(d => d.id === parseInt(id));
+
+    if (isDefined(parentToDelete) && isDefinedAndNotVoid(parentToDelete.departments)) {
+        addToast(notThrowableToast);
+        return ;
+    }
+
+    const originalDepartments = [...departments];
+    setDepartments(departments.filter(category => category.id !== id));
+    ParentDepartmentActions
+        .delete(id)
+        .catch(error => {
+            setDepartments(originalDepartments);
+            console.log(error.response);
+        });
+  }
 
   const handleSendCategories = e => {
     e.preventDefault();
-    console.log(newSelected);
     StoreActions
         .sendSelectedCategories(selectedStore, newSelected)
         .then(response  => addToast(successToast))
@@ -144,6 +171,18 @@ const Departments = (props) => {
     else 
       setSelectAll(true);
   };
+
+  const toggleDetails = (index, e) => {
+      e.preventDefault();
+      const position = details.indexOf(index);
+      let newDetails = details.slice();
+      if (position !== -1) {
+          newDetails.splice(position, 1);
+      } else {
+          newDetails = [...details, index];
+      }
+      setDetails(newDetails);
+  }
 
   const addToast = newToast => setToasts([...toasts, newToast]);
 
@@ -160,10 +199,15 @@ const Departments = (props) => {
         <CCol xs="12" lg="12">
           <CCard>
             <CCardHeader>
-                Liste des rayons
-                <CCol col="6" sm="4" md="2" className="ml-auto">
-                    <Link role="button" to="/components/departments/new" block variant="outline" color="success">CRÉER</Link>
+              <CRow className="my-2">
+                <CCol sm="12" md="6">
+                    <p>Liste des rayons</p>
                 </CCol>
+                <CCol sm="6" md="6" className="d-flex justify-content-end">
+                    <Link role="button" to="/components/departments/parent/new" block variant="outline" color="success" className="mr-4">CRÉER UN DÉPARTEMENT</Link>
+                    <Link role="button" to="/components/departments/new" block variant="outline" color="success" className="mx-2">CRÉER UN RAYON</Link>
+                </CCol>
+              </CRow>
             </CCardHeader>
             <CCardBody>
               <CRow>
@@ -202,6 +246,7 @@ const Departments = (props) => {
                     items={ departments }
                     fields={ selectedStore.id === mainStore.id ? fields.filter(f => f !== 'partagé') : fields }
                     bordered
+                    hover
                     itemsPerPage={ itemsPerPage }
                     pagination={{
                       'pages': Math.ceil(totalItems / itemsPerPage),
@@ -215,23 +260,53 @@ const Departments = (props) => {
                     onTableFilterChange={ word => setSearch(word) }
                     scopedSlots = {{
                       'name':
-                        item => <td><Link to={ "/components/departments/" + item.id }>{ item.name }</Link></td>
-                      ,
-                      'partagé':
-                          item => <td style={{width: '20%', textAlign: 'start'}}>
-                                      <input
-                                          className="mx-1 my-1"
-                                          type="checkbox"
-                                          name="inline-checkbox"
-                                          checked={ alreadySelected.includes(item.id) || newSelected.includes(item.id) }
-                                          onClick={ () => handleSelect(item) }
-                                          disabled={ alreadySelected.includes(item.id) }
-                                          style={{zoom: 2.3}}
-                                      />
-                                  </td>
+                        item => <td>
+                                    <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} disabled={ item.status === "WAITING" }>
+                                      { item.name }
+                                    </Link>
+                                </td>
                       ,
                       ' ':
-                        item => <td><CButton block color="danger" onClick={ () => handleDelete(item.id) }>Supprimer</CButton></td>
+                        item => <td className="">
+                                  <CButton color="warning" href={ "#/components/departments/parent/" + item.id } className="mx-1 my-1"><i className="fas fa-pen"></i></CButton>
+                                  <CButton color="danger" onClick={ () => handleDeleteParent(item.id) } className="mx-1 my-1"><i className="fas fa-trash"></i></CButton>
+                                </td>
+                      ,
+                      'details':
+                        item => <CCollapse show={details.includes(item.id)}>
+                                    <CDataTable
+                                        items={ item.departments }
+                                        fields={ selectedStore.id === mainStore.id ? ['Rayon', ' '] : ['Rayon', 'partagé', ' '] }
+                                        bordered
+                                        hover
+                                        scopedSlots = {{
+                                          'Rayon':
+                                            child => <td>
+                                                      <Link to={ "/components/departments/" + child.id }>{ child.name }</Link>
+                                                    </td>
+                                          ,
+                                          'partagé':
+                                            child => <td style={{width: '20%', textAlign: 'start'}}>
+                                                          <input
+                                                              className="mx-1 my-1"
+                                                              type="checkbox"
+                                                              name="inline-checkbox"
+                                                              checked={ alreadySelected.includes(child.id) || newSelected.includes(child.id) }
+                                                              onClick={ () => handleSelect(child) }
+                                                              disabled={ alreadySelected.includes(child.id) }
+                                                              style={{zoom: 2.3}}
+                                                          />
+                                                      </td>
+                                          ,
+                                          ' ':
+                                            child => <td>
+                                                        <CButton color="danger" onClick={ () => handleDeleteDepartment(child.id, item.id) }className="mx-1 my-1">
+                                                            <i className="fas fa-trash"></i>
+                                                        </CButton>
+                                                      </td>
+                                        }}
+                                    />
+                                </CCollapse>
                     }}
                   />
                   { selectedStore.id !== mainStore.id &&

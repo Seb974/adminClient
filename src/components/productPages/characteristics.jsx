@@ -11,6 +11,7 @@ import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import Suppliers from './Suppliers';
 import DepartmentActions from 'src/services/DepartmentActions';
+import ParentDepartmentActions from 'src/services/ParentDepartmentActions';
 
 const Characteristics = ({ product, categories, type, setProduct, errors, history}) => {
 
@@ -150,10 +151,6 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                 <CCol xs="12" sm="6">
                     <CLabel htmlFor="select">Rayon</CLabel>
                     <CSelect custom name="productGroup" id="productGroup" value={ isDefined(product.department) ? product.department.id : 0 } onChange={ handleDepartmentChange }>
-                        {/* <option value="J + 1">J + 1</option>
-                        <option value="J + 3">J + 3</option>
-                        <option value="J + 6">J + 6</option>
-                        <option value="J + 10">J + 10</option> */}
                         { departments.map(d => <option value={ d.id }>{ d.name }</option>) }
                     </CSelect>
                 </CCol>
