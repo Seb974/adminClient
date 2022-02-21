@@ -195,7 +195,7 @@ const Stocks = (props) => {
                                         value={ item.alert }
                                         onChange={ e => handleChange(e, item) }
                                         style={{ maxWidth: '180px'}}
-                                        disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
+                                        // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
                                     />
                                     <CInputGroupAppend>
                                         <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
