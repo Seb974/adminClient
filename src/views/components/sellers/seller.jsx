@@ -125,7 +125,6 @@ const Seller = ({ match, history }) => {
         if (seller.image) {
              if (!seller.image.filePath) {
                 const image = await SellerActions.createImage(seller.image);
-                console.log(image);
                 sellerWithImage = {...sellerWithImage, image: image['@id']};
             } else {
                 sellerWithImage = {...sellerWithImage, image: sellerWithImage.image['@id']};
