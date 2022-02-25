@@ -193,7 +193,7 @@ const Preparations = (props) => {
         OrderActions
             .update(order.id, formattedOrder)
             .then(response => {
-                const newOrders = orders.map(o => o.id === order.id ? response.data : o);
+                const newOrders = orders.map(o => o.id === order.id ? {...order, preparator: response.data.preparator} : o);
                 setOrders(newOrders);
             })
             .catch(error => console.log(error));

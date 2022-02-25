@@ -5,7 +5,7 @@ import Item from './Item';
 import { isDefined } from 'src/helpers/utils';
 import Packages from './Packages';
 
-const Items = ({ items, setItems, defaultItem, editing, packages = null }) => {
+const Items = ({ items, setItems, defaultItem, editing, packages = null, order = null }) => {
 
     const handleItemAdd = () => {
         setItems([
@@ -40,12 +40,15 @@ const Items = ({ items, setItems, defaultItem, editing, packages = null }) => {
                             <CCol md="1">{""}</CCol>
                             <CCol md="10">
                                 <Item
-                                    item={ item } 
+                                    item={ item }
+                                    items={ items }
+                                    setItems={ setItems }
                                     handleChange={ handleItemChange } 
                                     handleDelete={ handleItemDelete } 
                                     total={ items.length } 
                                     index={ index }
                                     editing={ editing }
+                                    order={ order }
                                 />
                             </CCol>
                         </CRow>

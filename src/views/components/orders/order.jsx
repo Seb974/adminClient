@@ -51,7 +51,7 @@ const Order = ({ match, history }) => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [minDate, setMinDate] = useState(new Date());
     const [selectedUser, setSelectedUser] = useState(null);
-    const [catalog, setCatalog] = useState(selectedCatalog);     //catalogs.find(c => c.isDefault));
+    const [catalog, setCatalog] = useState(selectedCatalog);
     const [packages, setPackages] = useState([]);
     const statuses = getStatus();
 
@@ -185,6 +185,7 @@ const Order = ({ match, history }) => {
             setErrors({...errors, ...newErrors});
         } else {
             const orderToWrite = getOrderToWrite(order, user, informations, items, order.deliveryDate, objectDiscount, catalog, condition, settings);
+            console.log(orderToWrite);
             const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
             request.then(response => {
                 setErrors(defaultErrors);
@@ -275,7 +276,7 @@ const Order = ({ match, history }) => {
                                     </>
                                 }
                                 <hr/>
-                                <Items items={ items } setItems={ setItems } defaultItem={ defaultItem } editing={ editing } packages={ packages }/>
+                                <Items items={ items } setItems={ setItems } defaultItem={ defaultItem } editing={ editing } packages={ packages } order={ order }/>
 
                             </Tab>
                             {/* { (isAdmin || Roles.isPicker(currentUser)) && */}

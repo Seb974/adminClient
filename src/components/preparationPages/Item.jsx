@@ -6,9 +6,14 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Select from '../forms/Select';
 import Roles from 'src/config/Roles';
+import 'flatpickr/dist/themes/material_blue.css';
+import { French } from "flatpickr/dist/l10n/fr.js";
+import Flatpickr from 'react-flatpickr';
 
-const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
+const Item = ({ item, items, setItems, handleChange, handleDelete, total, index, editing, order = null }) => {
 
+    const defaultTraceability = { number: "", endDate: new Date(), quantity: 0, id: new Date().getTime()};
+    const [batches, setBatches] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const { products } = useContext(ProductsContext);
     const [variants, setVariants] = useState([]);
@@ -18,14 +23,88 @@ const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         getPrice();
         getUnit();
+        getBatchesOptions();
+        if (!isDefinedAndNotVoid(item.traceabilities))
+            getTraceabilities();
         if (isDefined(item.product.variations))
             setVariants(item.product.variations);
     }, []);
 
     useEffect(() => getPrice(), [settings]);
 
-    const onChange = ({ currentTarget }) => {
-        handleChange({...item, [currentTarget.id]: currentTarget.value});
+    useEffect(() => getTraceabilities(), [order.status, item.product, batches])
+
+    const getTraceabilities = () => {
+        if (item.product.needsTraceability && isDefinedAndNotVoid(batches)) {
+            if (!['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
+                const newItem = {...item, traceabilities: [{...defaultTraceability, number: batches[0].number}]};
+                const newItems = items.map(i => i.id !== newItem.id ? i : newItem);
+                setItems(newItems);
+            } else {
+                setItems(items.map(i => i.id !== item.id ? i : {...item, traceabilities: []}));
+            }
+        }
+    };
+
+    const onChange = ({ currentTarget }) => handleChange({...item, [currentTarget.id]: currentTarget.value});
+
+    const handleBatchChange = ({ currentTarget }, traceability) => {
+        const {initialQty, quantity, ...batch} = batches.find(b => b.number === currentTarget.value);
+        const newTraceabilities = item.traceabilities.map(t => t.id !== traceability.id ? t : {...batch, quantity: t.quantity});
+        const newItems = items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: newTraceabilities}) : i);
+        setItems(newItems);
+    };
+
+    const getBatchesOptions = () => {
+        if (item.product.needsTraceability && !['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
+            let newBatches = [];
+            const stock = item.product.stocks.find(s => isDefined(s.platform));
+            if (isDefined(stock) && isDefinedAndNotVoid(stock.batches))
+                newBatches = stock.batches;
+
+            setBatches(newBatches);
+            return newBatches;
+        }
+    };
+
+    const getBatchMaxQuantity = number => {
+        const batch = batches.find(b => b.number === number);
+        return isDefined(batch) ? batch.quantity : 0;
+    };
+
+    const onBatchQuantityChange = ({ currentTarget }, traceability) => {
+        const newQty = currentTarget.value;
+        const newTraceability = ['DELIVERED','SHIPPED', 'COLLECTABLE'].includes(order.status) ?
+            {...traceability, quantity: newQty} : {...traceability, initialQty: newQty, quantity: newQty};
+        const newTraceabilities = item.traceabilities.map(t => t.id !== newTraceability.id ? t : newTraceability);
+        updateTotalPreparated(newTraceabilities, currentTarget.name);
+    };
+
+    const updateTotalPreparated = (traceabilities, itemId) => {
+        const total = traceabilities.reduce((sum, curr) => {
+            return sum += parseFloat(curr.quantity);
+        }, 0);
+        const newItem = ['DELIVERED','SHIPPED', 'COLLECTABLE'].includes(order.status) ?
+            {...item, traceabilities, deliveredQty: total} : {...item, traceabilities, preparedQty: total};
+        const newItems = items.map(i => i.id === parseInt(itemId) ? newItem : i);
+        setItems(newItems);
+    };
+
+    const handleDeleteTraceability = (traceability) => {
+        const newTraceabilities = item.traceabilities.filter(t => t.id !== traceability.id);
+        updateTotalPreparated(newTraceabilities, item.id);
+    };
+
+    const handleAddTraceability = ({ currentTarget }) => {
+        const usedBatches = item.traceabilities.map(t => t.number);
+        const newBatch = batches.find(b => !usedBatches.includes(b.number));
+        const batchToAdd = isDefined(newBatch) ? newBatch : batches[0];
+        const usedBatchesTotal = item.traceabilities.reduce((sum, curr) => {
+            return sum += parseFloat(curr.quantity);
+        }, 0);
+        const quantityToAdd = item.orderedQty - usedBatchesTotal > 0 ? item.orderedQty - usedBatchesTotal : 0;
+        const newTraceability = { number: batchToAdd.number, endDate: new Date(batchToAdd.endDate), quantity: quantityToAdd, id: new Date().getTime()};
+        updateTotalPreparated([...item.traceabilities, newTraceability], item.id);
     };
 
     const onProductChange = ({ currentTarget }) => {
@@ -155,6 +234,7 @@ const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
                                     name={ item.count }
                                     value={ item.preparedQty }
                                     onChange={ onChange }
+                                    disabled={ ['ON_PAYMENT', 'WAITING', 'ABORTED'].includes(order.status) }
                                 />
                                 <CInputGroupAppend>
                                     <CInputGroupText>{ item.product.unit }</CInputGroupText>
@@ -173,6 +253,7 @@ const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
                                     name={ item.count }
                                     value={ item.deliveredQty }
                                     onChange={ onChange }
+                                    disabled={ !['DELIVERED', 'SHIPPED', 'COLLECTABLE'].includes(order.status) }
                                 />
                                 <CInputGroupAppend>
                                     <CInputGroupText>{ item.product.unit }</CInputGroupText>
@@ -183,6 +264,97 @@ const Item = ({ item, handleChange, handleDelete, total, index, editing }) => {
                 </>
             }
         </CRow>
+        { isDefinedAndNotVoid(item.traceabilities) && 
+            <>
+                { item.traceabilities.map((t, i) => {
+                        return (<CRow className="d-flex justify-content-end" key={ i }>
+                            <CCol xs="12" sm="3">
+                                <CFormGroup>
+                                    <CLabel htmlFor="name">{"Lot"}
+                                    </CLabel>
+                                    <CSelect custom id="product" value={ !isDefinedAndNotVoid(batches) || batches.map(b => b.number).includes(t.number) ? t.number : batches[0].number } onChange={ e => handleBatchChange(e, t) }>
+                                        { isDefinedAndNotVoid(batches) ? batches.map(b => <option key={ b.number } value={ b.number }>{ b.number }</option>) : 
+                                            <option value={ t.number }>{ t.number }</option>
+                                        }
+                                    </CSelect>
+                                </CFormGroup>
+                            </CCol>
+                            <CCol xs="12" sm="3">
+                                <CFormGroup>
+                                    <CInputGroup>
+                                        <Flatpickr
+                                            disabled
+                                            name={ item.id }
+                                            value={ [ new Date(t.endDate) ] }
+                                            className={`form-control mt-4`}
+                                            options={{
+                                                dateFormat: "d/m/Y",
+                                                locale: French,
+                                            }}
+                                        />
+                                    </CInputGroup>
+                                </CFormGroup>
+                            </CCol>
+                            <CCol xs="12" sm="2">
+                                <CFormGroup>
+                                    <CLabel htmlFor="name">En stock</CLabel>
+                                    <CInputGroup>
+                                        <CInput
+                                            type={"number"}
+                                            name={ item.id }
+                                            value={ getBatchMaxQuantity(t.number) }
+                                            disabled={ true }
+                                        />
+                                        <CInputGroupAppend>
+                                            <CInputGroupText>{ item.product.unit }</CInputGroupText>
+                                        </CInputGroupAppend>
+                                    </CInputGroup>
+                                </CFormGroup>
+                            </CCol>
+                            <CCol xs="12" sm="2">
+                                <CFormGroup>
+                                    <CLabel htmlFor="name">{ "Quantité" }</CLabel>
+                                    <CInputGroup>
+                                        <CInput
+                                            id="preparedQty"
+                                            type="number"
+                                            name={ item.id }
+                                            value={ t.quantity }
+                                            onChange={ e => onBatchQuantityChange(e, t) }
+                                            // disabled={ isDelivery }
+                                        />
+                                        <CInputGroupAppend>
+                                            <CInputGroupText>{ item.product.unit }</CInputGroupText>
+                                        </CInputGroupAppend>
+                                    </CInputGroup>
+                                </CFormGroup>
+                            </CCol>
+                            { i === item.traceabilities.length - 1 ?
+                                <CCol xs="2" sm="2" md="2" className="d-flex align-items-center mt-2">
+                                    { item.traceabilities.length > 1 &&
+                                        <CButton className="mr-2" color="danger" onClick={ e => handleDeleteTraceability(t) } style={{ height: '38px', width: '38px' }}><i className="fas fa-trash"></i></CButton>
+                                    }
+                                    <CButton 
+                                        className="ml-4" 
+                                        color="warning" 
+                                        onClick={ handleAddTraceability } 
+                                        style={{ height: '38px', width: '38px' }}
+                                        disabled={ item.traceabilities.length >= batches.length }
+                                    >
+                                        <span style={{ fontWeight: 'bold', fontSize: '1.3em' }}>+</span>
+                                    </CButton>
+                                </CCol>
+                                : <CCol xs="2" sm="2" md="2" className="d-flex align-items-center mt-2">
+                                    { item.traceabilities.length > 1 &&
+                                        <CButton color="danger" onClick={ e => handleDeleteTraceability(t) } style={{ height: '38px', width: '38px' }}><i className="fas fa-trash"></i></CButton>
+                                    }
+                                </CCol>
+                            }
+                        </CRow>)
+                    })
+                }
+            </>
+        }
         </>
     );
 }

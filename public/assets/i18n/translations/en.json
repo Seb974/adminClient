@@ -58,5 +58,6 @@
     "costs.label": "Costs",
     "in-progress.label": "In progress",
     "departments.label": "Department",
-    "physical_sales.label": "Physical sales"
+    "physical_sales.label": "Physical sales",
+    "traceability.label": "Traceability"
 }

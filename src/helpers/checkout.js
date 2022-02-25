@@ -61,9 +61,11 @@ export const getOrderToWrite = (order, user, informations, productCart, date, ob
             deliveredQty: isDefined(item.deliveredQty) ? !isNaN(getFloat(item.deliveredQty)) ?getFloat(item.deliveredQty) : null : null,
             price: getFloat(item.price),
             unit: item.unit,
-            taxRate: item.product.tax.catalogTaxes.find(catalogTax => catalogTax.catalog.id === selectedCatalog.id).percent,   // !settings.subjectToTaxes ? 0 : 
+            taxRate: item.product.tax.catalogTaxes.find(catalogTax => catalogTax.catalog.id === selectedCatalog.id).percent,
             isAdjourned: false,
-            isPrepared: false
+            isPrepared: false,
+            traceabilities: isDefinedAndNotVoid(item.traceabilities) ? item.traceabilities.map(({id, ...t}) => ({...t, initialQty: getFloat(t.initialQty), quantity: getFloat(t.quantity)})) : []
+
         })),
         isRemains: false,
         status: !isDefined(order.status) ? "WAITING" : order.status,
@@ -100,11 +102,14 @@ export const getPreparedOrder = (order, currentUser) => {
         promotion: isDefined(promotion) ? (typeof promotion === 'object' ? promotion['@id'] : promotion) : null,
         items: items.map(item => {
             return Roles.hasAdminPrivileges(currentUser) || Roles.isPicker(currentUser) || isDefined(item.product) && isDefined(item.product.seller) && item.product.seller.users.find(user => user.id === currentUser.id) !== undefined ? 
-                {...item, 
+                {...item,
+                    orderedQty: isDefined(item.orderedQty) ? getFloat(item.orderedQty) : 0,
+                    preparedQty: isDefined(item.preparedQty) ? getFloat(item.preparedQty) : 0,
                     product: isDefined(item.product) ? (typeof item.product === 'string' ? item.product : item.product['@id']) : null,
                     variation: isDefined(item.variation) ? (typeof item.variation === 'string' ? item.variation : item.variation['@id']) : null,
                     size: isDefined(item.size) ? (typeof item.size === 'string' ? item.size : item.size['@id']) : null,
-                    preparedQty: isDefined(item.preparedQty) ? typeof item.preparedQty === 'string' && item.preparedQty.length > 0 ? getFloat(item.preparedQty) : item.preparedQty: null,
+                    // preparedQty: isDefined(item.preparedQty) ? typeof item.preparedQty === 'string' && item.preparedQty.length > 0 ? getFloat(item.preparedQty) : item.preparedQty: null,
+                    traceabilities: isDefinedAndNotVoid(item.traceabilities) ? getFormattedTraceabilities(item.traceabilities) : [],
                     isAdjourned: item.isAdjourned,
                 }
                 :
@@ -114,6 +119,13 @@ export const getPreparedOrder = (order, currentUser) => {
         isRemains: false
     };
 }
+
+const getFormattedTraceabilities = traceabilities  => {
+    return traceabilities.map(({id, ...t}) => {
+        const quantity = getFloat(t.quantity);
+        return {...t, quantity, initialQty: quantity}
+    });
+};
 
 export const getDeliveredOrder = order => {
     const { user, metas, catalog, appliedCondition, promotion, items, preparator } = order;
@@ -125,11 +137,14 @@ export const getDeliveredOrder = order => {
         appliedCondition: isDefined(appliedCondition) ? (typeof appliedCondition === 'object' ? appliedCondition['@id'] : appliedCondition) : null,
         promotion: isDefined(promotion) ? (typeof promotion === 'object' ? promotion['@id'] : promotion) : null,
         items: items.map(item => ({
-            ...item, 
+            ...item,
+            orderedQty: getFloat(item.orderedQty),
+            preparedQty: getFloat(item.preparedQty),
+            deliveredQty: getFloat(item.deliveredQty),
             product: isDefined(item.product) ? (typeof item.product === 'object' ? item.product['@id'] : item.product) : null,
             variation: isDefined(item.variation) ? (typeof item.variation === 'object' ? item.variation['@id'] : item.variation) : null,
             size: isDefined(item.size) ? (typeof item.size === 'object' ? item.size['@id'] : item.size) : null,
-            deliveredQty: getFloat(item.deliveredQty),
+            traceabilities: isDefinedAndNotVoid(item.traceabilities) ? item.traceabilities.map(t => ({...t, quantity: getFloat(t.quantity)})) : []
         })),
         packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
         status: isDefined(metas.isRelaypoint) && metas.isRelaypoint ? "COLLECTABLE" : "DELIVERED",
