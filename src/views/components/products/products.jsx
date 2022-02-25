@@ -13,7 +13,7 @@ import Spinner from 'react-bootstrap/Spinner';
 
 const Products = (props) => {
 
-    const itemsPerPage = 4;
+    const itemsPerPage = 30;
     const fields = ['name', 'promo', 'disponibilité', ' '];
     const { currentUser } = useContext(AuthContext);
     const [displayedProducts, setDisplayedProducts] = useState([]);
