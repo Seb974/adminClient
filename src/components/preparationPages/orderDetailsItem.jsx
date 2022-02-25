@@ -3,6 +3,9 @@ import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInp
 import CIcon from '@coreui/icons-react';
 import ProductsContext from 'src/contexts/ProductsContext';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import 'flatpickr/dist/themes/material_blue.css';
+import { French } from "flatpickr/dist/l10n/fr.js";
+import Flatpickr from 'react-flatpickr';
 
 
 const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) => {
@@ -10,9 +13,11 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
     const { products } = useContext(ProductsContext);
     const [variants, setVariants] = useState([]);
     const [displayedProduct, setDisplayedProduct] = useState(item.product);
+    const [batches, setBatches] = useState([]);
 
     useEffect(() => getDisplayedProduct(), []);
     useEffect(() => getDisplayedProduct(), [products]);
+    useEffect(() => getStock(), [displayedProduct]);
 
     const getDisplayedProduct = () => {
         if ( products.length > 0) {
@@ -20,6 +25,37 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
             setDisplayedProduct(productToDisplay);
             if (isDefined(productToDisplay) && isDefined(productToDisplay.variations))
                 setVariants(productToDisplay.variations);
+        }
+    };
+
+    const getStock = () => {
+        const entity = getStockEntity();
+        if (isDefined(entity) && isDefinedAndNotVoid(entity.stocks)) {
+            const onlineStock = entity.stocks.find(s => isDefined(s.platform));
+            if (displayedProduct.needsTraceability && isDefined(onlineStock) && isDefinedAndNotVoid(onlineStock.batches)) {
+                setBatches(onlineStock.batches);
+                if (!isDefinedAndNotVoid(item.traceabilities) && order.status == "WAITING") {
+                    const newTraceability = { number: onlineStock.batches[0].number, endDate: new Date(onlineStock.batches[0].endDate), quantity: 0, id: new Date().getTime()};     // item.orderedQty
+                    const newItems = order.items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: [newTraceability]}) : i);
+                    setOrder({...order, items: newItems});
+                } 
+                // else {
+                //     updateTotalPreparated(item.traceabilities, item.id);
+                // }
+            }
+        }
+    };
+
+    const getStockEntity = () => {
+        if (isDefined(displayedProduct)) {
+            const variations = displayedProduct.variations;
+            if (isDefined(variations) && isDefined(item.variation)) {
+                const variation = variations.find(v => v.id === item.variation.id);
+                const sizes = isDefined(variation) && isDefinedAndNotVoid(variation.sizes) && isDefined(item.size) ? variations : [];
+                const size = isDefinedAndNotVoid(sizes) ? sizes.find(s => s.id === item.size.id) : null;
+                return size;
+            }
+            return displayedProduct;
         }
     };
 
@@ -50,88 +86,244 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
         return isVariantEmpty ? sizeName : isSizeEmpty ? variantName : variantName + " - " + sizeName;
     };
 
+    const getBatchMaxQuantity = number => {
+        const batch = batches.find(b => b.number === number);
+        return isDefined(batch) ? batch.quantity : 0;
+    };
+
+    const handleAddTraceability = ({ currentTarget }) => {
+        const usedBatches = item.traceabilities.map(t => t.number);
+        const newBatch = batches.find(b => !usedBatches.includes(b.number));
+        const batchToAdd = isDefined(newBatch) ? newBatch : batches[0];
+        const usedBatchesTotal = item.traceabilities.reduce((sum, curr) => {
+            return sum += parseFloat(curr.quantity);
+        }, 0);
+
+        const quantityToAdd = item.orderedQty - usedBatchesTotal > 0 ? item.orderedQty - usedBatchesTotal : 0;
+        const newTraceability = { number: batchToAdd.number, endDate: new Date(batchToAdd.endDate), quantity: quantityToAdd, id: new Date().getTime()};     // quantityToAdd
+        updateTotalPreparated([...item.traceabilities, newTraceability], item.id);
+    };
+
+    const handleBatchChange = ({ currentTarget }, traceability) => {
+        const {initialQty, quantity, ...batch} = batches.find(b => b.number === currentTarget.value);
+        const newTraceabilities = item.traceabilities.map(t => t.id !== traceability.id ? t : {...batch, quantity: t.quantity});
+        const newItems = order.items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: newTraceabilities}) : i);
+        setOrder({...order, items: newItems});
+    };
+
+    const handleDeleteTraceability = (traceability) => {
+        const newTraceabilities = item.traceabilities.filter(t => t.id !== traceability.id);
+        updateTotalPreparated(newTraceabilities, item.id);
+    };
+
+    const onBatchQuantityChange = ({ currentTarget }, traceability) => {
+        const newTraceabilities = item.traceabilities.map(t => t.id !== traceability.id ? t : {...traceability, quantity : currentTarget.value});
+        updateTotalPreparated(newTraceabilities, currentTarget.name);
+    };
+
+    const updateTotalPreparated = (traceabilities, itemId) => {
+        const total = traceabilities.reduce((sum, curr) => {
+            return sum += parseFloat(curr.quantity);
+        }, 0);
+        const newItems = order.items.map(i => i.id === parseInt(itemId) ? ({...item, traceabilities, preparedQty: total}) : i);
+        setOrder({...order, items: newItems});
+    };
+
     return !isDefined(item) || !isDefined(displayedProduct) ? <></> : (
-        <CRow>
-            <CCol xs="12" sm="3">
-                <CFormGroup>
-                    <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}
-                    </CLabel>
-                    <CSelect custom id="product" value={ displayedProduct.id } disabled={ true }>
-                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                    </CSelect>
-                </CFormGroup>
-            </CCol>
-            <CCol xs="12" sm="3">
-                <CFormGroup>
-                    <CLabel htmlFor="name">{"Variante"}
-                    </CLabel>
-                    <CSelect custom name="variant" id="variant" disabled={ true } value={ isDefined(item.variation) && isDefined(item.size) ? item.variation.id + "-" + item.size.id : "0"}>
-                        { !isDefinedAndNotVoid(variants) ? 
-                            <option key="0" value="0">-</option> 
-                            :
-                            variants.map((variant, index) => {
-                                return variant.sizes.map((size, i) => 
-                                    <option key={ (index + "" + i) } value={variant.id + "-" + size.id}>
-                                        { getVariantName(variant.color, size.name) }
-                                    </option>
-                                );
-                            })
-                        }
-                    </CSelect>
-                </CFormGroup>
-            </CCol>
-            <CCol xs="12" sm="2">
-                <CFormGroup>
-                    <CLabel htmlFor="name">Commandé
-                    </CLabel>
-                    <CInputGroup>
-                        <CInput
-                            id="orderedQty"
-                            type="number"
-                            name={ item.id }
-                            value={ item.orderedQty }
-                            onChange={ onChange }
-                            disabled={ true }
-                        />
-                        <CInputGroupAppend>
-                            <CInputGroupText>{ item.unit }</CInputGroupText>
-                        </CInputGroupAppend>
-                    </CInputGroup>
-                </CFormGroup>
-            </CCol>
-            <CCol xs="12" sm="2">
-                <CFormGroup>
-                    <CLabel htmlFor="name">Préparé</CLabel>
-                    <CInputGroup>
-                        <CInput
-                            id="preparedQty"
-                            type="number"
-                            name={ item.id }
-                            value={ item.preparedQty }
-                            onChange={ onChange }
-                            disabled={ isDelivery }
-                            valid={ !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) >= (getFloat(item.orderedQty) * 0.8) }
-                            invalid={ !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) < (getFloat(item.orderedQty) * 0.8) }
-                        />
-                        <CInputGroupAppend>
-                            <CInputGroupText>{ displayedProduct.unit }</CInputGroupText>
-                        </CInputGroupAppend>
-                    </CInputGroup>
-                </CFormGroup>
-            </CCol>
-            { !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) < (getFloat(item.orderedQty) * 0.8) &&
-                <CCol xs="12" md="2" className="mt-4">
-                    <CFormGroup row className="mb-0 d-flex align-items-end justify-content-start">
-                        <CCol xs="4" sm="4" md="4">
-                            <CSwitch name="new" color="dark" shape="pill" className="mr-0" variant="opposite" checked={ item.isAdjourned } onChange={ handleAdjournment }/>
-                        </CCol>
-                        <CCol tag="label" xs="8" sm="8" md="8" className="col-form-label ml-0">
-                            Relivrer
-                        </CCol>
+        <>
+            <CRow>
+                <CCol xs="12" sm="3">
+                    <CFormGroup>
+                        <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}
+                        </CLabel>
+                        <CSelect custom id="product" value={ displayedProduct.id } disabled={ true }>
+                            { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
+                        </CSelect>
                     </CFormGroup>
                 </CCol>
+                <CCol xs="12" sm="3">
+                    <CFormGroup>
+                        <CLabel htmlFor="name">{"Variante"}
+                        </CLabel>
+                        <CSelect custom name="variant" id="variant" disabled={ true } value={ isDefined(item.variation) && isDefined(item.size) ? item.variation.id + "-" + item.size.id : "0"}>
+                            { !isDefinedAndNotVoid(variants) ? 
+                                <option key="0" value="0">-</option> 
+                                :
+                                variants.map((variant, index) => {
+                                    return variant.sizes.map((size, i) => 
+                                        <option key={ (index + "" + i) } value={variant.id + "-" + size.id}>
+                                            { getVariantName(variant.color, size.name) }
+                                        </option>
+                                    );
+                                })
+                            }
+                        </CSelect>
+                    </CFormGroup>
+                </CCol>
+                <CCol xs="12" sm="2">
+                    <CFormGroup>
+                        <CLabel htmlFor="name">Commandé
+                        </CLabel>
+                        <CInputGroup>
+                            <CInput
+                                id="orderedQty"
+                                type="number"
+                                name={ item.id }
+                                value={ item.orderedQty }
+                                onChange={ onChange }
+                                disabled={ true }
+                            />
+                            <CInputGroupAppend>
+                                <CInputGroupText>{ item.unit }</CInputGroupText>
+                            </CInputGroupAppend>
+                        </CInputGroup>
+                    </CFormGroup>
+                </CCol>
+                <CCol xs="12" sm="2">
+                    <CFormGroup>
+                        <CLabel htmlFor="name">Préparé</CLabel>
+                        <CInputGroup>
+                            <CInput
+                                id="preparedQty"
+                                type="number"
+                                name={ item.id }
+                                value={ item.preparedQty }
+                                onChange={ onChange }
+                                disabled={ isDelivery || item.product.needsTraceability }
+                                valid={ !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) >= (getFloat(item.orderedQty) * 0.8) }
+                                invalid={ !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) < (getFloat(item.orderedQty) * 0.8) }
+                            />
+                            <CInputGroupAppend>
+                                <CInputGroupText>{ displayedProduct.unit }</CInputGroupText>
+                            </CInputGroupAppend>
+                        </CInputGroup>
+                    </CFormGroup>
+                </CCol>
+                { isDelivery && ['DELIVERED', 'SHIPPED', 'COLLECTABLE'].includes(order.status) &&
+                    <CCol xs="12" sm="2">
+                        <CFormGroup>
+                            <CLabel htmlFor="name">Livré</CLabel>
+                            <CInputGroup>
+                                <CInput
+                                    id="preparedQty"
+                                    type="number"
+                                    name={ item.id }
+                                    value={ isDefined(item.deliveredQty) ? item.deliveredQty : 0 }
+                                    onChange={ onChange }
+                                    disabled={ isDelivery || item.product.needsTraceability }
+                                    valid={ !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) >= (getFloat(item.orderedQty) * 0.8) }
+                                    invalid={ !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) < (getFloat(item.orderedQty) * 0.8) }
+                                />
+                                <CInputGroupAppend>
+                                    <CInputGroupText>{ displayedProduct.unit }</CInputGroupText>
+                                </CInputGroupAppend>
+                            </CInputGroup>
+                        </CFormGroup>
+                    </CCol>
+                }
+                { !isDelivery && item.preparedQty.toString().length > 0 && getFloat(item.preparedQty) < (getFloat(item.orderedQty) * 0.8) &&
+                    <CCol xs="12" md="2" className="mt-4">
+                        <CFormGroup row className="mb-0 d-flex align-items-end justify-content-start">
+                            <CCol xs="4" sm="4" md="4">
+                                <CSwitch name="new" color="dark" shape="pill" className="mr-0" variant="opposite" checked={ item.isAdjourned } onChange={ handleAdjournment }/>
+                            </CCol>
+                            <CCol tag="label" xs="8" sm="8" md="8" className="col-form-label ml-0">
+                                Relivrer
+                            </CCol>
+                        </CFormGroup>
+                    </CCol>
+                }
+            </CRow>
+            { item.product.needsTraceability && item.traceabilities.map((t, i) => {   // !isDelivery &&
+                return (<CRow className="d-flex justify-content-end" key={ i }>
+                    <CCol xs="12" sm="3">
+                        <CFormGroup>
+                            <CLabel htmlFor="name">{"Lot"}
+                            </CLabel>
+                            <CSelect custom id="product" value={ t.number } onChange={ e => handleBatchChange(e, t) } disabled={ isDelivery }>
+                                { !isDelivery ? 
+                                    batches.map(b => <option key={ b.number } value={ b.number }>{ b.number }</option>) :
+                                    <option value={ t.number }>{ t.number }</option>
+                                }
+                            </CSelect>
+                        </CFormGroup>
+                    </CCol>
+                    <CCol xs="12" sm="3">
+                        <CFormGroup>
+                            <CInputGroup>
+                                <Flatpickr
+                                    disabled
+                                    name={ item.id }
+                                    value={ [ new Date(t.endDate) ] }
+                                    className={`form-control mt-4`}
+                                    options={{
+                                        dateFormat: "d/m/Y",
+                                        locale: French,
+                                    }}
+                                />
+                            </CInputGroup>
+                        </CFormGroup>
+                    </CCol>
+                    <CCol xs="12" sm="2">
+                        <CFormGroup>
+                            <CLabel htmlFor="name">En stock</CLabel>
+                            <CInputGroup>
+                                <CInput
+                                    type={isDelivery ? "text" : "number"}
+                                    name={ item.id }
+                                    value={ isDelivery ? '-' : getBatchMaxQuantity(t.number) }
+                                    disabled={ true }
+                                />
+                                <CInputGroupAppend>
+                                    <CInputGroupText>{ displayedProduct.unit }</CInputGroupText>
+                                </CInputGroupAppend>
+                            </CInputGroup>
+                        </CFormGroup>
+                    </CCol>
+                    <CCol xs="12" sm="2">
+                        <CFormGroup>
+                            <CLabel htmlFor="name">{ isDelivery && ['DELIVERED', 'SHIPPED', 'COLLECTABLE'].includes(order.status) ? "Livré" : "Préparé" }</CLabel>
+                            <CInputGroup>
+                                <CInput
+                                    id="preparedQty"
+                                    type="number"
+                                    name={ item.id }
+                                    value={ t.quantity }
+                                    onChange={ e => onBatchQuantityChange(e, t) }
+                                    disabled={ isDelivery }
+                                />
+                                <CInputGroupAppend>
+                                    <CInputGroupText>{ displayedProduct.unit }</CInputGroupText>
+                                </CInputGroupAppend>
+                            </CInputGroup>
+                        </CFormGroup>
+                    </CCol>
+                    { i === item.traceabilities.length - 1 && order.status === "WAITING" ?
+                        <CCol xs="2" sm="2" md="2" className="d-flex align-items-center mt-2">
+                            { item.traceabilities.length > 1 &&
+                                <CButton className="mr-2" color="danger" onClick={ e => handleDeleteTraceability(t) } style={{ height: '38px', width: '38px' }}><i className="fas fa-trash"></i></CButton>
+                            }
+                            <CButton 
+                                className="ml-4" 
+                                color="warning" 
+                                onClick={ handleAddTraceability } 
+                                style={{ height: '38px', width: '38px' }}
+                                disabled={ item.traceabilities.length >= batches.length }
+                            >
+                                <span style={{ fontWeight: 'bold', fontSize: '1.3em' }}>+</span>
+                            </CButton>
+                        </CCol>
+                        : <CCol xs="2" sm="2" md="2" className="d-flex align-items-center mt-2">
+                            { item.traceabilities.length > 1 &&
+                                <CButton color="danger" onClick={ e => handleDeleteTraceability(t) } style={{ height: '38px', width: '38px' }}><i className="fas fa-trash"></i></CButton>
+                            }
+                          </CCol>
+                    }
+                </CRow>)
+
+            })
             }
-        </CRow>
+        </>
     );
 }
  

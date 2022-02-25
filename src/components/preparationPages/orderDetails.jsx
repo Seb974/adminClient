@@ -41,8 +41,9 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
     };
 
     const onSubmit = e => {
+        const preparedOrder = getPreparedOrder(viewedOrder, currentUser);
         OrderActions
-            .update(viewedOrder.id, getPreparedOrder(viewedOrder, currentUser))
+            .update(viewedOrder.id, preparedOrder)
             .then(response => {
                 setOrders(orders.filter(o => o.id !== response.data.id));
                 // toggleDetails(response.data.id, e);

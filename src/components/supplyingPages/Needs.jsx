@@ -119,7 +119,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     const fetchSellers = () => {
         setLoading(true);
         SellerActions
-            .findAll()
+            .findActiveSellers()
             .then(response => {
                 setSellers(response);
                 setSelectedSeller(response[0]);

@@ -156,6 +156,13 @@ function getNav(translation, currentUser)
           to: '/components/stocks',
           icon: <CIcon name="cil-storage" customClasses="c-sidebar-nav-icon"/>,
         },
+    !["ADMIN", "PICKER", "SELLER", "STORE_MANAGER"].includes(mainRole) ? voidValue :  
+      {
+        _tag: 'CSidebarNavItem',
+        name: translation("traceability.label"),
+        to: '/components/traceabilities',
+        icon: <CIcon name="cil-zoom" customClasses="c-sidebar-nav-icon"/>,
+      },
     !["ADMIN", "SELLER"].includes(mainRole) ? voidValue :
       {
         _tag: 'CSidebarNavItem',

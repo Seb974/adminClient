@@ -59,6 +59,7 @@ const Orders = (props) => {
             const UTCDates = getUTCDates(dates);
             OrderActions.findPaginatedOrdersWithStatus(UTCDates, selectedStatus, page, itemsPerPage)
                     .then(response => {
+                        console.log(response['hydra:member']);
                         setOrders(response['hydra:member']);
                         setTotalItems(response['hydra:totalItems']);
                         setLoading(false);
@@ -232,7 +233,7 @@ const Orders = (props) => {
                                     ,
                                     'details':
                                         item => <CCollapse show={details.includes(item.id)}>
-                                                    <OrderDetails order={ item } isDelivery={ true }/>
+                                                    <OrderDetails orders={ orders } setOrders={ setOrders } order={ item } isDelivery={ true }/>
                                                 </CCollapse>
                                 }}
                             />

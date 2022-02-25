@@ -18,9 +18,9 @@ export const getTwoDigits = number => number < 10 ? '0' + number : number;
 
 export const getNumericOrNull = value => typeof value === 'string' ? (value.length > 0 ? parseFloat(value) : null) : value;
 
-export const getFloat = value => typeof value === 'string' ? parseFloat(value.replace(',','.')) : value;
+export const getFloat = value => typeof value === 'string' ? (value.length > 0 && !isNaN(value) ? parseFloat(value.replace(',','.')) : 0) : value;
 
-export const getInt = value => typeof value === 'string' ? parseInt(value) : value;
+export const getInt = value => typeof value === 'string' ? (value.length > 0 && !isNaN(value) ? parseInt(value) : 0) : value;
 
 export const isSameAddress = (address1, address2) => {
     return isDefined(address1) && isDefined(address2) &&

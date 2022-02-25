@@ -382,7 +382,7 @@ const Deliveries = (props) => {
                                     ,
                                     'details':
                                         item => <CCollapse show={details.includes(item.id)}>
-                                                    <OrderDetails order={ item } isDelivery={ true } id={ item.id }/>
+                                                    <OrderDetails orders={ orders } setOrders={setOrders} order={ item } isDelivery={ true } id={ item.id }/>
                                                 </CCollapse>
                                 }}
                             />
