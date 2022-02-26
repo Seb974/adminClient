@@ -31,7 +31,7 @@ const Order = ({ match, history }) => {
     const { id = "new" } = match.params;
     const defaultVariant = null;
     const [editing, setEditing] = useState(false);
-    const { products } = useContext(ProductsContext);
+    // const { products } = useContext(ProductsContext);
     const { catalogs } = useContext(CatalogContext);
     const { containers } = useContext(ContainerContext);
     const { currentUser, selectedCatalog, setSettings, settings, supervisor } = useContext(AuthContext);
@@ -40,9 +40,10 @@ const Order = ({ match, history }) => {
     const defaultErrors = { name: "", email: "", deliveryDate: "", phone: "", address: "" };
     const [informations, setInformations] = useState({ phone: '', address: '', address2: '', zipcode: '', city: '', position: isDefined(selectedCatalog) ? selectedCatalog.center : [0, 0]});
     const [errors, setErrors] = useState(defaultErrors);
-    const defaultVariantSize = defaultVariant !== null && products[0].variations[0].sizes && products[0].variations[0].sizes.length > 0 ? products[0].variations[0].sizes[0] : null;
-    const defaultProduct = {product: products[0], variation: defaultVariant, size: defaultVariantSize};
-    const defaultItem = {...defaultProduct, count: 0, orderedQty: "", preparedQty: "", deliveredQty: "", price: defaultProduct.product.prices[0].amount, unit: defaultProduct.product.unit};
+    // const defaultVariantSize = defaultVariant !== null && products[0].variations[0].sizes && products[0].variations[0].sizes.length > 0 ? products[0].variations[0].sizes[0] : null;
+    // const defaultProduct = {product: products[0], variation: defaultVariant, size: defaultVariantSize};
+    // const defaultItem = {...defaultProduct, count: 0, orderedQty: "", preparedQty: "", deliveredQty: "", price: defaultProduct.product.prices[0].amount, unit: defaultProduct.product.unit};
+    const defaultItem = { product: null, variation: null, size: null, count: 0, orderedQty: "", preparedQty: "", deliveredQty: "", price: 0, unit: ""}
     const [objectDiscount, setObjectDiscount] = useState(null);
     const [groups, setGroups] = useState([]);
     const [items, setItems] = useState([defaultItem]);
@@ -102,7 +103,8 @@ const Order = ({ match, history }) => {
             OrderActions.find(id)
                 .then(response => {
                     setOrder({...response, name: response.name, email: response.email, deliveryDate: new Date(response.deliveryDate), notification: isDefined(response.notification) ? response.notification : "No"});
-                    setItems(response.items.map((item, key) => ({...item, product: products.find(product => item.product.id === product.id), count: key})));
+                    // setItems(response.items.map((item, key) => ({...item, product: products.find(product => item.product.id === product.id), count: key})));
+                    setItems(response.items.map((item, key) => ({...item, count: key})));
                     setInformations(response.metas);
                     setCondition(response.appliedCondition);
                     setMinDate(new Date(response.deliveryDate));
@@ -180,30 +182,30 @@ const Order = ({ match, history }) => {
     };
 
     const handleSubmit = () => {
-        const newErrors = validateForm(order, informations, (isDefined(order.calalog) ? order.catalog : catalog), condition, relaypoints);
-        if (isDefined(newErrors) && Object.keys(newErrors).length > 0) {
-            setErrors({...errors, ...newErrors});
-        } else {
+        // const newErrors = validateForm(order, informations, (isDefined(order.calalog) ? order.catalog : catalog), condition, relaypoints);
+        // if (isDefined(newErrors) && Object.keys(newErrors).length > 0) {
+        //     setErrors({...errors, ...newErrors});
+        // } else {
             const orderToWrite = getOrderToWrite(order, user, informations, items, order.deliveryDate, objectDiscount, catalog, condition, settings);
             console.log(orderToWrite);
-            const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
-            request.then(response => {
-                setErrors(defaultErrors);
-                //TODO : Flash notification de succès
-                history.replace("/components/preparations");
-            })
-            .catch( ({ response }) => {
-                const { violations } = response.data;
-                if (violations) {
-                    const apiErrors = {};
-                    violations.forEach(({propertyPath, message}) => {
-                        apiErrors[propertyPath] = message;
-                    });
-                    setErrors(apiErrors);
-                }
-                //TODO : Flash notification d'erreur
-            });
-        }
+            // const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
+            // request.then(response => {
+            //     setErrors(defaultErrors);
+            //     //TODO : Flash notification de succès
+            //     history.replace("/components/preparations");
+            // })
+            // .catch( ({ response }) => {
+            //     const { violations } = response.data;
+            //     if (violations) {
+            //         const apiErrors = {};
+            //         violations.forEach(({propertyPath, message}) => {
+            //             apiErrors[propertyPath] = message;
+            //         });
+            //         setErrors(apiErrors);
+            //     }
+            //     //TODO : Flash notification d'erreur
+            // });
+        // }
     };
 
     const getUserGroup = () => {
@@ -254,13 +256,13 @@ const Order = ({ match, history }) => {
                                                 { supervisor.users.map(user => <option value={ user.id }>{ user.name + " - " + user.email }</option>) }
                                             </Select>
                                         </CCol>
-                                     : (isAdmin || Roles.isPicker(currentUser)) && id !== "new" ?
+                                     : (isAdmin || Roles.isPicker(currentUser)) && editing ?    // id !== "new" 
                                         <CCol xs="12" sm="12" md="6" className="mt-4">
                                             <Select name="status" label="Statut" onChange={ handleStatusChange } value={ order.status }>
                                                 { statuses.map((status, i) => <option key={ status.value } value={ status.value }>{ status.label }</option>) }
                                             </Select>
                                         </CCol>
-                                     : (isAdmin || Roles.isPicker(currentUser)) && id === "new" ?
+                                     : (isAdmin || Roles.isPicker(currentUser)) && !editing ?       // id === "new"
                                         <CCol xs="12" sm="12" md="6" className="mt-4">
                                             <Select className="mr-2" name="catalog" label="Destination" onChange={ handleCatalogChange } value={ isDefined(catalog) ? catalog.id : 0 }>
                                                 { catalogs.map(c => <option value={ c.id }>{ c.name }</option>) }
@@ -276,7 +278,7 @@ const Order = ({ match, history }) => {
                                     </>
                                 }
                                 <hr/>
-                                <Items items={ items } setItems={ setItems } defaultItem={ defaultItem } editing={ editing } packages={ packages } order={ order }/>
+                                <Items items={ items } setItems={ setItems } defaultItem={ defaultItem } editing={ editing } packages={ packages } order={ order } user={ user }/>
 
                             </Tab>
                             {/* { (isAdmin || Roles.isPicker(currentUser)) && */}

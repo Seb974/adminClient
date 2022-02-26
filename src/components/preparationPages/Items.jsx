@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CButton, CCol, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import Item from './Item';
 import { isDefined } from 'src/helpers/utils';
 import Packages from './Packages';
+import { useEffect } from 'react';
 
-const Items = ({ items, setItems, defaultItem, editing, packages = null, order = null }) => {
+const Items = ({ items, setItems, defaultItem, editing, packages = null, order = null, user = null }) => {
+
+    const [userGroups, setUserGroups] = useState(["ROLE_USER"]);
+
+    useEffect(() => {
+        if (isDefined(user))
+            setUserGroups(user.roles);
+        else 
+            setUserGroups(["ROLE_USER"]);
+    }, [user]);
 
     const handleItemAdd = () => {
         setItems([
@@ -15,8 +25,8 @@ const Items = ({ items, setItems, defaultItem, editing, packages = null, order =
     };
 
     const handleItemChange = item => {
-        const filteredItemss = items.filter(option => parseInt(option.count) !== parseInt(item.count));
-        setItems([...filteredItemss, item].sort((a, b) => (a.count > b.count) ? 1 : -1));
+        const filteredItems = items.filter(option => parseInt(option.count) !== parseInt(item.count));
+        setItems([...filteredItems, item].sort((a, b) => (a.count > b.count) ? 1 : -1));
     };
 
     const handleItemDelete = ({currentTarget}) => {
@@ -49,6 +59,8 @@ const Items = ({ items, setItems, defaultItem, editing, packages = null, order =
                                     index={ index }
                                     editing={ editing }
                                     order={ order }
+                                    user={ user }
+                                    userGroups={ userGroups }
                                 />
                             </CCol>
                         </CRow>

@@ -2,50 +2,40 @@ import React, { useContext, useEffect, useState } from 'react';
 import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow, CSelect } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import ProductsContext from 'src/contexts/ProductsContext';
-import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Select from '../forms/Select';
-import ProductSearch from '../forms/ProductSearch';
 import Roles from 'src/config/Roles';
 import 'flatpickr/dist/themes/material_blue.css';
 import { French } from "flatpickr/dist/l10n/fr.js";
 import Flatpickr from 'react-flatpickr';
 
-const Item = ({ item, items, setItems, handleChange, handleDelete, total, index, editing, order = null, user = null, userGroups }) => {
+const Item = ({ item, items, setItems, handleChange, handleDelete, total, index, editing, order = null }) => {
 
     const defaultTraceability = { number: "", endDate: new Date(), quantity: 0, id: new Date().getTime()};
     const [batches, setBatches] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const { currentUser } = useContext(AuthContext);
-
-    const [product, setProduct] = useState(null);
-    const [variation, setVariation] = useState(null);
-    const [size, setSize] = useState(null);
-
-    useEffect(() => {
-            const newItem = {...item, product, variation, size, price: getUserPrice(product), unit: getUnit(product)};
-            const newItems = items.map(i => i.count === newItem.count ? newItem : i);
-            setItems(newItems);
-
-    }, [product, variation, size]);
-
-    useEffect(() => {
-        const newItem = {...item, price: getUserPrice(product)};
-        const newItems = items.map(i => i.count === newItem.count ? newItem : i);
-        setItems(newItems);
-    }, [userGroups])
+    const { products } = useContext(ProductsContext);
+    const [variants, setVariants] = useState([]);
+    const { settings, currentUser } = useContext(AuthContext);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
+        getPrice();
+        getUnit();
         getBatchesOptions();
         if (!isDefinedAndNotVoid(item.traceabilities))
             getTraceabilities();
+        if (isDefined(item.product.variations))
+            setVariants(item.product.variations);
     }, []);
+
+    useEffect(() => getPrice(), [settings]);
 
     useEffect(() => getTraceabilities(), [order.status, item.product, batches])
 
     const getTraceabilities = () => {
-        if (isDefined(item.product) && item.product.needsTraceability && isDefinedAndNotVoid(batches) && editing) {
+        if (item.product.needsTraceability && isDefinedAndNotVoid(batches)) {
             if (!['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
                 const newItem = {...item, traceabilities: [{...defaultTraceability, number: batches[0].number}]};
                 const newItems = items.map(i => i.id !== newItem.id ? i : newItem);
@@ -55,19 +45,6 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
             }
         }
     };
-
-    const getUserPrice = product => {
-        if (isDefined(product)) {
-            const prices = product.prices
-                                .filter(p => p.priceGroup.userGroup.filter(g => userGroups.includes(g.value)).length > 0)
-                                .map(p => getFloat(p.amount));
-            const userPrice = Math.min.apply(Math, prices);
-            return isDefined(userPrice) ? userPrice : 0;
-        }
-        return 0;
-    };
-
-    const getUnit = product => isDefined(product) ? product.unit : "U";
 
     const onChange = ({ currentTarget }) => handleChange({...item, [currentTarget.id]: currentTarget.value});
 
@@ -79,7 +56,7 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
     };
 
     const getBatchesOptions = () => {
-        if (isDefined(item.product) && item.product.needsTraceability && !['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
+        if (item.product.needsTraceability && !['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
             let newBatches = [];
             const stock = item.product.stocks.find(s => isDefined(s.platform));
             if (isDefined(stock) && isDefinedAndNotVoid(stock.batches))
@@ -130,80 +107,52 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
         updateTotalPreparated([...item.traceabilities, newTraceability], item.id);
     };
 
-    // const onProductChange = ({ currentTarget }) => {
-    //     const selection = products.find(product => parseInt(product.id) === parseInt(currentTarget.value));
-    //     const newVariants = isDefined(selection.variations) ? selection.variations : null;
-    //     const selectedVariant = isDefinedAndNotVoid(newVariants) ? newVariants[0] : null;
-    //     const selectedSize = isDefined(selectedVariant) && isDefinedAndNotVoid(selectedVariant.sizes) ? selectedVariant.sizes[0] : null;
-    //     handleChange({...item, product: selection, variation: selectedVariant, size: selectedSize, price: getProductPrice(selection), unit: selection.unit});
-    //     setVariants(isDefined(selection.variations) ? selection.variations : null);
-    // };
+    const onProductChange = ({ currentTarget }) => {
+        const selection = products.find(product => parseInt(product.id) === parseInt(currentTarget.value));
+        const newVariants = isDefined(selection.variations) ? selection.variations : null;
+        const selectedVariant = isDefinedAndNotVoid(newVariants) ? newVariants[0] : null;
+        const selectedSize = isDefined(selectedVariant) && isDefinedAndNotVoid(selectedVariant.sizes) ? selectedVariant.sizes[0] : null;
+        handleChange({...item, product: selection, variation: selectedVariant, size: selectedSize, price: getProductPrice(selection), unit: selection.unit});
+        setVariants(isDefined(selection.variations) ? selection.variations : null);
+    };
 
-    // const onVariantChange = ({ currentTarget }) => {
-    //     const ids = currentTarget.value.split("-");
-    //     const selectedVariant = item.product.variations.find(variation => variation.id === parseInt(ids[0]));
-    //     const selectedSize = selectedVariant.sizes.find(size => size.id === parseInt(ids[1]));
-    //     handleChange({...item, variation: selectedVariant, size: selectedSize});
-    // };
+    const onVariantChange = ({ currentTarget }) => {
+        const ids = currentTarget.value.split("-");
+        const selectedVariant = item.product.variations.find(variation => variation.id === parseInt(ids[0]));
+        const selectedSize = selectedVariant.sizes.find(size => size.id === parseInt(ids[1]));
+        handleChange({...item, variation: selectedVariant, size: selectedSize});
+    };
 
-    // const getPrice = () => {
-    //     if (isDefined(item.product)) {
-    //         const productPrice = item.product.prices.find(price => price.priceGroup.id === settings.priceGroup.id).amount;
-    //         onChange({currentTarget: {id: "price", value: productPrice}});
-    //     }
-    // }
+    const getPrice = () => {
+        const productPrice = item.product.prices.find(price => price.priceGroup.id === settings.priceGroup.id).amount;
+        onChange({currentTarget: {id: "price", value: productPrice}});
+    }
 
-    // const getUnit = () => { 
-    //     if (isDefined(item.product)) {
-    //         onChange({currentTarget: {id: "unit", value: item.product.unit}});
-    //     }
-    // };
+    const getUnit = () => onChange({currentTarget: {id: "unit", value: item.product.unit}});
 
-    // const getProductPrice = product => {
-    //     return product.prices.find(price => price.priceGroup.id === settings.priceGroup.id).amount;
-    // };
+    const getProductPrice = product => {
+        return product.prices.find(price => price.priceGroup.id === settings.priceGroup.id).amount;
+    };
 
-    // const getVariantName = (variantName, sizeName) => {
-    //     const isVariantEmpty = variantName.length === 0 || variantName.replace(" ","").length === 0;
-    //     const isSizeEmpty = sizeName.length === 0 || sizeName.replace(" ","").length === 0;
-    //     return isVariantEmpty ? sizeName : isSizeEmpty ? variantName : variantName + " - " + sizeName;
-    // };
+    const getVariantName = (variantName, sizeName) => {
+        const isVariantEmpty = variantName.length === 0 || variantName.replace(" ","").length === 0;
+        const isSizeEmpty = sizeName.length === 0 || sizeName.replace(" ","").length === 0;
+        return isVariantEmpty ? sizeName : isSizeEmpty ? variantName : variantName + " - " + sizeName;
+    };
 
-    //  || !isDefined(item.product)
-    return !isDefined(item) ? <></> : (
+    return !isDefined(item) || !isDefined(item.product) ? <></> : (
         <>
         <CRow>
-            <CCol xs="12" sm="8">
+            <CCol xs="12" sm="4">
                 <CFormGroup>
-                    <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}</CLabel>
-                    <ProductSearch 
-                        product={ product } setProduct={ setProduct }
-                        variation={ variation } setVariation={ setVariation }
-                        size={ size } setSize={ setSize }
-                    />
-                    {/* <CSelect custom id="product" value={ item.product.id } onChange={ onProductChange }>
+                    <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}
+                    </CLabel>
+                    <CSelect custom id="product" value={ item.product.id } onChange={ onProductChange }>
                         { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                    </CSelect> */}
-
-                    {/* <CInputGroup>
-                        <CInput
-                            id="productSearch"
-                            name="productSearch"
-                            value={ userSearch }
-                            onChange={ handleProductSearch }
-                            placeholder="Rechercher..."
-                        />
-                        <CInputGroupAppend>
-                            <CInputGroupText onClick={ handleSearch }>
-                                <span className={ userSearch.length === 0 ? "" : "text-success" }>
-                                    <CIcon name="cil-magnifying-glass"/>
-                                </span>
-                            </CInputGroupText>
-                        </CInputGroupAppend>
-                    </CInputGroup> */}
+                    </CSelect>
                 </CFormGroup>
             </CCol>
-            {/* <CCol xs="12" sm="4">
+            <CCol xs="12" sm="4">
                 <CFormGroup>
                     <CLabel htmlFor="name">{"Variante"}
                     </CLabel>
@@ -215,7 +164,7 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
                         }
                     </CSelect>
                 </CFormGroup>
-            </CCol> */}
+            </CCol>
             <CCol xs="12" sm="3">
                 <CFormGroup>
                     <CLabel htmlFor="name">Prix

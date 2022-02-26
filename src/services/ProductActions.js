@@ -32,6 +32,12 @@ function findWord(word, page = 1, items = 30) {
         .then(response => response.data);
 }
 
+function findUnpaginatedWord(word) {
+    return api
+        .get(`/api/products?name[]=${ word }&order[name]=asc`)
+        .then(response => response.data);
+}
+
 function findPaginatedFromSeller(seller, page = 1, items = 30) {
     return api
         .get(`/api/products?seller=${ seller['@id'] }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
@@ -143,4 +149,5 @@ export default {
     updateComponent,
     updateFromMercure,
     deleteFromMercure,
+    findUnpaginatedWord
 }

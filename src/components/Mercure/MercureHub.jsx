@@ -1,21 +1,36 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import AuthContext from 'src/contexts/AuthContext';
 import api from 'src/config/api';
 import touringEvents from 'src/data/dataProvider/eventHandlers/touringEvents';
 import DeliveryContext from 'src/contexts/DeliveryContext';
-import ProductsContext from 'src/contexts/ProductsContext';
 import MercureContext from 'src/contexts/MercureContext';
+import { CCol, CToast, CToastBody, CToaster, CToastHeader } from '@coreui/react';
+import { isDefined } from 'src/helpers/utils';
 
 const MercureHub = ({ children }) => {
     
+    const { isAuthenticated } = useContext(AuthContext);
     const url = new URL(api.MERCURE_DOMAIN + "/.well-known/mercure");
-    const { products, setProducts } = useContext(ProductsContext);
+    const [toasts, setToasts] = useState([]);
     const { updatedOrders, setUpdatedOrders, updatedProducts, setUpdatedProducts, updatedCategories, setUpdatedCategories } = useContext(MercureContext);
     const { updatedUsers, setUpdatedUsers, updatedProvisions, setUpdatedProvisions, updatedContainers, setUpdatedContainers } = useContext(MercureContext);
     const { updatedMessages, setUpdatedMessages } = useContext(MercureContext);
     const { currentUser, eventSource, setEventSource } = useContext(AuthContext);
-    const { packages, setPackages, tourings, setTourings } = useContext(DeliveryContext);
+    const { tourings, setTourings } = useContext(DeliveryContext);      // packages, setPackages, 
+
+    const networkMessage = "Vous avez été déconnecté d' internet. Vérifiez l'état de votre connexion et rafraîchissez la page.";
+    const networkToast = { position: 'top-right', autohide: false, closeButton: true, fade: true, color: 'danger', messsage: networkMessage, title: 'Connexion interrompue' };
+
+    const addToast = newToast => setToasts([...toasts, newToast]);
+
+    // useEffect(() => {
+    //     const state = eventSource.readyState;
+    //     if (isDefined(state)) {
+    //         const message = state === 0 ? "Connecting" : state === 1 ? "Connected" : "Disconnected";
+    //         console.log(message);
+    //     }
+    // }, [eventSource]);
 
     useEffect(() => {
         closeIfExists();
@@ -38,9 +53,16 @@ const MercureHub = ({ children }) => {
             eventSource.close();
     };
 
+    eventSource.onerror = errorEvent => {
+        if (errorEvent.error.message === 'network error') {
+            closeIfExists();
+            if (isAuthenticated)
+                addToast(networkToast);
+        }
+    };
+
     eventSource.onmessage = event => {
         const data = JSON.parse(event.data);
-        console.log(data);
         if (data['@id'].includes('tourings'))
             touringEvents.update(data, tourings, setTourings);
 
@@ -66,7 +88,39 @@ const MercureHub = ({ children }) => {
             setUpdatedProducts([...updatedProducts, data]);
     };
 
-    return <>{ children }</>
+    const toasters = (()=>{
+        return toasts.reduce((toasters, toast) => {
+          toasters[toast.position] = toasters[toast.position] || []
+          toasters[toast.position].push(toast)
+          return toasters
+        }, {})
+    })();
+
+    return (
+        <>
+            { children }
+            <CCol sm="12" lg="6">
+              { Object.keys(toasters).map((toasterKey) => (
+                <CToaster position={toasterKey} key={'toaster' + toasterKey}>
+                    { toasters[toasterKey].map((toast, key)=> {
+                        return (
+                            <CToast key={ 'toast' + key } 
+                                    show={ true } 
+                                    autohide={ toast.autohide } 
+                                    fade={ toast.fade } 
+                                    color={ toast.color } 
+                                    style={{ color: 'white' }}
+                            >
+                                <CToastHeader closeButton={ toast.closeButton }>{ toast.title }</CToastHeader>
+                                <CToastBody style={{ backgroundColor: 'white', color: "black" }}>{ toast.messsage }</CToastBody>
+                            </CToast>
+                        )})
+                    }
+                </CToaster>
+              ))}
+            </CCol>
+        </>
+        );
 }
 
 export default MercureHub;

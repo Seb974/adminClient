@@ -46,20 +46,12 @@ const DataProvider = ({ children }) => {
 
     useEffect(() => {
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
-        // AuthActions.getGeolocation()
-        //            .then(response => setCountry(response));
         PlatformActions.find()
                        .then(response => setPlatform(response));
         ProductActions.findAll()
                       .then(response => setProducts(response));
-        // ContainerActions.findAll()
-        //                 .then(response => setContainers(response));
         CatalogActions.findAll()
                       .then(response => setCatalogs(response));
-        // RelaypointActions.findAll()
-        //                  .then(response => setRelaypoints(response));
-        // CategoryActions.findAll()
-        //                .then(response => setCategories(response));
     },[]);
 
     useEffect(() => {

@@ -1,7 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CValidFeedback } from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import ProductsContext from 'src/contexts/ProductsContext';
+import React, { useEffect, useState } from 'react';
+import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow, CSelect, CSwitch } from '@coreui/react';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import 'flatpickr/dist/themes/material_blue.css';
 import { French } from "flatpickr/dist/l10n/fr.js";
@@ -10,22 +8,18 @@ import Flatpickr from 'react-flatpickr';
 
 const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) => {
 
-    const { products } = useContext(ProductsContext);
     const [variants, setVariants] = useState([]);
     const [displayedProduct, setDisplayedProduct] = useState(item.product);
     const [batches, setBatches] = useState([]);
 
     useEffect(() => getDisplayedProduct(), []);
-    useEffect(() => getDisplayedProduct(), [products]);
     useEffect(() => getStock(), [displayedProduct]);
 
     const getDisplayedProduct = () => {
-        if ( products.length > 0) {
-            const productToDisplay = products.find(product => product.id === item.product.id);
+            const productToDisplay =item.product;
             setDisplayedProduct(productToDisplay);
             if (isDefined(productToDisplay) && isDefined(productToDisplay.variations))
                 setVariants(productToDisplay.variations);
-        }
     };
 
     const getStock = () => {
@@ -39,9 +33,6 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
                     const newItems = order.items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: [newTraceability]}) : i);
                     setOrder({...order, items: newItems});
                 } 
-                // else {
-                //     updateTotalPreparated(item.traceabilities, item.id);
-                // }
             }
         }
     };
@@ -134,11 +125,10 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
             <CRow>
                 <CCol xs="12" sm="3">
                     <CFormGroup>
-                        <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}
-                        </CLabel>
-                        <CSelect custom id="product" value={ displayedProduct.id } disabled={ true }>
-                            { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                        </CSelect>
+                        <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}</CLabel>
+                        <CInputGroup>
+                            <CInput id="name" value={ displayedProduct.name } disabled={ true } />
+                        </CInputGroup>
                     </CFormGroup>
                 </CCol>
                 <CCol xs="12" sm="3">
