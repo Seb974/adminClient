@@ -1,77 +1,56 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow, CSelect } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import ProductsContext from 'src/contexts/ProductsContext';
+// import ProductsContext from 'src/contexts/ProductsContext';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Select from '../forms/Select';
 import Roles from 'src/config/Roles';
+import ProductSearch from '../forms/ProductSearch';
 
-const Good = ({ provision, good, handleChange, handleDelete, total, index, editing }) => {
+const Good = ({ provision, good, goods, setGoods, handleChange, handleDelete, total, index, editing }) => {
 
     const [isAdmin, setIsAdmin] = useState(false);
-    const { products } = useContext(ProductsContext);
-    const [variants, setVariants] = useState([]);
     const { currentUser } = useContext(AuthContext);
 
+    const [product, setProduct] = useState(good.product);
+    const [variation, setVariation] = useState(good.variation);
+    const [size, setSize] = useState(good.size);
+
+    useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), []);
+
     useEffect(() => {
-        setIsAdmin(Roles.hasAdminPrivileges(currentUser));
-        getUnit();
-        if (isDefined(good.product.variations))
-            setVariants(good.product.variations);
-    }, []);
+        if (isDefinedAndNotVoid(good.product) && (!isDefined(product) || product.id !== good.product.id)) {
+            setProduct(good.product);
+            setVariation(good.variation);
+            setSize(good.size);
+        }
+    }, [good]);
 
-    const onChange = ({ currentTarget }) => {
-        handleChange({...good, [currentTarget.id]: currentTarget.value});
-    };
+    useEffect(() => {
+            const newGood = {...good, product, variation, size, unit: getUnit(product)};
+            const newGoods = goods.map(i => i.count === newGood.count ? newGood : i);
+            setGoods(newGoods);
 
-    const onProductChange = ({ currentTarget }) => {
-        const selection = products.find(product => parseInt(product.id) === parseInt(currentTarget.value));
-        const newVariants = isDefined(selection.variations) ? selection.variations : null;
-        const selectedVariant = isDefinedAndNotVoid(newVariants) ? newVariants[0] : null;
-        const selectedSize = isDefined(selectedVariant) && isDefinedAndNotVoid(selectedVariant.sizes) ? selectedVariant.sizes[0] : null;
-        handleChange({...good, product: selection, variation: selectedVariant, size: selectedSize, unit: selection.unit});
-        setVariants(isDefined(selection.variations) ? selection.variations : null);
-    };
+    }, [product, variation, size]);
 
-    const onVariantChange = ({ currentTarget }) => {
-        const ids = currentTarget.value.split("-");
-        const selectedVariant = good.product.variations.find(variation => variation.id === parseInt(ids[0]));
-        const selectedSize = selectedVariant.sizes.find(size => size.id === parseInt(ids[1]));
-        handleChange({...good, variation: selectedVariant, size: selectedSize});
-    };
+    const getUnit = product => isDefined(product) ? product.unit : "U";
 
-    const getUnit = () => onChange({currentTarget: {id: "unit", value: good.product.unit}});
+    const onChange = ({ currentTarget }) => handleChange({...good, [currentTarget.id]: currentTarget.value});
 
-    const getVariantName = (variantName, sizeName) => {
-        const isVariantEmpty = variantName.length === 0 || variantName.replace(" ","").length === 0;
-        const isSizeEmpty = sizeName.length === 0 || sizeName.replace(" ","").length === 0;
-        return isVariantEmpty ? sizeName : isSizeEmpty ? variantName : variantName + " - " + sizeName;
-    };
-
-    return !isDefined(good) || !isDefined(good.product) ? <></> : (
+    return !isDefined(good) ? <></> : (
         <>
         <CRow>
-            <CCol xs="12" sm="4">
+            <CCol xs="12" sm="8">
                 <CFormGroup>
-                    <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}
-                    </CLabel>
-                    <CSelect custom id="product" value={ good.product.id } onChange={ onProductChange }>
-                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                    </CSelect>
-                </CFormGroup>
-            </CCol>
-            <CCol xs="12" sm="4">
-                <CFormGroup>
-                    <CLabel htmlFor="name">{"Variante"}
-                    </CLabel>
-                    <CSelect custom name="variant" id="variant" disabled={ !variants || variants.length <= 0 } onChange={ onVariantChange } value={ isDefined(good.variation) && isDefined(good.size) ? good.variation.id + "-" + good.size.id : "0"}>
-                        { !isDefinedAndNotVoid(variants) ? <option key="0" value="0">-</option> : 
-                            variants.map((variant, index) => {
-                                return variant.sizes.map((size, i) => <option key={ (index + "" + i) } value={variant.id + "-" + size.id}>{ getVariantName(variant.color, size.name) }</option>);
-                            })
-                        }
-                    </CSelect>
+                    <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}</CLabel>
+                    <ProductSearch 
+                        product={ product } setProduct={ setProduct }
+                        variation={ variation } setVariation={ setVariation }
+                        size={ size } setSize={ setSize }
+                        seller={ provision.seller }
+                        supplier={ provision.supplier }
+                    />
                 </CFormGroup>
             </CCol>
             <CCol xs="12" sm="4">

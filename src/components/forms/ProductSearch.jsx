@@ -4,8 +4,9 @@ import { CFormGroup, CInput, CInputGroupText, CInputGroupAppend, CInputGroup } f
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import ProductActions from 'src/services/ProductActions';
 import { Spinner } from 'react-bootstrap';
+import '../../assets/css/searchBar.css';
 
-const ProductSearch = ({ product, setProduct, variation, setVariation, size, setSize }) => {
+const ProductSearch = ({ product, setProduct, variation, setVariation, size, setSize, seller = null, supplier = null }) => {
 
     const [productSearch, setProductSearch] = useState("");
     const [suggestions, setSuggestions] = useState([]);
@@ -25,20 +26,57 @@ const ProductSearch = ({ product, setProduct, variation, setVariation, size, set
         setProduct(null);
     };
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         setLoading(true);
-        ProductActions
-            .findUnpaginatedWord(productSearch)
-            .then(response => {
+        try {
+            let response = null;
+            if (!isDefined(seller) && !isDefined(supplier))
+                response = await getAllProductsContainingWord(productSearch);
+            else if (isDefined(seller) && !isDefined(supplier))
+                response = await getSellerProductsContainingWord(productSearch, seller);
+            else if (!isDefined(seller) && isDefined(supplier))
+                response = await getSupplierProductsContainingWord(productSearch, supplier);
+            else
+                response = await getSellerProductsFromSupplierContainingWord(productSearch, seller, supplier);
+            
+            if (isDefined(response)) {
                 const newSuggestions = getSuggestionsWithVariants(response['hydra:member']);
                 setSuggestions(newSuggestions);
                 setHasResults(true);
-                setLoading(false);
-            })
-            .catch(error => {
-                setLoading(false);
-                console.log(error);
-            });
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
+        // ProductActions
+        //     .findUnpaginatedWord(productSearch)
+        //     .then(response => {
+        //         const newSuggestions = getSuggestionsWithVariants(response['hydra:member']);
+        //         setSuggestions(newSuggestions);
+        //         setHasResults(true);
+        //         setLoading(false);
+        //     })
+        //     .catch(error => {
+        //         setLoading(false);
+        //         console.log(error);
+        //     });
+    };
+
+    const getAllProductsContainingWord = async (word) => {
+        return await ProductActions.getAllProductsContainingWord(word);
+    };
+
+    const getSellerProductsContainingWord = async (word, seller) => {
+        return await ProductActions.getSellerProductsContainingWord(word, seller);
+    };
+
+    const getSupplierProductsContainingWord = async (word, supplier) => {
+        return await ProductActions.getSupplierProductsContainingWord(word, supplier);
+    };
+
+    const getSellerProductsFromSupplierContainingWord = async (word, seller, supplier) => {
+        return await ProductActions.getSellerProductsFromSupplierContainingWord(word, seller, supplier);
     };
 
     const getSuggestionsWithVariants = products => {

@@ -32,9 +32,27 @@ function findWord(word, page = 1, items = 30) {
         .then(response => response.data);
 }
 
-function findUnpaginatedWord(word) {
+function getAllProductsContainingWord(word) {
     return api
         .get(`/api/products?name[]=${ word }&order[name]=asc`)
+        .then(response => response.data);
+}
+
+function getSellerProductsContainingWord(word, seller) {
+    return api
+        .get(`/api/products?name[]=${ word }&seller=${ seller['@id'] }&order[name]=asc`)
+        .then(response => response.data);
+}
+
+function getSupplierProductsContainingWord(word, supplier) {
+    return api
+        .get(`/api/products?name[]=${ word }&suppliers=${ supplier['@id'] }&order[name]=asc`)
+        .then(response => response.data);
+}
+
+function getSellerProductsFromSupplierContainingWord(word, seller, supplier) {
+    return api
+        .get(`/api/products?name[]=${ word }&seller=${ seller['@id'] }&suppliers=${ supplier['@id'] }&order[name]=asc`)
         .then(response => response.data);
 }
 
@@ -48,13 +66,13 @@ function findFromSupplierAndStore(seller, supplier, enabledIds, page = 1, items 
     const ids = getIdsList(enabledIds);
     return api
         .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&${ ids }&storeAvailable=true&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
-        .then(response => response.data);       // ['hydra:member']
+        .then(response => response.data); 
 }
 
 function findFromSupplierAndPlatform(seller, supplier, page = 1, items = 30) {
     return api
         .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&available=true&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
-        .then(response => response.data);       // ['hydra:member']
+        .then(response => response.data); 
 }
 
 function deleteProduct(id) {
@@ -149,5 +167,8 @@ export default {
     updateComponent,
     updateFromMercure,
     deleteFromMercure,
-    findUnpaginatedWord
+    getAllProductsContainingWord,
+    getSellerProductsContainingWord,
+    getSupplierProductsContainingWord,
+    getSellerProductsFromSupplierContainingWord
 }

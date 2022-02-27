@@ -39,7 +39,9 @@ const Goods = ({ provision, goods, setGoods, defaultGood, editing }) => {
                             <CCol md="10">
                                 <Good
                                     provision={ provision }
-                                    good={ good } 
+                                    good={ good }
+                                    setGoods={ setGoods }
+                                    goods={ goods }
                                     handleChange={ handleGoodChange } 
                                     handleDelete={ handleGoodDelete } 
                                     total={ goods.length } 

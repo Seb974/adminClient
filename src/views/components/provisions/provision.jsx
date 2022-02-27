@@ -26,9 +26,7 @@ const Provision = ({ match, history }) => {
     const [provision, setProvision] = useState({ provisionDate: new Date(), status: "ORDERED" });
     const defaultErrors = { provisionDate: "" };
     const [errors, setErrors] = useState(defaultErrors);
-    const defaultVariantSize = defaultVariant !== null && products[0].variations[0].sizes && products[0].variations[0].sizes.length > 0 ? products[0].variations[0].sizes[0] : null;
-    const defaultProduct = {product: products[0], variation: defaultVariant, size: defaultVariantSize};
-    const defaultGood = {...defaultProduct, count: 0, quantity: "", received: "", price: "", unit: defaultProduct.product.unit};
+    const defaultGood = {product: null, variation: null, size: null, count: 0, quantity: "", received: "", price: "", unit: "U"};
     const [goods, setGoods] = useState([defaultGood]);
     const [sellers, setSellers] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
@@ -100,7 +98,7 @@ const Provision = ({ match, history }) => {
 
     const fetchSellers = () => {
         SellerActions
-            .findAll()
+            .findActiveSellers()
             .then(response => setSellers(response))
             .catch(error => console.log(error));
     };
