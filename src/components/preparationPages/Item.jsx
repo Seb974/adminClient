@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow, CSelect } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import ProductsContext from 'src/contexts/ProductsContext';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Select from '../forms/Select';
@@ -18,9 +17,17 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
     const [isAdmin, setIsAdmin] = useState(false);
     const { currentUser } = useContext(AuthContext);
 
-    const [product, setProduct] = useState(null);
-    const [variation, setVariation] = useState(null);
-    const [size, setSize] = useState(null);
+    const [product, setProduct] = useState(item.product);
+    const [variation, setVariation] = useState(item.variation);
+    const [size, setSize] = useState(item.size);
+
+    useEffect(() => {
+        if (isDefinedAndNotVoid(item.product) && (!isDefined(product) || product.id !== item.product.id)) {
+            setProduct(item.product);
+            setVariation(item.variation);
+            setSize(item.size);
+        }
+    }, [item]);
 
     useEffect(() => {
             const newItem = {...item, product, variation, size, price: getUserPrice(product), unit: getUnit(product)};
@@ -33,19 +40,20 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
         const newItem = {...item, price: getUserPrice(product)};
         const newItems = items.map(i => i.count === newItem.count ? newItem : i);
         setItems(newItems);
-    }, [userGroups])
+    }, [userGroups]);
+
+    useEffect(() => getBatchesOptions(), [product]);
 
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
-        getBatchesOptions();
         if (!isDefinedAndNotVoid(item.traceabilities))
             getTraceabilities();
     }, []);
 
-    useEffect(() => getTraceabilities(), [order.status, item.product, batches])
+    useEffect(() => getTraceabilities(), [order.status, product, batches]);
 
     const getTraceabilities = () => {
-        if (isDefined(item.product) && item.product.needsTraceability && isDefinedAndNotVoid(batches) && editing) {
+        if (isDefined(product) && product.needsTraceability && isDefinedAndNotVoid(batches) && editing) {
             if (!['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
                 const newItem = {...item, traceabilities: [{...defaultTraceability, number: batches[0].number}]};
                 const newItems = items.map(i => i.id !== newItem.id ? i : newItem);
@@ -79,9 +87,9 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
     };
 
     const getBatchesOptions = () => {
-        if (isDefined(item.product) && item.product.needsTraceability && !['ABORTED', 'WAITING', 'ON_PAYMENT'].includes(order.status)) {
+        if (isDefined(product) && product.needsTraceability ) {
             let newBatches = [];
-            const stock = item.product.stocks.find(s => isDefined(s.platform));
+            const stock = product.stocks.find(s => isDefined(s.platform));
             if (isDefined(stock) && isDefinedAndNotVoid(stock.batches))
                 newBatches = stock.batches;
 
@@ -130,46 +138,6 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
         updateTotalPreparated([...item.traceabilities, newTraceability], item.id);
     };
 
-    // const onProductChange = ({ currentTarget }) => {
-    //     const selection = products.find(product => parseInt(product.id) === parseInt(currentTarget.value));
-    //     const newVariants = isDefined(selection.variations) ? selection.variations : null;
-    //     const selectedVariant = isDefinedAndNotVoid(newVariants) ? newVariants[0] : null;
-    //     const selectedSize = isDefined(selectedVariant) && isDefinedAndNotVoid(selectedVariant.sizes) ? selectedVariant.sizes[0] : null;
-    //     handleChange({...item, product: selection, variation: selectedVariant, size: selectedSize, price: getProductPrice(selection), unit: selection.unit});
-    //     setVariants(isDefined(selection.variations) ? selection.variations : null);
-    // };
-
-    // const onVariantChange = ({ currentTarget }) => {
-    //     const ids = currentTarget.value.split("-");
-    //     const selectedVariant = item.product.variations.find(variation => variation.id === parseInt(ids[0]));
-    //     const selectedSize = selectedVariant.sizes.find(size => size.id === parseInt(ids[1]));
-    //     handleChange({...item, variation: selectedVariant, size: selectedSize});
-    // };
-
-    // const getPrice = () => {
-    //     if (isDefined(item.product)) {
-    //         const productPrice = item.product.prices.find(price => price.priceGroup.id === settings.priceGroup.id).amount;
-    //         onChange({currentTarget: {id: "price", value: productPrice}});
-    //     }
-    // }
-
-    // const getUnit = () => { 
-    //     if (isDefined(item.product)) {
-    //         onChange({currentTarget: {id: "unit", value: item.product.unit}});
-    //     }
-    // };
-
-    // const getProductPrice = product => {
-    //     return product.prices.find(price => price.priceGroup.id === settings.priceGroup.id).amount;
-    // };
-
-    // const getVariantName = (variantName, sizeName) => {
-    //     const isVariantEmpty = variantName.length === 0 || variantName.replace(" ","").length === 0;
-    //     const isSizeEmpty = sizeName.length === 0 || sizeName.replace(" ","").length === 0;
-    //     return isVariantEmpty ? sizeName : isSizeEmpty ? variantName : variantName + " - " + sizeName;
-    // };
-
-    //  || !isDefined(item.product)
     return !isDefined(item) ? <></> : (
         <>
         <CRow>
@@ -181,41 +149,8 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
                         variation={ variation } setVariation={ setVariation }
                         size={ size } setSize={ setSize }
                     />
-                    {/* <CSelect custom id="product" value={ item.product.id } onChange={ onProductChange }>
-                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                    </CSelect> */}
-
-                    {/* <CInputGroup>
-                        <CInput
-                            id="productSearch"
-                            name="productSearch"
-                            value={ userSearch }
-                            onChange={ handleProductSearch }
-                            placeholder="Rechercher..."
-                        />
-                        <CInputGroupAppend>
-                            <CInputGroupText onClick={ handleSearch }>
-                                <span className={ userSearch.length === 0 ? "" : "text-success" }>
-                                    <CIcon name="cil-magnifying-glass"/>
-                                </span>
-                            </CInputGroupText>
-                        </CInputGroupAppend>
-                    </CInputGroup> */}
                 </CFormGroup>
             </CCol>
-            {/* <CCol xs="12" sm="4">
-                <CFormGroup>
-                    <CLabel htmlFor="name">{"Variante"}
-                    </CLabel>
-                    <CSelect custom name="variant" id="variant" disabled={ !variants || variants.length <= 0 } onChange={ onVariantChange } value={ isDefined(item.variation) && isDefined(item.size) ? item.variation.id + "-" + item.size.id : "0"}>
-                        { !isDefinedAndNotVoid(variants) ? <option key="0" value="0">-</option> : 
-                            variants.map((variant, index) => {
-                                return variant.sizes.map((size, i) => <option key={ (index + "" + i) } value={variant.id + "-" + size.id}>{ getVariantName(variant.color, size.name) }</option>);
-                            })
-                        }
-                    </CSelect>
-                </CFormGroup>
-            </CCol> */}
             <CCol xs="12" sm="3">
                 <CFormGroup>
                     <CLabel htmlFor="name">Prix
@@ -272,7 +207,7 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
                     </CInputGroup>
                 </CFormGroup>
             </CCol>
-            { editing &&
+            { editing && isDefined(item.product) &&
                 <>
                     <CCol xs="12" sm="3">
                         <CFormGroup>

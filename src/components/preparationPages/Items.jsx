@@ -17,21 +17,16 @@ const Items = ({ items, setItems, defaultItem, editing, packages = null, order =
             setUserGroups(["ROLE_USER"]);
     }, [user]);
 
-    const handleItemAdd = () => {
-        setItems([
-            ...items, 
-            {...defaultItem, count: items[items.length -1].count + 1}
-        ])
-    };
+    const handleItemAdd = () => setItems([...items, {...defaultItem, count: items[items.length -1].count + 1}]);
 
     const handleItemChange = item => {
-        const filteredItems = items.filter(option => parseInt(option.count) !== parseInt(item.count));
-        setItems([...filteredItems, item].sort((a, b) => (a.count > b.count) ? 1 : -1));
+        const newItems = items.map(i => i.count === item.count ? item : i);
+        setItems(newItems);
     };
 
     const handleItemDelete = ({currentTarget}) => {
-        const item = items.find(option => parseInt(option.count) === parseInt(currentTarget.name));
-        setItems(items.filter(element => parseInt(element.count) !== parseInt(item.count)));
+        console.log(currentTarget.name);
+        setItems(items.filter(i => i.count !== parseInt(currentTarget.name)));
     };
 
     return (

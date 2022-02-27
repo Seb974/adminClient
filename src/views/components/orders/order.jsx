@@ -16,7 +16,6 @@ import DeliveryContext from 'src/contexts/DeliveryContext';
 import CityActions from 'src/services/CityActions';
 import { getOrderToWrite, validateForm } from 'src/helpers/checkout';
 import GroupActions from 'src/services/GroupActions';
-import ProductsContext from 'src/contexts/ProductsContext';
 import UserActions from 'src/services/UserActions';
 import Roles from 'src/config/Roles';
 import Select from 'src/components/forms/Select';
@@ -29,9 +28,7 @@ import { getPackages } from 'src/helpers/containers';
 const Order = ({ match, history }) => {
 
     const { id = "new" } = match.params;
-    const defaultVariant = null;
     const [editing, setEditing] = useState(false);
-    // const { products } = useContext(ProductsContext);
     const { catalogs } = useContext(CatalogContext);
     const { containers } = useContext(ContainerContext);
     const { currentUser, selectedCatalog, setSettings, settings, supervisor } = useContext(AuthContext);
@@ -40,9 +37,6 @@ const Order = ({ match, history }) => {
     const defaultErrors = { name: "", email: "", deliveryDate: "", phone: "", address: "" };
     const [informations, setInformations] = useState({ phone: '', address: '', address2: '', zipcode: '', city: '', position: isDefined(selectedCatalog) ? selectedCatalog.center : [0, 0]});
     const [errors, setErrors] = useState(defaultErrors);
-    // const defaultVariantSize = defaultVariant !== null && products[0].variations[0].sizes && products[0].variations[0].sizes.length > 0 ? products[0].variations[0].sizes[0] : null;
-    // const defaultProduct = {product: products[0], variation: defaultVariant, size: defaultVariantSize};
-    // const defaultItem = {...defaultProduct, count: 0, orderedQty: "", preparedQty: "", deliveredQty: "", price: defaultProduct.product.prices[0].amount, unit: defaultProduct.product.unit};
     const defaultItem = { product: null, variation: null, size: null, count: 0, orderedQty: "", preparedQty: "", deliveredQty: "", price: 0, unit: ""}
     const [objectDiscount, setObjectDiscount] = useState(null);
     const [groups, setGroups] = useState([]);
@@ -70,17 +64,9 @@ const Order = ({ match, history }) => {
     }, [user]);
     
     useEffect(() => {
-        if (id === "new" && isDefined(supervisor) && !isDefined(user)) {
+        if (id === "new" && isDefined(supervisor) && !isDefined(user))
             setUser(supervisor.users[0]);
-        }
     }, []);
-
-    useEffect(() => {
-        if (groups.length > 0) {
-            const userSettings = getUserGroup();
-            setSettings(userSettings);
-        }
-    }, [user, groups]);
 
     useEffect(() => {
         if (isDefined(catalog))
@@ -103,7 +89,6 @@ const Order = ({ match, history }) => {
             OrderActions.find(id)
                 .then(response => {
                     setOrder({...response, name: response.name, email: response.email, deliveryDate: new Date(response.deliveryDate), notification: isDefined(response.notification) ? response.notification : "No"});
-                    // setItems(response.items.map((item, key) => ({...item, product: products.find(product => item.product.id === product.id), count: key})));
                     setItems(response.items.map((item, key) => ({...item, count: key})));
                     setInformations(response.metas);
                     setCondition(response.appliedCondition);
@@ -207,17 +192,6 @@ const Order = ({ match, history }) => {
             // });
         // }
     };
-
-    const getUserGroup = () => {
-        const defaultGroup = groups.find(group => group.value === "ROLE_USER");
-        if (!isDefined(user))
-            return defaultGroup;
-        else {
-            const shopGroups = groups.filter(group => group.hasShopAccess && group.value !== "ROLE_USER");
-            const userGroup = shopGroups.find(group => user.roles.includes(group.value));
-            return isDefined(userGroup) ? userGroup : defaultGroup;
-        }
-    }
 
     return !isDefined(order) ? <></> : (
         <CRow>
