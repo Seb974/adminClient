@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow, CSelect } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-// import ProductsContext from 'src/contexts/ProductsContext';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Select from '../forms/Select';

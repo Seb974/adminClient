@@ -5,22 +5,14 @@ import Good from './Good';
 
 const Goods = ({ provision, goods, setGoods, defaultGood, editing }) => {
 
-    const handleGoodAdd = () => {
-        setGoods([
-            ...goods, 
-            {...defaultGood, count: goods[goods.length -1].count + 1}
-        ])
-    };
+    const handleGoodAdd = () => setGoods([...goods, {...defaultGood, count: goods[goods.length -1].count + 1}]);
 
     const handleGoodChange = good => {
-        const filteredGoods = goods.filter(option => parseInt(option.count) !== parseInt(good.count));
-        setGoods([...filteredGoods, good].sort((a, b) => (a.count > b.count) ? 1 : -1));
+        const newGoods = goods.map(g => g.count === good.count ? good : g);
+        setGoods(newGoods);
     };
 
-    const handleGoodDelete = ({currentTarget}) => {
-        const good = goods.find(option => parseInt(option.count) === parseInt(currentTarget.name));
-        setGoods(goods.filter(element => parseInt(element.count) !== parseInt(good.count)));
-    };
+    const handleGoodDelete = ({currentTarget}) => setGoods(goods.filter(g => g.count !== parseInt(currentTarget.name)));
 
     return (
         <>

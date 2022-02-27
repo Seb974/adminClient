@@ -24,10 +24,7 @@ const Items = ({ items, setItems, defaultItem, editing, packages = null, order =
         setItems(newItems);
     };
 
-    const handleItemDelete = ({currentTarget}) => {
-        console.log(currentTarget.name);
-        setItems(items.filter(i => i.count !== parseInt(currentTarget.name)));
-    };
+    const handleItemDelete = ({currentTarget}) => setItems(items.filter(i => i.count !== parseInt(currentTarget.name)));
 
     return (
         <>
