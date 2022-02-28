@@ -109,7 +109,7 @@ const Prices = (props) => {
 
     const getPriceAmount = product => {
         const priceEntity = product.prices.find(p => p.priceGroup.name === selectedPriceGroup.name);
-        return priceEntity.amount;
+        return isDefined(priceEntity) && isDefined(priceEntity.amount) ? priceEntity.amount : 0;
     };
 
     const getSupervisorRoles = users => {
