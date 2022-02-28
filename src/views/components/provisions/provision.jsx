@@ -281,26 +281,6 @@ const Provision = ({ match, history }) => {
                                 </CCol>
                             </CRow>
                             }
-                            {/* <CRow>
-                                <CCol xs="12" sm="12" md="6" className="mt-4">
-                                    <CFormGroup>
-                                        <CLabel htmlFor="name">Date d'approvisionnement</CLabel>
-                                        <Flatpickr
-                                            name="provisionDate"
-                                            value={ provision.provisionDate }
-                                            onChange={ onDateChange }
-                                            className="form-control form-control-sm"
-                                            options={{
-                                                mode: "single",
-                                                dateFormat: "d/m/Y",
-                                                locale: French,
-                                                disable: [(date) => date.getDay() === 0],
-                                            }}
-                                            style={{ height: "35px" }}
-                                        />
-                                    </CFormGroup>
-                                </CCol>
-                            </CRow> */}
                             <CRow>
                                 <CCol xs="12" sm="12" md="6" className="mt-4">
                                     <Select className="mr-2" name="status" label="Statut de la commande" onChange={ onChange } value={ isDefined(provision.status) ? provision.status : "ORDERED" }>
