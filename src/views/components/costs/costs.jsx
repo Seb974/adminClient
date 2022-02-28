@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import { getWritableProduct } from 'src/helpers/products';
+import Spinner from 'react-bootstrap/Spinner';
 
 const Costs = (props) => {
 
@@ -16,18 +17,26 @@ const Costs = (props) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
     const [details, setDetails] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => getDisplayedProducts(), []);
     useEffect(() => getDisplayedProducts(), [search]);
     useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
 
     const getDisplayedProducts = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedProducts(search, page) : await getProducts(page);
-        if (isDefined(response)) {
-            const simpleProducts = response['hydra:member'].filter(p => !isDefinedAndNotVoid(p.components));
-            const products = getProductsWithCosts(simpleProducts);
-            setDisplayedProducts(products);
-            setTotalItems(response['hydra:totalItems']);
+        try {
+            setLoading(true);
+            const response = isDefined(search) && search.length > 0 ? await getSearchedProducts(search, page) : await getProducts(page);
+            if (isDefined(response)) {
+                const simpleProducts = response['hydra:member'].filter(p => !isDefinedAndNotVoid(p.components));
+                const products = getProductsWithCosts(simpleProducts);
+                setDisplayedProducts(products);
+                setTotalItems(response['hydra:totalItems']);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -100,74 +109,84 @@ const Costs = (props) => {
           <CCard>
             <CCardHeader>Coût d'achat des produits</CCardHeader>
             <CCardBody>
-            <CDataTable
-              items={ displayedProducts }
-              fields={ width < 576 ? ['name', 'Avantageux'] : fields }
-              bordered
-              itemsPerPage={ displayedProducts.length }
-              pagination={{
-                'pages': Math.ceil(totalItems / itemsPerPage),
-                'activePage': currentPage,
-                'onActivePageChange': page => setCurrentPage(page),
-                'align': 'center',
-                'dots': true,
-                'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
-              }}
-              tableFilter
-              onTableFilterChange={ word => setSearch(word) }
-              scopedSlots = {{
-                'name':
-                    item => <td style={{ width: '25%'}}>
-                                <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >{ item.name }</Link>
-                            </td>
-                ,
-                'Avantageux':
-                    item => <td style={{ width: '25%'}}>{ getCheapestSupplier(item.costs, "name") }</td>
-                ,
-                'Coût HT':
-                    item => <td style={{ width: '25%'}}>{ getCheapestSupplier(item.costs, "cost") }</td>
-                ,
-                'details':
-                    item => <CCollapse show={details.includes(item.id)}>
-                                <CDataTable
-                                    items={ item.costs }
-                                    fields={ [
-                                        { key: 'Fournisseur', _style: { width: '50%'} },
-                                        { key: 'PrixHT', _style: { width: '50%'} }
-                                    ] }
-                                    bordered
-                                    itemsPerPage={ 10 }
-                                    hover
-                                    scopedSlots = {{
-                                        'Fournisseur':
-                                            cost => <td>{ cost.supplier.name }</td>
-                                        ,
-                                        'PrixHT':
-                                            cost => <td>
-                                                        <CInputGroup>
-                                                            <CInput
-                                                                type="number"
-                                                                name={ cost.id }
-                                                                value={ cost.value }
-                                                                onChange={ e => handlePriceChange(e, item, cost) }
-                                                                style={{ maxWidth: '180px'}}
-                                                            />
-                                                            <CInputGroupAppend>
-                                                                <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
-                                                            </CInputGroupAppend>
-                                                        </CInputGroup>
-                                                    </td>
-                                    }}
-                                />
-                            </CCollapse>
-              }}
-            />
+                { loading ?
+                    <CRow>
+                        <CCol xs="12" lg="12" className="text-center">
+                            <Spinner animation="border" variant="danger"/>
+                        </CCol>
+                    </CRow>
+                    :
+                    <CDataTable
+                        items={ displayedProducts }
+                        fields={ width < 576 ? ['name', 'Avantageux'] : fields }
+                        bordered
+                        itemsPerPage={ displayedProducts.length }
+                        pagination={{
+                            'pages': Math.ceil(totalItems / itemsPerPage),
+                            'activePage': currentPage,
+                            'onActivePageChange': page => setCurrentPage(page),
+                            'align': 'center',
+                            'dots': true,
+                            'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                        }}
+                        tableFilter
+                        onTableFilterChange={ word => setSearch(word) }
+                        scopedSlots = {{
+                            'name':
+                                item => <td style={{ width: '25%'}}>
+                                            <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >{ item.name }</Link>
+                                        </td>
+                            ,
+                            'Avantageux':
+                                item => <td style={{ width: '25%'}}>{ getCheapestSupplier(item.costs, "name") }</td>
+                            ,
+                            'Coût HT':
+                                item => <td style={{ width: '25%'}}>{ getCheapestSupplier(item.costs, "cost") }</td>
+                            ,
+                            'details':
+                                item => <CCollapse show={details.includes(item.id)}>
+                                            <CDataTable
+                                                items={ item.costs }
+                                                fields={ [
+                                                    { key: 'Fournisseur', _style: { width: '50%'} },
+                                                    { key: 'PrixHT', _style: { width: '50%'} }
+                                                ] }
+                                                bordered
+                                                itemsPerPage={ 10 }
+                                                hover
+                                                scopedSlots = {{
+                                                    'Fournisseur':
+                                                        cost => <td>{ cost.supplier.name }</td>
+                                                    ,
+                                                    'PrixHT':
+                                                        cost => <td>
+                                                                    <CInputGroup>
+                                                                        <CInput
+                                                                            type="number"
+                                                                            name={ cost.id }
+                                                                            value={ cost.value }
+                                                                            onChange={ e => handlePriceChange(e, item, cost) }
+                                                                            style={{ maxWidth: '180px'}}
+                                                                        />
+                                                                        <CInputGroupAppend>
+                                                                            <CInputGroupText style={{ minWidth: '43px'}}>€</CInputGroupText>
+                                                                        </CInputGroupAppend>
+                                                                    </CInputGroup>
+                                                                </td>
+                                                }}
+                                            />
+                                        </CCollapse>
+                        }}
+                    />
+                }
             </CCardBody>
-            <CCardFooter className="d-flex justify-content-center">
-                <CButton size="sm" color="success" onClick={ handleUpdate } className="my-3" style={{width: '140px', height: '35px'}} disabled={ needsUpdate() }>
-                    Mettre à jour
-                </CButton>
-            </CCardFooter>
+            { !loading && 
+                <CCardFooter className="d-flex justify-content-center">
+                    <CButton size="sm" color="success" onClick={ handleUpdate } className="my-3" style={{width: '140px', height: '35px'}} disabled={ needsUpdate() }>
+                        Mettre à jour
+                    </CButton>
+                </CCardFooter>
+            }
           </CCard>
         </CCol>
 

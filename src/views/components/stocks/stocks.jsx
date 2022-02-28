@@ -13,10 +13,11 @@ import CIcon from '@coreui/icons-react';
 import 'flatpickr/dist/themes/material_blue.css';
 import { French } from "flatpickr/dist/l10n/fr.js";
 import Flatpickr from 'react-flatpickr';
+import Spinner from 'react-bootstrap/Spinner';
 
 const Stocks = (props) => {
 
-    const itemsPerPage = 6;
+    const itemsPerPage = 30;
     const { currentUser, seller } = useContext(AuthContext);
     const { platform } = useContext(PlatformContext);
     const mainStore = { id: -1, name: "Principal" };
@@ -28,6 +29,7 @@ const Stocks = (props) => {
     const [search, setSearch] = useState("");
     const [stores, setStores] = useState([]);
     const [details, setDetails] = useState([]);
+    const [loading, setLoading] = useState(false);
     const initialStore = isDefined(currentUser) && Roles.isStoreManager(currentUser) && isDefined(seller) && isDefinedAndNotVoid(seller.stores) ? seller.stores[0] : mainStore;
     const [selectedStore, setSelectedStore] = useState(initialStore);
     const defaultBatch = { number: "", endDate: new Date(), initialQty: 0, quantity: 0, isNew: true };
@@ -44,16 +46,25 @@ const Stocks = (props) => {
 
     const getStocks = async (page = 1) => {
         if (page >=1 && isDefined(platform) && isDefined(selectedStore)) {
-            const main = !isDefined(selectedStore) || selectedStore.id === mainStore.id;
-            const entity = main ? platform['@id'] : selectedStore['@id'];
-            const response = page >=1 ? await StockActions.findAllPaginated(main, entity, page, itemsPerPage) : null;
-            if (isDefined(response)) {
-                const newStocks = response['hydra:member']
-                        .map(s => ({...s, name: getStockName(s), unit: getUnit(s), updated: false}))
-                        .sort((a, b) => (a.name > b.name) ? 1 : -1);
-                setStocks(newStocks);
-                setTotalItems(response['hydra:totalItems']);
+            try {
+                setLoading(true);
+                const main = !isDefined(selectedStore) || selectedStore.id === mainStore.id;
+                const entity = main ? platform['@id'] : selectedStore['@id'];
+                const response = page >=1 ? await StockActions.findAllPaginated(main, entity, page, itemsPerPage) : null;
+                if (isDefined(response)) {
+                    const newStocks = response['hydra:member']
+                            .map(s => ({...s, unit: getUnit(s), updated: false}))       // name: getStockName(s),
+                            .sort((a, b) => (a.name > b.name) ? 1 : -1);
+                    setStocks(newStocks);
+                    setTotalItems(response['hydra:totalItems']);
+                    
+                }
+            } catch (error) {
+                console.log(error)
+            } finally {
+                setLoading(false);
             }
+
         }
     }; 
 
@@ -183,14 +194,28 @@ const Stocks = (props) => {
         return (
             item.quantity <= item.security ?
                 <span className={ width >= 576 ? "" : "text-danger" }>
-                    { width >= 576 ? <i className="fas fa-exclamation-triangle mr-1 text-danger"></i> : ""} { item.name }
+                    { width >= 576 ? <i className="fas fa-exclamation-triangle mr-1 text-danger"></i> : ""} { getProductName(item) }
                 </span>
             : item.quantity <= item.alert ? 
                 <span className={ width >= 576 ? "" : "text-warning" }>
-                    { width >= 576 ? <i className="fas fa-info-circle mr-1 text-warning"></i>  : ""} { item.name }
+                    { width >= 576 ? <i className="fas fa-info-circle mr-1 text-warning"></i>  : ""} { getProductName(item) }
                 </span>
-            : item.name
+            : getProductName(item)
         );
+    };
+
+    const getProductName = item => {
+        const { product, size } = item;
+        let variationName = "";
+        let sizeName = "";
+        let productName = isDefined(product) ? product.name : "";
+        if (isDefined(size)) {
+            const { variation, name } = size;
+            variationName = isDefined(variation) && variation.color.trim().length > 0 ? " " + variation.color : "";
+            sizeName = name.trim().length > 0 ? " " + name : "";
+            productName = productName.trim().length <= 0 && isDefined(variation.product) ? variation.product.name : productName;
+        }
+        return productName + variationName + sizeName;
     };
 
     const toggleDetails = (index, e) => {
@@ -219,173 +244,183 @@ const Stocks = (props) => {
                         </Select>
                     </CCol>
                 </CRow>
-                <CDataTable
-                    items={ stocks }
-                    fields={ width < 576 ? ['name', 'Niveau'] : fields }
-                    bordered
-                    itemsPerPage={ stocks.length }
-                    pagination={{
-                        'pages': Math.ceil(totalItems / itemsPerPage),
-                        'activePage': currentPage,
-                        'onActivePageChange': page => setCurrentPage(page),
-                        'align': 'center',
-                        'dots': true,
-                        'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
-                    }}
-                    tableFilter
-                    onTableFilterChange={ word => setSearch(word) }
-                    scopedSlots = {{
-                        'name':
-                        item => <td style={{ width: '25%'}}>
-                                    { !isDefinedAndNotVoid(item.batches) ? getSignPostName(item) : 
-                                        <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >
-                                            { getSignPostName(item) }
-                                        </Link>
-                                    }
-                                </td>
-                        ,
-                        'Sécurité':
-                        item => <td>
-                                    <CInputGroup>
-                                        <CInput
-                                            name="security"
-                                            type="number"
-                                            value={ item.security }
-                                            onChange={ e => handleChange(e, item) }
-                                            style={{ maxWidth: '180px'}}
-                                            // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
+                { loading ?
+                    <CRow>
+                        <CCol xs="12" lg="12" className="text-center">
+                            <Spinner animation="border" variant="danger"/>
+                        </CCol>
+                    </CRow>
+                    :
+                    <CDataTable
+                        items={ stocks }
+                        fields={ width < 576 ? ['name', 'Niveau'] : fields }
+                        bordered
+                        itemsPerPage={ stocks.length }
+                        pagination={{
+                            'pages': Math.ceil(totalItems / itemsPerPage),
+                            'activePage': currentPage,
+                            'onActivePageChange': page => setCurrentPage(page),
+                            'align': 'center',
+                            'dots': true,
+                            'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                        }}
+                        tableFilter
+                        onTableFilterChange={ word => setSearch(word) }
+                        scopedSlots = {{
+                            'name':
+                            item => <td style={{ width: '25%'}}>
+                                        { !isDefinedAndNotVoid(item.batches) ? getSignPostName(item) : 
+                                            <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} >
+                                                { getSignPostName(item) }
+                                            </Link>
+                                        }
+                                    </td>
+                            ,
+                            'Sécurité':
+                            item => <td>
+                                        <CInputGroup>
+                                            <CInput
+                                                name="security"
+                                                type="number"
+                                                value={ item.security }
+                                                onChange={ e => handleChange(e, item) }
+                                                style={{ maxWidth: '180px'}}
+                                                // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                    </td>
+                            ,
+                            'Alerte':
+                            item => <td>
+                                        <CInputGroup>
+                                            <CInput
+                                                name="alert"
+                                                type="number"
+                                                value={ item.alert }
+                                                onChange={ e => handleChange(e, item) }
+                                                style={{ maxWidth: '180px'}}
+                                                // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                    </td>
+                            ,
+                            'Niveau':
+                            item => <td>
+                                        <CInputGroup>
+                                            <CInput
+                                                name="quantity"
+                                                type="number"
+                                                value={ item.quantity }
+                                                onChange={ e => handleChange(e, item) }
+                                                style={{ maxWidth: '180px'}}
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                    </td>
+                            ,
+                            'details':
+                            item => <CCollapse show={details.includes(item.id)}>
+                                        <CDataTable
+                                            items={ item.batches }
+                                            fields={ width < 576 ? ['Lot', 'Niveau'] : ['Lot', 'Date de fin', 'Qté Initiale', 'Niveau'] }
+                                            bordered
+                                            itemsPerPage={ item.batches.length }
+                                            scopedSlots = {{
+                                                'Lot':
+                                                    batch => <td style={{ width: '25%'}}>
+                                                                <CInputGroup>
+                                                                    <CInput
+                                                                        name="number"
+                                                                        value={ batch.number }
+                                                                        disabled={ !isDefined(batch.isNew) }
+                                                                        style={{ maxWidth: '180px'}}
+                                                                        onChange={ e => handleBatchChange(e, batch, item) }
+                                                                    />
+                                                                    <CInputGroupAppend>
+                                                                        <CInputGroupText style={{ minWidth: '43px'}} onClick={ e => onBatchDelete(batch, item) }>
+                                                                            <i className="fas fa-times mx-auto"></i>
+                                                                        </CInputGroupText>
+                                                                    </CInputGroupAppend>
+                                                                </CInputGroup>
+                                                            </td>
+                                                ,
+                                                'Date de fin':
+                                                    batch => <td style={{ width: '25%'}}>
+                                                                <CInputGroup>
+                                                                    <Flatpickr
+                                                                        name="endDate"
+                                                                        disabled={ !isDefined(batch.isNew) }
+                                                                        value={ [ new Date(batch.endDate) ] }
+                                                                        onChange={ e => handleBatchDateChange(e, batch, item) }
+                                                                        className={`form-control`}
+                                                                        style={{ maxWidth: '224px' }}
+                                                                        options={{
+                                                                            dateFormat: "d/m/Y",
+                                                                            locale: French,
+                                                                        }}
+                                                                    />
+                                                                </CInputGroup>
+                                                            </td>
+                                                ,
+                                                'Qté Initiale':
+                                                    batch => <td style={{ width: '25%'}}>
+                                                                <CInputGroup>
+                                                                    <CInput
+                                                                        name="initialQty"
+                                                                        type="number"
+                                                                        value={ batch.initialQty }
+                                                                        disabled={ !isDefined(batch.isNew) }
+                                                                        onChange={ e => handleBatchChange(e, batch, item) }
+                                                                        style={{ maxWidth: '180px'}}
+                                                                    />
+                                                                    <CInputGroupAppend>
+                                                                        <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                                                    </CInputGroupAppend>
+                                                                </CInputGroup>
+                                                            </td>
+                                                ,
+                                                'Niveau':
+                                                    batch => <td style={{ width: '25%'}}>
+                                                                <CInputGroup>
+                                                                    <CInput
+                                                                        name="quantity"
+                                                                        type="number"
+                                                                        value={ batch.quantity }
+                                                                        onChange={ e => handleBatchChange(e, batch, item) }
+                                                                        style={{ maxWidth: '180px'}}
+                                                                    />
+                                                                    <CInputGroupAppend>
+                                                                        <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
+                                                                    </CInputGroupAppend>
+                                                                </CInputGroup>
+                                                            </td>
+                                                }}
                                         />
-                                        <CInputGroupAppend>
-                                            <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-                                        </CInputGroupAppend>
-                                    </CInputGroup>
-                                </td>
-                        ,
-                        'Alerte':
-                        item => <td>
-                                    <CInputGroup>
-                                        <CInput
-                                            name="alert"
-                                            type="number"
-                                            value={ item.alert }
-                                            onChange={ e => handleChange(e, item) }
-                                            style={{ maxWidth: '180px'}}
-                                            // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
-                                        />
-                                        <CInputGroupAppend>
-                                            <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-                                        </CInputGroupAppend>
-                                    </CInputGroup>
-                                </td>
-                        ,
-                        'Niveau':
-                        item => <td>
-                                    <CInputGroup>
-                                        <CInput
-                                            name="quantity"
-                                            type="number"
-                                            value={ item.quantity }
-                                            onChange={ e => handleChange(e, item) }
-                                            style={{ maxWidth: '180px'}}
-                                        />
-                                        <CInputGroupAppend>
-                                            <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-                                        </CInputGroupAppend>
-                                    </CInputGroup>
-                                </td>
-                        ,
-                        'details':
-                        item => <CCollapse show={details.includes(item.id)}>
-                                    <CDataTable
-                                        items={ item.batches }
-                                        fields={ width < 576 ? ['Lot', 'Niveau'] : ['Lot', 'Date de fin', 'Qté Initiale', 'Niveau'] }
-                                        bordered
-                                        itemsPerPage={ item.batches.length }
-                                        scopedSlots = {{
-                                            'Lot':
-                                                batch => <td style={{ width: '25%'}}>
-                                                            <CInputGroup>
-                                                                <CInput
-                                                                    name="number"
-                                                                    value={ batch.number }
-                                                                    disabled={ !isDefined(batch.isNew) }
-                                                                    style={{ maxWidth: '180px'}}
-                                                                    onChange={ e => handleBatchChange(e, batch, item) }
-                                                                />
-                                                                <CInputGroupAppend>
-                                                                    <CInputGroupText style={{ minWidth: '43px'}} onClick={ e => onBatchDelete(batch, item) }>
-                                                                        <i className="fas fa-times mx-auto"></i>
-                                                                    </CInputGroupText>
-                                                                </CInputGroupAppend>
-                                                            </CInputGroup>
-                                                        </td>
-                                            ,
-                                            'Date de fin':
-                                                batch => <td style={{ width: '25%'}}>
-                                                            <CInputGroup>
-                                                                <Flatpickr
-                                                                    name="endDate"
-                                                                    disabled={ !isDefined(batch.isNew) }
-                                                                    value={ [ new Date(batch.endDate) ] }
-                                                                    onChange={ e => handleBatchDateChange(e, batch, item) }
-                                                                    className={`form-control`}
-                                                                    style={{ maxWidth: '224px' }}
-                                                                    options={{
-                                                                        dateFormat: "d/m/Y",
-                                                                        locale: French,
-                                                                    }}
-                                                                />
-                                                            </CInputGroup>
-                                                        </td>
-                                            ,
-                                            'Qté Initiale':
-                                                batch => <td style={{ width: '25%'}}>
-                                                            <CInputGroup>
-                                                                <CInput
-                                                                    name="initialQty"
-                                                                    type="number"
-                                                                    value={ batch.initialQty }
-                                                                    disabled={ !isDefined(batch.isNew) }
-                                                                    onChange={ e => handleBatchChange(e, batch, item) }
-                                                                    style={{ maxWidth: '180px'}}
-                                                                />
-                                                                <CInputGroupAppend>
-                                                                    <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-                                                                </CInputGroupAppend>
-                                                            </CInputGroup>
-                                                        </td>
-                                            ,
-                                            'Niveau':
-                                                batch => <td style={{ width: '25%'}}>
-                                                            <CInputGroup>
-                                                                <CInput
-                                                                    name="quantity"
-                                                                    type="number"
-                                                                    value={ batch.quantity }
-                                                                    onChange={ e => handleBatchChange(e, batch, item) }
-                                                                    style={{ maxWidth: '180px'}}
-                                                                />
-                                                                <CInputGroupAppend>
-                                                                    <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
-                                                                </CInputGroupAppend>
-                                                            </CInputGroup>
-                                                        </td>
-                                            }}
-                                    />
-                                    <CRow className="mt-2 mb-5 d-flex justify-content-center">
-                                        <CButton size="sm" color="warning" onClick={ e => onBatchAdd(item) }>
-                                            <CIcon name="cil-plus"/> Ajouter un lot
-                                        </CButton>
-                                    </CRow>
-                                </CCollapse>
-                    }}
-                />
+                                        <CRow className="mt-2 mb-5 d-flex justify-content-center">
+                                            <CButton size="sm" color="warning" onClick={ e => onBatchAdd(item) }>
+                                                <CIcon name="cil-plus"/> Ajouter un lot
+                                            </CButton>
+                                        </CRow>
+                                    </CCollapse>
+                        }}
+                    />
+                }
             </CCardBody>
-            <CCardFooter className="d-flex justify-content-center">
-                <CButton size="sm" color="success" onClick={ handleUpdate } className="my-3" style={{width: '140px', height: '35px'}} disabled={ stocks.findIndex(s => s.updated) === -1 }>
-                    Mettre à jour
-                </CButton>
-            </CCardFooter>
+            { !loading && 
+                <CCardFooter className="d-flex justify-content-center">
+                    <CButton size="sm" color="success" onClick={ handleUpdate } className="my-3" style={{width: '140px', height: '35px'}} disabled={ stocks.findIndex(s => s.updated) === -1 }>
+                        Mettre à jour
+                    </CButton>
+                </CCardFooter>
+            }
           </CCard>
         </CCol>
 
