@@ -168,6 +168,9 @@ export const validateForm = (user, informations, catalog, condition, relaypoints
         errors['address'] = "Adresse non disponible depuis le catalogue sélectionné."
         isCatalogError = true;
     } else if (!isDeliverable(catalog, condition)) {
+        console.log(catalog);
+        console.log(condition);
+        console.log(isDeliverable(catalog, condition));
         errors['address'] = "Pas de livraison à domicile à cette adresse."
         notDeliverableAddress = true;
     }
@@ -190,10 +193,20 @@ export const isValidPhoneNumber = phoneNumber => {
 }
 
 export const isValidAddress = (informations, catalog, condition, relaypoints) => {
+    console.log(catalog.center);
     const zipPattern = /^(?:[0-9]\d|9[0-8])\d{3}$/g;
     if ( isDefinedAndNotVoid(informations.zipcode.match(zipPattern)) ) {
         const { city, address, position } = informations;
         const initialPosition = isDefined(catalog) && isDefinedAndNotVoid(catalog.center) ? catalog.center : [0, 0];
+        console.log(city.length > 0);
+        console.log("et");
+        console.log(address.length > 0);
+        console.log("et (");
+        console.log(!isSamePosition(position, initialPosition));
+        console.log("ou");
+        console.log(isRelaypoint(condition, relaypoints));
+        console.log(') = ');
+        console.log(city.length > 0 && address.length > 0 && (!isSamePosition(position, initialPosition) || isRelaypoint(condition, relaypoints)));
         return city.length > 0 && address.length > 0 && (!isSamePosition(position, initialPosition) || isRelaypoint(condition, relaypoints));
     }
     return false;
@@ -205,7 +218,8 @@ export const isValidCatalog = (catalog, informations) => {
 };
 
 const isDeliverable = (catalog, condition) => {
-    return isDefined(catalog) && (catalog.needsParcel || (!catalog.needsParcel && isDefined(condition)));
+    // return isDefined(catalog) && (catalog.needsParcel || (!catalog.needsParcel && isDefined(condition)));
+    return isDefined(catalog) && (catalog.needsParcel || !isDefined(condition));
 };
 
 export const isSamePosition = (position1, position2) => JSON.stringify(position1) === JSON.stringify(position2);

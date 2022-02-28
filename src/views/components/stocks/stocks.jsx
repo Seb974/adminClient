@@ -1,18 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import ProductActions from '../../../services/ProductActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCardFooter, CCollapse } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCardFooter, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
-import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import StockActions from 'src/services/StockActions';
 import StoreActions from 'src/services/StoreActions';
-import ProductsContext from 'src/contexts/ProductsContext';
 import PlatformContext from 'src/contexts/PlatformContext';
 import Select from 'src/components/forms/Select';
-import { batch } from 'react-redux';
 import CIcon from '@coreui/icons-react';
 import 'flatpickr/dist/themes/material_blue.css';
 import { French } from "flatpickr/dist/l10n/fr.js";
@@ -67,10 +63,6 @@ const Stocks = (props) => {
             .then(response => setStores(response))
             .catch(error => console.log(error));
     };
-
-    // const getDefaultStock = () => {
-    //     return Roles.isStoreManager(currentUser) && isDefined(seller) && isDefinedAndNotVoid(seller.stores) ? seller.stores[0] : mainStore;
-    // };
 
     const getStockName = stock => {
         const { product, size } = stock;

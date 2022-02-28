@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState } from 'react';
-import ProductsContext from '../../../contexts/ProductsContext'
 import ProductActions from '../../../services/ProductActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
 import { DocsLink } from 'src/reusable'

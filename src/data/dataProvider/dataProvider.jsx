@@ -1,13 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ProductsContext from '../../contexts/ProductsContext';
 import AuthContext from '../../contexts/AuthContext';
 import AuthActions from '../../services/AuthActions';
 import ProductActions from 'src/services/ProductActions';
 import DeliveryContext from 'src/contexts/DeliveryContext';
-import ContainerActions from 'src/services/ContainerActions';
 import CatalogActions from 'src/services/CatalogActions';
-import CategoryActions from 'src/services/CategoryActions';
-import RelaypointActions from 'src/services/RelaypointActions';
 import ContainerContext from 'src/contexts/ContainerContext';
 import Roles from 'src/config/Roles';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
@@ -48,8 +45,8 @@ const DataProvider = ({ children }) => {
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
         PlatformActions.find()
                        .then(response => setPlatform(response));
-        ProductActions.findAll()
-                      .then(response => setProducts(response));
+        // ProductActions.findAll()
+        //               .then(response => setProducts(response));
         CatalogActions.findAll()
                       .then(response => setCatalogs(response));
     },[]);
@@ -58,8 +55,8 @@ const DataProvider = ({ children }) => {
         setCurrentUser(AuthActions.getCurrentUser());
         AuthActions.getUserSettings()
                    .then(response => setSettings(response));
-        ProductActions.findAll()
-                      .then(response => setProducts(response));
+        // ProductActions.findAll()
+        //               .then(response => setProducts(response));
     }, [isAuthenticated]);
 
     useEffect(() => {

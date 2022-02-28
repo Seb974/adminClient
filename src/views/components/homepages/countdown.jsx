@@ -3,21 +3,31 @@ import { French } from "flatpickr/dist/l10n/fr.js";
 import React, { useState, useEffect } from 'react';
 import { CButton, CCol, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Image from 'src/components/forms/image';
-import Select from 'src/components/forms/Select';
-import { useContext } from 'react';
-import ProductsContext from 'src/contexts/ProductsContext';
 import { SwatchesPicker } from 'react-color';
 import Flatpickr from 'react-flatpickr';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
 import { getDateFrom } from 'src/helpers/days';
+import ProductSearch from 'src/components/forms/ProductSearch';
 
 const Countdown = ({ countdown, errors, countdowns, setCountdowns, iteration }) => {
 
     const now = new Date();
-    const { products } = useContext(ProductsContext);
     const today = getDateFrom(now, 0, 0, 0);
+    const [product, setProduct] = useState(null);
+    const [variation, setVariation] = useState(null);
+    const [size, setSize] = useState(null);
+    
+    useEffect(() => {
+        const newCountdown = {...countdown, product: product};
+        setCountdowns(countdowns.map(c => c.count !== newCountdown.count ? c : newCountdown));
+    }, [product]);
+
+    useEffect(() => {
+        if (isDefined(countdown.product) && !isDefined(product))
+            setProduct(countdown.product);
+    }, [countdown]);
 
     const handleCatalogsChange = catalogs => {
         const newCountdowns = countdowns.map(c => c.count === countdown.count ? {...countdown, catalogs: isDefined(catalogs) ? catalogs : []} : c);
@@ -33,13 +43,6 @@ const Countdown = ({ countdown, errors, countdowns, setCountdowns, iteration }) 
 
     const handleTextColorChange = (color, count) => {
         const newCountdowns = countdowns.map(c => c.count === parseInt(count) ? {...c, textColor: color.hex} : c);
-        setCountdowns(newCountdowns);
-    };
-
-    const handleProductChange = ({ currentTarget }) => {
-        const { value, name } = currentTarget;
-        const newCountdowns = countdowns.map(c => c.count === parseInt(name) ? 
-            {...c, product: parseInt(value) > -1 ? products.find(h => h.id === parseInt(value)) : null} : c);
         setCountdowns(newCountdowns);
     };
 
@@ -106,15 +109,21 @@ const Countdown = ({ countdown, errors, countdowns, setCountdowns, iteration }) 
                     <SelectMultiple name="catalogs" label="Disponible sur les catalogues" value={ countdown.catalogs } error={ errors.catalogs } onChange={ handleCatalogsChange } data={ countdown.selectableCatalogs }/>
                 </CCol>
             </CRow>
-            <CRow>
+            <CRow className="mt-4">
                 <CCol xs="12" sm="6" md="6">
                     <Image entity={ countdown } setEntity={ setCountdowns } isLandscape={ true } handleChange={ handleImageChange } iteration={ countdown.count }/>
                 </CCol>
                 <CCol xs="12" sm="6" md="6" className="mt-4">
-                    <Select className="mr-2" id="product" name={ countdown.count } label="Produit associé" onChange={ handleProductChange } value={ isDefined(countdown.product) ? countdown.product.id : -1 }>
-                        <option value={ -1 }>Aucun</option>
-                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                    </Select>
+                        <CLabel htmlFor="title">Produit</CLabel>
+                        <ProductSearch
+                            product={ product }
+                            setProduct={ setProduct }
+                            variation={ variation }
+                            setVariation={ setVariation }
+                            size={ size }
+                            setSize={ setSize }
+                            withVariants={ false }
+                        />
                 </CCol>
             </CRow>
             <CRow>

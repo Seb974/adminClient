@@ -51,12 +51,10 @@ const getProductWithNewStock = (product, variation, size, stock) => {
             variations: product.variations.map(v => {
                 return v['@id'] !== variation['@id'] ? v : 
                         {...variation, sizes: variation.sizes.map(s => s['@id'] !== size['@id'] ? s : {...size, stocks: s.stocks.map(st => st['@id'] === stock['@id'] ? stock : st)})}
-                        // {...variation, sizes: variation.sizes.map(s => s['@id'] !== size['@id'] ? s : {...size, stock: stock})}
             })
         };
     else
         return {...product, stocks: product.stocks.map(st => st['@id'] === stock['@id'] ? stock : st)};
-        // return {...product, stock: stock};
 };
 
 const getProductLinkedToStock = (stock, products) => {
@@ -66,14 +64,11 @@ const getProductLinkedToStock = (stock, products) => {
 };
 
 const isStockMatching = (stock, product) => {
-    // if (isDefined(product.stock) && product.stock['@id'] === stock['@id'])
     if (isDefined(product.stocks) && product.stocks.find(s => s['@id'] === stock['@id']) !== undefined)
         return { product, variation: null, size: null }
     else if (isDefined(product.variations)) {
-        // const variation = product.variations.find(v => v.sizes.find(s => s.stock['@id'] === stock['@id']));
         const variation = product.variations.find(v => v.sizes.find(s => s.stocks.find(st => st['@id'] === stock['@id']) !== undefined));
         if (isDefined(variation)) {
-            // const size = variation.sizes.find(s => s.stock['@id'] === stock['@id']);
             const size = variation.sizes.find(s => s.stocks.find(st => st['@id'] === stock['@id']) !== undefined);
             return {product, variation, size};
         }

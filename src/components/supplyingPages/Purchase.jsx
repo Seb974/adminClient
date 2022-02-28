@@ -126,7 +126,6 @@ const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selecte
                 </CCol>
             </CRow>
             <CRow>
-                
                 <CCol xs="12" lg="6" className="mt-2">
                     <Select className="mr-2" name="sendMode" label="Mode d'envoi de la commande" value={ sendingMode } onChange={ handleSendingModeChange }>
                         <option value={"email"}>{"Email"}</option>

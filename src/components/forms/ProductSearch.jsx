@@ -6,7 +6,7 @@ import ProductActions from 'src/services/ProductActions';
 import { Spinner } from 'react-bootstrap';
 import '../../assets/css/searchBar.css';
 
-const ProductSearch = ({ product, setProduct, variation, setVariation, size, setSize, seller = null, supplier = null }) => {
+const ProductSearch = ({ product, setProduct, variation, setVariation, size, setSize, seller = null, supplier = null, withVariants = true }) => {
 
     const [productSearch, setProductSearch] = useState("");
     const [suggestions, setSuggestions] = useState([]);
@@ -40,7 +40,9 @@ const ProductSearch = ({ product, setProduct, variation, setVariation, size, set
                 response = await getSellerProductsFromSupplierContainingWord(productSearch, seller, supplier);
             
             if (isDefined(response)) {
-                const newSuggestions = getSuggestionsWithVariants(response['hydra:member']);
+                const newSuggestions = withVariants ? 
+                    getSuggestionsWithVariants(response['hydra:member']) : 
+                    getSuggestionsWithoutVariants(response['hydra:member']);
                 setSuggestions(newSuggestions);
                 setHasResults(true);
             }
@@ -49,18 +51,6 @@ const ProductSearch = ({ product, setProduct, variation, setVariation, size, set
         } finally {
             setLoading(false);
         }
-        // ProductActions
-        //     .findUnpaginatedWord(productSearch)
-        //     .then(response => {
-        //         const newSuggestions = getSuggestionsWithVariants(response['hydra:member']);
-        //         setSuggestions(newSuggestions);
-        //         setHasResults(true);
-        //         setLoading(false);
-        //     })
-        //     .catch(error => {
-        //         setLoading(false);
-        //         console.log(error);
-        //     });
     };
 
     const getAllProductsContainingWord = async (word) => {
@@ -94,6 +84,8 @@ const ProductSearch = ({ product, setProduct, variation, setVariation, size, set
         });
         return newSuggestions;
     };
+
+    const getSuggestionsWithoutVariants = products => products.map(p => ({ product: p}));
 
     const handleSelect = suggestion => {
         setProduct(suggestion.product);

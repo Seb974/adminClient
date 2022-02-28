@@ -12,6 +12,7 @@ import ProductsContext from 'src/contexts/ProductsContext';
 import { SwatchesPicker } from 'react-color';
 import CatalogContext from 'src/contexts/CatalogContext';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
+import ProductSearch from 'src/components/forms/ProductSearch';
 
 const Banner = ({ match, history }) => {
 
@@ -26,6 +27,18 @@ const Banner = ({ match, history }) => {
     const [errors, setErrors] = useState(defaultError);
     const [numberSelect, setNumberSelect] = useState(Array.from(Array(maxBanners).keys()).filter(i => i > 0));
     const [formattedCatalogs, setFormattedCatalogs] = useState([]);
+    const [product, setProduct] = useState(null);
+    const [variation, setVariation] = useState(null);
+    const [size, setSize] = useState(null);
+    
+    useEffect(() => {
+        setBanner({...banner, product: product});
+    }, [product]);
+
+    useEffect(() => {
+        if (isDefined(banner.product) && !isDefined(product))
+            setProduct(banner.product);
+    }, [banner]);
 
     useEffect(() => {
         fetchHomepages();
@@ -50,16 +63,6 @@ const Banner = ({ match, history }) => {
     const handleHomepageChange = ({ currentTarget }) => {
         const selectedHomepage = homepages.find(h => h.id === parseInt(currentTarget.value));
         setBanner({...banner, homepage: selectedHomepage });
-    };
-
-    const handleProductChange = ({ currentTarget }) => {
-        const selectedId = parseInt(currentTarget.value);
-        if (selectedId > -1) {
-            const selectedProduct = products.find(h => h.id === selectedId);
-            setBanner({...banner, product: selectedProduct });
-        } else {
-            setBanner({...banner, product: null})
-        }
     };
 
     const handleCategoryChange = ({ currentTarget }) => {
@@ -224,11 +227,17 @@ const Banner = ({ match, history }) => {
                                 </CCol>
                             </CRow>
                             <CRow>
-                                <CCol xs="12" sm="6" md="6" className="mt-4">
-                                    <Select className="mr-2" name="product" label="Produit associé" onChange={ handleProductChange } value={ isDefined(banner.product) ? banner.product.id : -1 }>
-                                        <option value={ -1 }>Aucun</option>
-                                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                                    </Select>
+                                <CCol xs="12" sm="12" md="6" className="mt-4">
+                                    <CLabel htmlFor="title">Produit</CLabel>
+                                    <ProductSearch
+                                        product={ product }
+                                        setProduct={ setProduct }
+                                        variation={ variation }
+                                        setVariation={ setVariation }
+                                        size={ size }
+                                        setSize={ setSize }
+                                        withVariants={ false }
+                                    />
                                 </CCol>
                                 <CCol xs="12" sm="6" md="6" className="mt-4">
                                     <Select className="mr-2" name="product" label="Catégorie associée" onChange={ handleCategoryChange } value={ isDefined(banner.category) ? banner.category.id : -1 }>

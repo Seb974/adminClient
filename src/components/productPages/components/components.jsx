@@ -3,24 +3,16 @@ import { CButton, CCol, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import Component from './component';
 
-const Components = ({ product, components, setComponents, defaultComponent }) => {
+const Components = ({ components, setComponents, defaultComponent }) => {
 
-    const handleComponentAdd = () => {
-        setComponents([
-            ...components, 
-            {...defaultComponent, count: components[components.length -1].count + 1}
-        ])
-    };
+    const handleComponentAdd = () => setComponents([...components, {...defaultComponent, count: components[components.length -1].count + 1}]);
 
     const handleComponentChange = component => {
-        const filteredComponents = components.filter(option => parseInt(option.count) !== parseInt(component.count));
-        setComponents([...filteredComponents, component].sort((a, b) => (a.count > b.count) ? 1 : -1));
+        const newComponents = components.map(c => c.count !== component.count ? c : component);
+        setComponents(newComponents);
     };
 
-    const handleComponentDelete = ({currentTarget}) => {
-        const component = components.find(option => parseInt(option.count) === parseInt(currentTarget.name));
-        setComponents(components.filter(element => parseInt(element.count) !== parseInt(component.count)));
-    };
+    const handleComponentDelete = ({currentTarget}) => setComponents(components.filter(c => c.count !== parseInt(currentTarget.name)));
 
     return (
         <>
@@ -35,8 +27,9 @@ const Components = ({ product, components, setComponents, defaultComponent }) =>
                             <CCol md="1">{""}</CCol>
                             <CCol md="10">
                                 <Component
-                                    product={product}
                                     component={ component } 
+                                    setComponents={ setComponents }
+                                    components={ components }
                                     handleChange={ handleComponentChange } 
                                     handleDelete={ handleComponentDelete } 
                                     total={ components.length } 

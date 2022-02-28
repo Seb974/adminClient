@@ -6,7 +6,6 @@ import touringEvents from 'src/data/dataProvider/eventHandlers/touringEvents';
 import DeliveryContext from 'src/contexts/DeliveryContext';
 import MercureContext from 'src/contexts/MercureContext';
 import { CCol, CToast, CToastBody, CToaster, CToastHeader } from '@coreui/react';
-import { isDefined } from 'src/helpers/utils';
 
 const MercureHub = ({ children }) => {
     
@@ -17,20 +16,12 @@ const MercureHub = ({ children }) => {
     const { updatedUsers, setUpdatedUsers, updatedProvisions, setUpdatedProvisions, updatedContainers, setUpdatedContainers } = useContext(MercureContext);
     const { updatedMessages, setUpdatedMessages } = useContext(MercureContext);
     const { currentUser, eventSource, setEventSource } = useContext(AuthContext);
-    const { tourings, setTourings } = useContext(DeliveryContext);      // packages, setPackages, 
+    const { tourings, setTourings } = useContext(DeliveryContext);
 
     const networkMessage = "Vous avez été déconnecté d' internet. Vérifiez l'état de votre connexion et rafraîchissez la page.";
     const networkToast = { position: 'top-right', autohide: false, closeButton: true, fade: true, color: 'danger', messsage: networkMessage, title: 'Connexion interrompue' };
 
     const addToast = newToast => setToasts([...toasts, newToast]);
-
-    // useEffect(() => {
-    //     const state = eventSource.readyState;
-    //     if (isDefined(state)) {
-    //         const message = state === 0 ? "Connecting" : state === 1 ? "Connected" : "Disconnected";
-    //         console.log(message);
-    //     }
-    // }, [eventSource]);
 
     useEffect(() => {
         closeIfExists();

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ZoneActions from '../../../services/ZoneActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import CityActions from 'src/services/CityActions';
 import { isDefined } from 'src/helpers/utils';
@@ -29,12 +28,6 @@ const Zones = (props) => {
 
     const getZones = (page = 1) => page >=1 ? ZoneActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedZones = (word, page = 1) => ZoneActions.findWord(word, page, itemsPerPage);
-
-    // useEffect(() => {
-    //     ZoneActions.findAll()
-    //         .then(response => setZones(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
 
     const handleDelete = (zoneToDelete) => {
 

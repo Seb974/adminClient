@@ -50,7 +50,6 @@ const Type = ({product, type, variations, components, defaultComponent, defaultS
             )}
             { type === "mixed" &&
                 <Components
-                    product={product}
                     components={components}
                     setComponents={setComponents}
                     defaultComponent={defaultComponent}

@@ -3,7 +3,7 @@ import Flatpickr from 'react-flatpickr';
 import { French } from "flatpickr/dist/l10n/fr.js";
 import { Link } from 'react-router-dom';
 import OrderActions from 'src/services/OrderActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSwitch } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CFormGroup, CInvalidFeedback, CLabel, CRow, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import CIcon from '@coreui/icons-react';
@@ -24,16 +24,18 @@ import CatalogContext from 'src/contexts/CatalogContext';
 import PackageList from 'src/components/preparationPages/packageList';
 import ContainerContext from 'src/contexts/ContainerContext';
 import { getPackages } from 'src/helpers/containers';
+import PlatformContext from 'src/contexts/PlatformContext';
 
 const Order = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const [editing, setEditing] = useState(false);
     const { catalogs } = useContext(CatalogContext);
+    const { platform } = useContext(PlatformContext);
     const { containers } = useContext(ContainerContext);
     const { currentUser, selectedCatalog, setSettings, settings, supervisor } = useContext(AuthContext);
     const { setCities, condition, relaypoints, setCondition } = useContext(DeliveryContext);
-    const [order, setOrder] = useState({ name: "", email: "", deliveryDate: new Date(), notification: "No" });
+    const [order, setOrder] = useState({ name: "", email: "", deliveryDate: new Date(), notification: "No", platform: platform['@id'] });
     const defaultErrors = { name: "", email: "", deliveryDate: "", phone: "", address: "" };
     const [informations, setInformations] = useState({ phone: '', address: '', address2: '', zipcode: '', city: '', position: isDefined(selectedCatalog) ? selectedCatalog.center : [0, 0]});
     const [errors, setErrors] = useState(defaultErrors);
@@ -48,8 +50,12 @@ const Order = ({ match, history }) => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [catalog, setCatalog] = useState(selectedCatalog);
     const [packages, setPackages] = useState([]);
+    const [toasts, setToasts] = useState([]);
     const statuses = getStatus();
+    const failMessage = "Des informations sont manquantes ou erronées. Vérifiez s'il vous plaît le formulaire."
+    const failToast = { position: 'top-right', autohide: 5000, closeButton: true, fade: true, color: 'danger', messsage: failMessage, title: 'Commande invalide' };
 
+    useEffect(() => console.log(catalog), [catalog]);
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         fetchCities();
@@ -112,21 +118,23 @@ const Order = ({ match, history }) => {
             .findAll()
             .then(response => setCities(response))
             .catch(error => console.log(error));
-    }
+    };
 
     const fetchGroups = () => {
         GroupActions
             .findAll()
             .then(response => setGroups(response))
             .catch(error => console.log(error));
-    }
+    };
 
     const fetchUser = user => {
         UserActions
             .find(user.id)
             .then(response => setUser(response))
             .catch(error => console.log(error));
-    }
+    };
+
+    const addToast = newToast => setToasts([...toasts, newToast]);
 
     const setUserInformations = () => {
         if (isDefined(user)) {
@@ -167,31 +175,41 @@ const Order = ({ match, history }) => {
     };
 
     const handleSubmit = () => {
-        // const newErrors = validateForm(order, informations, (isDefined(order.calalog) ? order.catalog : catalog), condition, relaypoints);
-        // if (isDefined(newErrors) && Object.keys(newErrors).length > 0) {
-        //     setErrors({...errors, ...newErrors});
-        // } else {
+        const newErrors = validateForm(order, informations, (isDefined(order.calalog) ? order.catalog : catalog), condition, relaypoints);
+        if (isDefined(newErrors) && Object.keys(newErrors).length > 0) {
+            console.log(Object.values(newErrors)[0]);
+            setErrors({...errors, ...newErrors});
+            addToast(failToast);
+        } else {
             const orderToWrite = getOrderToWrite(order, user, informations, items, order.deliveryDate, objectDiscount, catalog, condition, settings);
-            console.log(orderToWrite);
-            // const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
-            // request.then(response => {
-            //     setErrors(defaultErrors);
-            //     //TODO : Flash notification de succès
-            //     history.replace("/components/preparations");
-            // })
-            // .catch( ({ response }) => {
-            //     const { violations } = response.data;
-            //     if (violations) {
-            //         const apiErrors = {};
-            //         violations.forEach(({propertyPath, message}) => {
-            //             apiErrors[propertyPath] = message;
-            //         });
-            //         setErrors(apiErrors);
-            //     }
-            //     //TODO : Flash notification d'erreur
-            // });
-        // }
+            const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
+            request.then(response => {
+                setErrors(defaultErrors);
+                //TODO : Flash notification de succès
+                history.replace("/components/preparations");
+            })
+            .catch( ({ response }) => {
+                const { violations } = response.data;
+                if (violations) {
+                    const apiErrors = {};
+                    violations.forEach(({propertyPath, message}, i) => {
+                        apiErrors[propertyPath] = message;
+                    });
+                    setErrors(apiErrors);
+                    addToast(failToast);
+                }
+                //TODO : Flash notification d'erreur
+            });
+        }
     };
+
+    const toasters = (()=>{
+        return toasts.reduce((toasters, toast) => {
+          toasters[toast.position] = toasters[toast.position] || []
+          toasters[toast.position].push(toast)
+          return toasters
+        }, {})
+    })();
 
     return !isDefined(order) ? <></> : (
         <CRow>
@@ -293,6 +311,26 @@ const Order = ({ match, history }) => {
                         <Link to="/components/preparations" className="btn btn-link">Retour à la liste</Link>
                     </CCardFooter>
                 </CCard>
+            </CCol>
+            <CCol sm="12" lg="6">
+              { Object.keys(toasters).map((toasterKey) => (
+                <CToaster position={toasterKey} key={'toaster' + toasterKey}>
+                    { toasters[toasterKey].map((toast, key)=> {
+                        return (
+                            <CToast key={ 'toast' + key } 
+                                    show={ true } 
+                                    autohide={ toast.autohide } 
+                                    fade={ toast.fade } 
+                                    color={ toast.color } 
+                                    style={{ color: 'white' }}
+                            >
+                                <CToastHeader closeButton={ toast.closeButton }>{ toast.title }</CToastHeader>
+                                <CToastBody style={{ backgroundColor: 'white', color: "black" }}>{ toast.messsage }</CToastBody>
+                            </CToast>
+                        )})
+                    }
+                </CToaster>
+              ))}
             </CCol>
         </CRow>
     );

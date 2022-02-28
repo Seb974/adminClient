@@ -1,22 +1,16 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ProductActions from '../../../services/ProductActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCardFooter, CCollapse } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCardFooter, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import AuthContext from 'src/contexts/AuthContext';
-import Roles from 'src/config/Roles';
 import useWindowDimensions from 'src/helpers/screenDimensions';
-import StockActions from 'src/services/StockActions';
-import ProductsContext from 'src/contexts/ProductsContext';
 import { getWritableProduct } from 'src/helpers/products';
 
 const Costs = (props) => {
 
-    const itemsPerPage = 4;
-    const { currentUser } = useContext(AuthContext);
+    const itemsPerPage = 30;
     const fields = ['name', 'Avantageux', 'Coût HT'];
-    const { height, width } = useWindowDimensions();
+    const { width } = useWindowDimensions();
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -104,7 +98,7 @@ const Costs = (props) => {
         <CRow>
         <CCol xs="12" lg="12">
           <CCard>
-            <CCardHeader>Etat des stocks</CCardHeader>
+            <CCardHeader>Coût d'achat des produits</CCardHeader>
             <CCardBody>
             <CDataTable
               items={ displayedProducts }

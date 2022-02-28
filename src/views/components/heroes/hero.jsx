@@ -8,22 +8,33 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Image from 'src/components/forms/image';
 import Select from 'src/components/forms/Select';
 import { useContext } from 'react';
-import ProductsContext from 'src/contexts/ProductsContext';
 import { SwatchesPicker } from 'react-color';
 import CatalogContext from 'src/contexts/CatalogContext';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
+import ProductSearch from 'src/components/forms/ProductSearch';
 
 const Hero = ({ match, history }) => {
 
     const { id = "new" } = match.params;
     const { catalogs } = useContext(CatalogContext);
     const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", textColor: "", titleColor: "", textShadow: "", catalogs: "" };
-    const { products } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
     const [hero, setHero] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, textColor: '#fff', titleColor: '#fff', textShadow: true, catalogs: [] });
     const [homepages, setHomepages] = useState([]);
     const [errors, setErrors] = useState(defaultError);
     const [formattedCatalogs, setFormattedCatalogs] = useState([]);
+    const [product, setProduct] = useState(null);
+    const [variation, setVariation] = useState(null);
+    const [size, setSize] = useState(null);
+    
+    useEffect(() => {
+        setHero({...hero, product: product});
+    }, [product]);
+
+    useEffect(() => {
+        if (isDefined(hero.product) && !isDefined(product))
+            setProduct(hero.product);
+    }, [hero]);
 
     useEffect(() => {
         fetchHomepages();
@@ -39,16 +50,6 @@ const Hero = ({ match, history }) => {
         const selectedHomepage = homepages.find(h => h.id === parseInt(currentTarget.value));
         setHero({...hero, homepage: selectedHomepage });
     };
-
-    const handleProductChange = ({ currentTarget }) => {
-        const selectedId = parseInt(currentTarget.value);
-        if (selectedId > -1) {
-            const selectedProduct = products.find(h => h.id === selectedId);
-            setHero({...hero, product: selectedProduct });
-        } else {
-            setHero({...hero, product: null})
-        }
-    }
 
     const fetchHero = id => {
         if (id !== "new") {
@@ -145,10 +146,16 @@ const Hero = ({ match, history }) => {
                                     </Select>
                                 </CCol>
                                 <CCol xs="12" sm="12" md="6" className="mt-4">
-                                    <Select className="mr-2" name="product" label="Produit associé" onChange={ handleProductChange } value={ isDefined(hero.product) ? hero.product.id : -1 }>
-                                        <option value={ -1 }>Aucun</option>
-                                        { products.map(product => <option key={ product.id } value={ product.id }>{ product.name }</option>) }
-                                    </Select>
+                                    <CLabel htmlFor="title">Produit</CLabel>
+                                    <ProductSearch
+                                        product={ product }
+                                        setProduct={ setProduct }
+                                        variation={ variation }
+                                        setVariation={ setVariation }
+                                        size={ size }
+                                        setSize={ setSize }
+                                        withVariants={ false }
+                                    />
                                 </CCol>
                             </CRow>
                             <CRow className="mt-2">
