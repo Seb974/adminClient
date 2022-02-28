@@ -12,7 +12,7 @@ import ProductActions from 'src/services/ProductActions';
 
 const Prices = (props) => {
 
-    const itemsPerPage = 4;
+    const itemsPerPage = 500;
     const { currentUser, selectedCatalog, supervisor } = useContext(AuthContext);
     const [priceGroups, setPriceGroups] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
