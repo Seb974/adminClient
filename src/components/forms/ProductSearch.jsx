@@ -6,7 +6,7 @@ import ProductActions from 'src/services/ProductActions';
 import { Spinner } from 'react-bootstrap';
 import '../../assets/css/searchBar.css';
 
-const ProductSearch = ({ product, setProduct, variation, setVariation, size, setSize, seller = null, supplier = null, withVariants = true }) => {
+const ProductSearch = ({ product, setProduct, variation, setVariation, size, setSize, seller = null, supplier = null, withVariants = true, readOnly = false }) => {
 
     const [productSearch, setProductSearch] = useState("");
     const [suggestions, setSuggestions] = useState([]);
@@ -110,11 +110,13 @@ const ProductSearch = ({ product, setProduct, variation, setVariation, size, set
                     value={ getSelectionName() }
                     disabled={ true }
                 />
-                <CInputGroupAppend>
-                    <CInputGroupText onClick={ handleDeleteSelection }>
-                        <i class="fas fa-times"></i>
-                    </CInputGroupText>
-                </CInputGroupAppend>
+                { !readOnly &&
+                    <CInputGroupAppend>
+                        <CInputGroupText onClick={ handleDeleteSelection }>
+                            <i class="fas fa-times"></i>
+                        </CInputGroupText>
+                    </CInputGroupAppend>
+                }
             </CInputGroup> 
         </CFormGroup>
     : 

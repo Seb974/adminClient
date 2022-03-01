@@ -4,23 +4,17 @@ import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import 'flatpickr/dist/themes/material_blue.css';
 import { French } from "flatpickr/dist/l10n/fr.js";
 import Flatpickr from 'react-flatpickr';
+import ProductSearch from '../forms/ProductSearch';
 
 
 const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) => {
 
-    const [variants, setVariants] = useState([]);
     const [displayedProduct, setDisplayedProduct] = useState(item.product);
+    const [displayedVariation, setDisplayedVariation] = useState(item.variation);
+    const [displayedSize, setDisplayedSize] = useState(item.size);
     const [batches, setBatches] = useState([]);
 
-    useEffect(() => getDisplayedProduct(), []);
     useEffect(() => getStock(), [displayedProduct]);
-
-    const getDisplayedProduct = () => {
-            const productToDisplay =item.product;
-            setDisplayedProduct(productToDisplay);
-            if (isDefined(productToDisplay) && isDefined(productToDisplay.variations))
-                setVariants(productToDisplay.variations);
-    };
 
     const getStock = () => {
         const entity = getStockEntity();
@@ -71,12 +65,6 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
         }
     };
 
-    const getVariantName = (variantName, sizeName) => {
-        const isVariantEmpty = variantName.length === 0 || variantName.replace(" ","").length === 0;
-        const isSizeEmpty = sizeName.length === 0 || sizeName.replace(" ","").length === 0;
-        return isVariantEmpty ? sizeName : isSizeEmpty ? variantName : variantName + " - " + sizeName;
-    };
-
     const getBatchMaxQuantity = number => {
         const batch = batches.find(b => b.number === number);
         return isDefined(batch) ? batch.quantity : 0;
@@ -123,31 +111,15 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
     return !isDefined(item) || !isDefined(displayedProduct) ? <></> : (
         <>
             <CRow>
-                <CCol xs="12" sm="3">
+                <CCol xs="12" sm="6">
                     <CFormGroup>
                         <CLabel htmlFor="name">{"Produit " + (total > 1 ? index + 1 : "")}</CLabel>
-                        <CInputGroup>
-                            <CInput id="name" value={ displayedProduct.name } disabled={ true } />
-                        </CInputGroup>
-                    </CFormGroup>
-                </CCol>
-                <CCol xs="12" sm="3">
-                    <CFormGroup>
-                        <CLabel htmlFor="name">{"Variante"}
-                        </CLabel>
-                        <CSelect custom name="variant" id="variant" disabled={ true } value={ isDefined(item.variation) && isDefined(item.size) ? item.variation.id + "-" + item.size.id : "0"}>
-                            { !isDefinedAndNotVoid(variants) ? 
-                                <option key="0" value="0">-</option> 
-                                :
-                                variants.map((variant, index) => {
-                                    return variant.sizes.map((size, i) => 
-                                        <option key={ (index + "" + i) } value={variant.id + "-" + size.id}>
-                                            { getVariantName(variant.color, size.name) }
-                                        </option>
-                                    );
-                                })
-                            }
-                        </CSelect>
+                        <ProductSearch
+                            product={ displayedProduct } setProduct={ setDisplayedProduct }
+                            variation={ displayedVariation } setVariation={ setDisplayedVariation }
+                            size={ displayedSize } setSize={ setDisplayedSize }
+                            readOnly={ true }
+                        />
                     </CFormGroup>
                 </CCol>
                 <CCol xs="12" sm="2">
