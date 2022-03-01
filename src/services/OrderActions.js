@@ -17,15 +17,14 @@ function findStatusBetween(dates, statuses, user) {
     const UTCDates = formatUTC(dates);
     const dateLimits = `deliveryDate[after]=${ getStringDate(UTCDates.start) }&deliveryDate[before]=${ getStringDate(UTCDates.end) }`;
     return api
-        .get(`/api/order_entities?${ status }&${ dateLimits }`)
+        .get(`/api/order_entities?${ status }&${ dateLimits }&order[deliveryDate]=asc`)
         .then(response => {
-            const data = Roles.hasAdminPrivileges(user) || Roles.isSupervisor(user) || Roles.isPicker(user) ? 
+            return Roles.hasAdminPrivileges(user) || Roles.isSupervisor(user) || Roles.isPicker(user) ? 
                 response.data['hydra:member'] :
                 response.data['hydra:member'].filter(order => {
                     return order.items.find(item => {
                         return item.product.seller.users.find(u => u.id === user.id) !== undefined}) !== undefined;
                 });
-            return data.sort((a, b) => (new Date(a.deliveryDate) < new Date(b.deliveryDate)) ? -1 : 1)
         });
 }
 

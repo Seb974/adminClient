@@ -48,7 +48,7 @@ function sendCategories(store) {
 }
 
 function getProducts(store, page = 0) {
-    const pageSelection = page !== 0 ? `/${ page }`  : '';
+    const pageSelection = page !== 0 ? `/${ page }` : '';
     return api.get(`/api/hiboutik/${ store.id }/products${ pageSelection }`)
               .then(response => response.data);
 }

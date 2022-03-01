@@ -26,6 +26,12 @@ function findAllPaginated(page = 1, items = 30) {
         .then(response => response.data);
 }
 
+function findBestSales(page = 1, items = 30) {
+    return api
+        .get(`/api/products?saleCount[lt]=0&order[saleCount]=desc&pagination=true&itemsPerPage=${ items }&page=${ page }`)
+        .then(response => response.data);
+}
+
 function findWord(word, page = 1, items = 30) {
     return api
         .get(`/api/products?name[]=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
@@ -73,6 +79,13 @@ function findFromSupplierAndPlatform(seller, supplier, page = 1, items = 30) {
     return api
         .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&available=true&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
         .then(response => response.data); 
+}
+
+function findProductWithIds(enabledIds) {
+    const ids = getIdsList(enabledIds);
+    return api
+        .get(`/api/products?${ ids }&storeAvailable=true&order[saleCount]=desc`)
+        .then(response => response.data);  
 }
 
 function deleteProduct(id) {
@@ -157,9 +170,11 @@ export default {
     findFromSupplierAndStore,
     findFromSupplierAndPlatform,
     delete: deleteProduct,
+    findProductWithIds,
     find,
     update,
     create,
+    findBestSales,
     createImage,
     createVariation,
     updateVariation,
