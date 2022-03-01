@@ -1,30 +1,21 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CValidFeedback } from '@coreui/react';
-import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import ContainerContext from 'src/contexts/ContainerContext';
+import React from 'react';
+import { CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow } from '@coreui/react';
+import { isDefined } from 'src/helpers/utils';
 
 const PackageList = ({ _package, total, index, orderView = false }) => {
-
-    const { containers } = useContext(ContainerContext);
 
     return !isDefined(_package) ? <></> : (
         <CRow>
             <CCol xs="12" sm={orderView ? "4" : "3"}>
                 <CFormGroup>
-                    <CLabel htmlFor="name" style={{ color: 'darkgoldenrod' }}>{"Colis " + (total > 1 ? index + 1 : "")}
-                    </CLabel>
-                    <CSelect custom id="container" value={ _package.container.id } disabled={ true }>
-                        { containers.map(c => <option key={ c.id } value={ c.id }>{ c.name }</option>) }
-                    </CSelect>
+                    <CLabel htmlFor="name" style={{ color: 'darkgoldenrod' }}>{"Colis " + (total > 1 ? index + 1 : "")}</CLabel>
+                    <CInput id="name" name={ _package.id }  value={ _package.container.name } disabled={ true } style={{ color: 'darkgoldenrod' }}/>
                 </CFormGroup>
             </CCol>
             <CCol xs="12" sm="3">
                 <CFormGroup>
-                    <CLabel htmlFor="name" style={{ color: 'darkgoldenrod' }}>{"Capacité réelle"}
-                    </CLabel>
-                    <CSelect custom name="capacity" id="capacity" disabled={ true } value={ "0" }>
-                            <option key="0" value="0">{ (_package.container.max - _package.container.tare).toFixed(2) + " Kg" }</option> 
-                    </CSelect>
+                    <CLabel htmlFor="name" style={{ color: 'darkgoldenrod' }}>{"Capacité réelle"}</CLabel>
+                    <CInput id="capacity" name={ _package.id }  value={ (_package.container.max - _package.container.tare).toFixed(2) + " Kg" } disabled={ true } style={{ color: 'darkgoldenrod' }}/>
                 </CFormGroup>
             </CCol>
             <CCol xs="12" sm="2">
@@ -38,9 +29,10 @@ const PackageList = ({ _package, total, index, orderView = false }) => {
                             name={ _package.id }
                             value={ _package.quantity }
                             disabled={ true }
+                            style={{ color: 'darkgoldenrod' }}
                         />
                         <CInputGroupAppend>
-                            <CInputGroupText>{ "U" }</CInputGroupText>
+                            <CInputGroupText style={{ color: 'darkgoldenrod' }}>{ "U" }</CInputGroupText>
                         </CInputGroupAppend>
                     </CInputGroup>
                 </CFormGroup>
@@ -55,9 +47,10 @@ const PackageList = ({ _package, total, index, orderView = false }) => {
                             name={ _package.id }
                             value={ _package.quantity }
                             disabled={ true }
+                            style={{ color: 'darkgoldenrod' }}
                         />
                         <CInputGroupAppend>
-                            <CInputGroupText>{ "U" }</CInputGroupText>
+                            <CInputGroupText style={{ color: 'darkgoldenrod' }}>{ "U" }</CInputGroupText>
                         </CInputGroupAppend>
                     </CInputGroup>
                 </CFormGroup>
