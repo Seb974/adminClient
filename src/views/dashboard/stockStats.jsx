@@ -69,7 +69,6 @@ const StockStats = () => {
                 ProductActions
                     .findBestSales(page, itemsPerPage)
                     .then(response => {
-                        console.log(response['hydra:member']);
                         setTotalItems(response['hydra:totalItems']);
                         const productsAndVariants = getProductsWithVariants(response['hydra:member']);
                         setProducts(productsAndVariants);
@@ -82,7 +81,6 @@ const StockStats = () => {
                         ProductActions
                             .findProductWithIds(ids)
                             .then(response => {
-                                console.log(response);
                                 setTotalItems(response['hydra:totalItems']);
                                 const productsAndVariants = getProductsWithVariants(response['hydra:member']);
                                 setProducts(productsAndVariants);
@@ -324,7 +322,9 @@ const StockStats = () => {
                             ,
                             'Produit':
                                 item => <td>
-                                            <div>{ item.name }</div>
+                                            <div>
+                                                <strong>{ item.name }</strong>
+                                            </div>
                                             <div className="small text-muted">
                                                 <span>Sécurité : { getSecurity(item) + " " + getUnit(item) }</span> | Alerte : { getAlert(item) + " " + getUnit(item) }
                                             </div>
@@ -351,12 +351,16 @@ const StockStats = () => {
                                 ,
                             'Commandé':
                                 item => <td>
-                                            <strong>{ item.provisioned.toFixed(2) + " " + getUnit(item) }</strong>
+                                            {/* <strong> */}
+                                                { item.provisioned.toFixed(2) + " " + getUnit(item) }
+                                            {/* </strong> */}
                                         </td>
                             ,
                             'Vendu':
                                 item => <td>
-                                            <strong>{ item.ordered.toFixed(2) + " " + getUnit(item) }</strong>
+                                            {/* <strong> */}
+                                                { item.ordered.toFixed(2) + " " + getUnit(item) }
+                                            {/* </strong> */}
                                         </td>
                         }} 
                     />

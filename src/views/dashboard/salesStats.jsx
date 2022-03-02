@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CProgress, CRow, CCallout} from '@coreui/react';
 import OrderActions from 'src/services/OrderActions';
+import ProductActions from 'src/services/ProductActions';
 import { getActiveStatus } from 'src/helpers/orders';
 import AuthContext from 'src/contexts/AuthContext';
 import { getDateFrom, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { isSameDate } from 'src/helpers/days';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
-import ProductsContext from 'src/contexts/ProductsContext';
 import Roles from 'src/config/Roles';
 import { updateStatusBetween } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import MercureContext from 'src/contexts/MercureContext';
@@ -16,7 +16,6 @@ const SalesStats = () => {
     const productLimit = 8;
     const breaksLimit = 5;
     const status = getActiveStatus();
-    const { products } = useContext(ProductsContext);
     const { currentUser, supervisor, seller } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
     const [mercureOpering, setMercureOpering] = useState(false);
@@ -24,6 +23,12 @@ const SalesStats = () => {
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [productSales, setProductSales] = useState([]);
     const [breaks, setBreaks] = useState([]);
+    const [products, setProducts] = useState([]);
+
+    useEffect(() => {
+        fetchSales();
+        fetchProducts();
+    }, []);
 
     useEffect(() => {
         if (isDefinedAndNotVoid(updatedOrders) && !mercureOpering) {
@@ -36,11 +41,20 @@ const SalesStats = () => {
     useEffect(() => fetchSales(), [dates]);
 
     useEffect(() => {
-        const selledProducts = getProductsStats();
-        const breaksSales = getBreaks();
-        setProductSales(selledProducts);
-        setBreaks(breaksSales);
+        if (isDefinedAndNotVoid(products) && isDefinedAndNotVoid(sales)) {
+            const selledProducts = getProductsStats();
+            const breaksSales = getBreaks();
+            setProductSales(selledProducts);
+            setBreaks(breaksSales);
+        }
     }, [sales, products]);
+
+
+    const  fetchProducts = () => {
+        ProductActions
+            .findAll()
+            .then(response => setProducts(response));
+    };
 
     const fetchSales = () => {
         if (isDefined(currentUser)) {
