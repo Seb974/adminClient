@@ -13,7 +13,7 @@ import SellerActions from 'src/services/SellerActions';
 
 const Traceabilities = (props) => {
 
-    const itemsPerPage = 6;
+    const itemsPerPage = 30;
     const { currentUser } = useContext(AuthContext);
     const [type, setType] = useState("upstream");
     const [number, setNumber] = useState("");
@@ -82,6 +82,7 @@ const Traceabilities = (props) => {
                     }
                     
                     if (isDefined(data)) {
+                        console.log(data['hydra:member']);
                         setData(data['hydra:member']);
                         setTotalItems(data['hydra:totalItems']);
                     }
@@ -292,6 +293,21 @@ const Traceabilities = (props) => {
                                         item => <td style={{ width: '10%'}}>
                                                     {   (isDefined(item.quantity) ? item.quantity : 0) + " "
                                                         + 
+                                                        (isDefined(item.good) ? item.good.product.unit : 
+                                                         isDefined(item.item) ? item.item.product.unit : 
+                                                         isDefined(item.stock) ? item.stock.product.unit :
+                                                         0)
+                                                    }
+                                                </td>
+                                    ,
+                                    'Quantité':
+                                        item => <td style={{ width: '10%'}}>
+                                                    {   ( isDefined(item.item) ? 
+                                                            isDefined(item.item.deliveredQty) ? item.item.deliveredQty : 
+                                                            isDefined(item.item.preparedQty) ? item.item.preparedQty :
+                                                            isDefined(item.item.orderedQty) ? item.item.orderedQty :
+                                                            0 : 0)
+                                                        + " " + 
                                                         (isDefined(item.good) ? item.good.product.unit : 
                                                          isDefined(item.item) ? item.item.product.unit : 
                                                          isDefined(item.stock) ? item.stock.product.unit :

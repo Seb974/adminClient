@@ -148,7 +148,7 @@ const getSubTotal = (costs, quantity, selectedSupplier) => {
     return quantity * cost <= 0 ? 0 : Math.round(quantity * cost * 100) / 100;
 }
 
-const getSupplierCostValue = (product, selectedSupplier) => {
+export const getSupplierCostValue = (product, selectedSupplier) => {
     const cost = getSupplierCost(product, selectedSupplier);
     return !isDefined(cost) || cost.value.length === 0 ? 0 : getFloat(cost.value);
 }

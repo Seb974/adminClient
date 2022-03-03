@@ -21,9 +21,10 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
         if (isDefined(entity) && isDefinedAndNotVoid(entity.stocks)) {
             const onlineStock = entity.stocks.find(s => isDefined(s.platform));
             if (displayedProduct.needsTraceability && isDefined(onlineStock) && isDefinedAndNotVoid(onlineStock.batches)) {
-                setBatches(onlineStock.batches);
+                const orderedBatches = onlineStock.batches.sort((a, b) => (a.endDate > b.endDate) ? 1 : -1)
+                setBatches(orderedBatches);
                 if (!isDefinedAndNotVoid(item.traceabilities) && order.status == "WAITING") {
-                    const newTraceability = { number: onlineStock.batches[0].number, endDate: new Date(onlineStock.batches[0].endDate), quantity: 0, id: new Date().getTime()};     // item.orderedQty
+                    const newTraceability = { number: orderedBatches[0].number, endDate: new Date(orderedBatches[0].endDate), quantity: 0, id: new Date().getTime()};     // item.orderedQty
                     const newItems = order.items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: [newTraceability]}) : i);
                     setOrder({...order, items: newItems});
                 } 

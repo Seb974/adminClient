@@ -4,7 +4,7 @@ import Flatpickr from 'react-flatpickr';
 import CIcon from '@coreui/icons-react';
 import { CButton, CCardFooter, CCol, CFormGroup, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow } from '@coreui/react';
 import React, { useContext, useEffect, useState } from 'react';
-import { getDisabledDays, getFirstDeliverableDay, getGoods, getSuppliedProducts, getTotal } from 'src/helpers/supplying';
+import { getDisabledDays, getFirstDeliverableDay, getGoods, getSuppliedProducts, getTotal, getSupplierCostValue } from 'src/helpers/supplying';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Select from '../forms/Select';
 import PlatformContext from 'src/contexts/PlatformContext';
@@ -51,9 +51,9 @@ const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selecte
     const handleSubmit = () => {
         if (selection.length === 0) {
             addToast(voidToast);
-        } else if (isDefined(selectedSupplier.provisionMin) && getFloat(getTotal(selection, selectedSupplier)) < selectedSupplier.provisionMin) {
+        } else if (isDefined(selectedSupplier.provisionMin) && !hasUnknownPrices(selection) && getFloat(getTotal(selection, selectedSupplier)) < selectedSupplier.provisionMin) {
             addToast(minToast);
-        } else if (isDefined(selectedSupplier.deliveryMin) && receiveMode === "livraison" && getFloat(getTotal(selection, selectedSupplier)) < selectedSupplier.deliveryMin) {
+        } else if (isDefined(selectedSupplier.deliveryMin) && receiveMode === "livraison" && !hasUnknownPrices(selection) && getFloat(getTotal(selection, selectedSupplier)) < selectedSupplier.deliveryMin) {
             addToast(deliveryMinToast);
         } else {
             const provision = getNewProvision();
@@ -66,6 +66,16 @@ const Purchase = ({ displayedProducts, selectedSupplier, selectedSeller, selecte
                 })
                 .catch(error => addToast(failToast));
         }
+    };
+
+    const hasUnknownPrices = selection => {
+        let unknownPrice = false;
+        selection.map(s => {
+            if (getSupplierCostValue(s, selectedSupplier) === 0) {
+                unknownPrice = true;
+            }
+        });
+        return unknownPrice;
     };
 
     const setToSupplies = (goods) => {
