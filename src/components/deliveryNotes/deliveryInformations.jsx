@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
     pageNumber: {
         textAlign: 'right',
         fontSize: 8,
-        marginRight: 30
+        marginRight: 90,
+        marginLeft: 'auto'
     },
     pageText: {
         marginLeft: 12,
@@ -98,7 +99,9 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 18,
-        textAlign: 'center'
+        textAlign: 'center',
+        marginLeft: 'auto',
+        marginRight: 'auto'
     },
     footer: {
         position: 'absolute',
@@ -123,7 +126,7 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
         pages.map((page, i) => {
 
             const itemsToDisplay = invoicedElements.slice((i * maxPerPage), ((i + 1) * maxPerPage));
-            const orderPages = Math.ceil(itemsToDisplay.length / maxPerPage);
+            const orderPages = Math.ceil(invoicedElements.length / maxPerPage);
 
             return !isDefinedAndNotVoid(itemsToDisplay) ? <></> : (
                 <Page size="A4" style={ styles.page }>
