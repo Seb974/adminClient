@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import { CButton, CCol, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCollapse, CRow } from '@coreui/react';
+import { CButton, CCol, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCollapse, CRow, CFormGroup, CLabel, CTextarea } from '@coreui/react';
 import { getFloat, isDefined } from 'src/helpers/utils';
 import { Link } from 'react-router-dom';
 import ProvisionActions from 'src/services/ProvisionActions';
@@ -13,6 +13,9 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
     const [details, setDetails] = useState([]);
     const [receivedProvision, setReceivedProvision] = useState({
         ...item, 
+        isTruckCompliant: true,        // isDefined(item.isTruckCompliant) ? item.isTruckCompliant :
+        temperature: isDefined(item.temperature) ? item.temperature : 0,
+        comments: isDefined(item.comments) ? item.comments : "",
         goods: item.goods.map(g => g.product.needsTraceability ? 
             {...g, received: g.quantity, batches: [{...defaultBatch, quantity: g.quantity}] } : 
             {...g, received: g.quantity}
@@ -36,10 +39,18 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
         setReceivedProvision({...receivedProvision, goods: newGoods})
     };
 
+    const onProvisionParameterChange =  ({ currentTarget }) => {
+        setReceivedProvision({...receivedProvision, [currentTarget.name]: currentTarget.value});
+    };
+
+    const onTruckChange = ({ currentTarget }) => {
+        setReceivedProvision({...receivedProvision, isTruckCompliant: !receivedProvision.isTruckCompliant});
+    };
+
     const handleSubmit = () => {
         const newProvision = getProvisionToWrite();
         ProvisionActions
-            .update(receivedProvision.id, getProvisionToWrite())
+            .update(receivedProvision.id, newProvision)
             .then(response => {
                 updateProvisions(response.data);
                 setModalShow(false);
@@ -52,6 +63,8 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
             ...receivedProvision, 
             seller: receivedProvision.seller['@id'], 
             supplier: receivedProvision.supplier['@id'],
+            temperature: getFloat(receivedProvision.temperature),
+            comments: receivedProvision.comments.length == 0 ? "R.A.S." : receivedProvision.comments,
             goods: receivedProvision.goods.map(g => ({
                 ...g,
                 product: g.product['@id'],
@@ -92,6 +105,8 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
         }
         setDetails(newDetails);
     };
+
+    const needsControl = () => receivedProvision.goods.filter(g => g.product.needsTraceability).length > 0;
 
     return (
         <>
@@ -170,6 +185,43 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
                                         </CCollapse>
                         }}
                     />
+                    { needsControl() && 
+                        <>
+                            <CRow>
+                                <CCol xs="6" md="6">
+                                    <CFormGroup>
+                                        <CLabel htmlFor="name">Température</CLabel>
+                                        <CInputGroup>
+                                            <CInput
+                                                id="temperature"
+                                                type="number"
+                                                name={ "temperature" }
+                                                value={ receivedProvision.temperature }
+                                                onChange={ onProvisionParameterChange }
+                                            />
+                                            <CInputGroupAppend>
+                                                <CInputGroupText>°C</CInputGroupText>
+                                            </CInputGroupAppend>
+                                        </CInputGroup>
+                                    </CFormGroup>
+                                </CCol>
+                                <CCol>
+                                    <div className="form-check mt-4 pt-2">
+                                        <input className="form-check-input" type="checkbox" checked={ receivedProvision.isTruckCompliant } name="isTruckCompliant" onClick={ onTruckChange } />
+                                        <label className="form-check-label" for="flexCheckChecked">
+                                            Camion conforme
+                                        </label>
+                                    </div>
+                                </CCol>
+                            </CRow>
+                            <CRow>
+                                <CCol xs="12" md="12">
+                                    <CLabel htmlFor="textarea-input">Commentaires</CLabel>
+                                    <CTextarea name="comments" id="comments" rows="4" placeholder="R.A.S." onChange={ onProvisionParameterChange } value={ receivedProvision.comments } />
+                                </CCol>
+                            </CRow>
+                        </>
+                    }
                 </Modal.Body>
                 <Modal.Footer className="d-flex justify-content-between">
                     <CButton color="success" onClick={ handleSubmit }><i className="fas fa-check mr-2"></i> Valider</CButton>
