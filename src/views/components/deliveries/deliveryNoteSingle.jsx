@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
 const DeliveryNoteSingle = ({ match }) => {
 
     const { id = "new" } = match.params;
-    const maxPerPage = 18;
+    const maxPerPage = 15;
     const [order, setOrder] = useState([]);
 
     useEffect(() => {
