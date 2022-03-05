@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ProductsContext from '../../contexts/ProductsContext';
 import AuthContext from '../../contexts/AuthContext';
 import AuthActions from '../../services/AuthActions';
-import ProductActions from 'src/services/ProductActions';
+// import ProductActions from 'src/services/ProductActions';
 import DeliveryContext from 'src/contexts/DeliveryContext';
 import CatalogActions from 'src/services/CatalogActions';
 import ContainerContext from 'src/contexts/ContainerContext';

@@ -90,15 +90,33 @@ export const getProductToWrite = (product, type, categories, variations, adapted
 };
 
 const getFormattedStock = (stock, quantity) => {
-    const { alert, security } = stock;
-    return {...stock, alert: getFloat(alert), security: getFloat(security),  quantity: getFloat(quantity)} 
+    const { alert, security, batches } = stock;
+    return {
+        ...stock, 
+        alert: getFloat(alert), 
+        security: getFloat(security),
+        quantity: getFloat(quantity),
+        batches: isDefinedAndNotVoid(batches) ? batches.map(b => b['@id']) : []
+    } 
 };
 
 const getFormattedSizeStock = (stock, product, quantity) => {
-    const { alert, security, platform } = product.stock;
+    const { alert, security, platform, batches } = product.stock;
     return isDefined(stock) ? 
-        {...stock, alert: getFloat(alert), security: getFloat(security), quantity: getFloat(quantity)} :
-        { platform, alert: getFloat(alert), security: getFloat(security), quantity: getFloat(quantity) };
+        {
+            ...stock, 
+            alert: getFloat(alert), 
+            security: getFloat(security), 
+            quantity: getFloat(quantity),
+            batches: isDefinedAndNotVoid(batches) ? batches.map(b => b['@id']) : []
+        } :
+        { 
+            platform, 
+            alert: getFloat(alert), 
+            security: getFloat(security), 
+            quantity: getFloat(quantity),
+            batches: isDefinedAndNotVoid(batches) ? batches.map(b => b['@id']) : []
+         };
 };
 
 

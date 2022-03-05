@@ -7,6 +7,8 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { isSameDate } from 'src/helpers/days';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { updateStatusBetween } from 'src/data/dataProvider/eventHandlers/orderEvents';
+import { updateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
+import { updateAllBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
 import MercureContext from 'src/contexts/MercureContext';
 import ItemActions from 'src/services/ItemActions';
 import GoodActions from 'src/services/GoodActions';
@@ -19,12 +21,17 @@ const StockStats = () => {
     const status = getActiveStatus();
     const fields = [' ', 'Produit', 'Stock', 'Commandé', 'Vendu', 'Utilisation' ];
     const { currentUser, supervisor, seller } = useContext(AuthContext);
-    const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
+    const { updatedOrders, setUpdatedOrders, updatedProducts, setUpdatedProducts, updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
     const [mercureOpering, setMercureOpering] = useState(false);
+    const [mercureProductOpering, setMercureProductOpering] = useState(false);
+    const [mercureProvisionOpering, setMercureProvisionOpering] = useState(false);
     const [sales, setSales] = useState([]);
-    const  [store, setStore] = useState(null);
+    const [store, setStore] = useState(null);
+    const [goods, setGoods] =  useState([]);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [products, setProducts] = useState([]);
+    const [provisions, setProvisions] = useState([]);
+    const [productsEntities, setProductsEntities] = useState([]);
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -38,6 +45,22 @@ const StockStats = () => {
     }, [updatedOrders]);
 
     useEffect(() => {
+        if (isDefinedAndNotVoid(updatedProducts) && !mercureProductOpering) {
+            setMercureProductOpering(true);
+            updateViewedProducts(productsEntities, setProductsEntities, updatedProducts, setUpdatedProducts)
+                .then(response => setMercureProductOpering(false)); 
+        }
+    }, [updatedProducts]);
+
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedProvisions) && !mercureProvisionOpering) {
+            setMercureProvisionOpering(true);
+            updateAllBetween(getUTCDates(), provisions, setProvisions, updatedProvisions, setUpdatedProducts)
+                .then(response => setMercureProvisionOpering(false)); 
+        }
+    }, [updatedProvisions]);
+
+    useEffect(() => {
         getStore();
         fetchProducts();
     }, []);
@@ -45,13 +68,33 @@ const StockStats = () => {
     useEffect(() => fetchProducts(), [store]);
     useEffect(() => fetchProducts(currentPage), [currentPage])
 
-    useEffect(() => getDisplayedProducts(), [products, dates]);
+    useEffect(() => {
+        let newGoods = [];
+        provisions.map(p => newGoods = [...newGoods, ...p.goods]);
+        const updatedGoods = goods.map(g => {
+            const updatedGood = newGoods.find(good => good.id === g.id);
+            return isDefined(updatedGood) ? updatedGood : g;
+        });
+        const goodsFromNewProvision = newGoods.filter(g => updatedGoods.find(good => good.id === g.id) === undefined);
+        const displayableGoods = [...updatedGoods, ...goodsFromNewProvision];
+        setGoods(displayableGoods);
+    }, [provisions]);
 
-    const getDisplayedProducts = async () => {
+    useEffect(() => getData(), [products, dates]);
+    useEffect(() => formatDisplayedProducts(), [productsEntities]);
+    useEffect(() => getDisplayedProducts(), [sales, goods])
+
+
+    const getData = async () => {
         const sales = await fetchItems();
         const provisions = await fetchGoods();
+        setSales(sales);
+        setGoods(provisions);
+    };
+
+    const getDisplayedProducts = () => {
         const productsWithSales = isDefinedAndNotVoid(sales) ? getProductsWithSales(products, sales) : products;
-        const productsWithProvisions = isDefinedAndNotVoid(provisions) ? getProductsWithProvisions(productsWithSales, provisions) : productsWithSales;
+        const productsWithProvisions = isDefinedAndNotVoid(goods) ? getProductsWithProvisions(productsWithSales, goods) : productsWithSales;
         setDisplayedProducts(productsWithProvisions);
     };
 
@@ -63,6 +106,13 @@ const StockStats = () => {
         }
     };
 
+    const formatDisplayedProducts = () => {
+        if (isDefinedAndNotVoid(productsEntities)) {
+            const productsAndVariants = getProductsWithVariants(productsEntities);
+            setProducts(productsAndVariants);
+        }
+    };
+
     const fetchProducts = ( page = 1 ) => {
         if (page >= 1) {
             if (!Roles.isStoreManager(currentUser)) {
@@ -70,8 +120,7 @@ const StockStats = () => {
                     .findBestSales(page, itemsPerPage)
                     .then(response => {
                         setTotalItems(response['hydra:totalItems']);
-                        const productsAndVariants = getProductsWithVariants(response['hydra:member']);
-                        setProducts(productsAndVariants);
+                        setProductsEntities(response['hydra:member']);
                     });
             } else if (isDefined(store)) {
                 StoreActions
@@ -82,8 +131,7 @@ const StockStats = () => {
                             .findProductWithIds(ids)
                             .then(response => {
                                 setTotalItems(response['hydra:totalItems']);
-                                const productsAndVariants = getProductsWithVariants(response['hydra:member']);
-                                setProducts(productsAndVariants);
+                                setProductsEntities(response['hydra:member']);
                             })
                     })
             }
@@ -158,7 +206,7 @@ const StockStats = () => {
     };
 
     const isSameProduct = (product, sale) => {
-        if (product.product['@id'] === sale.product['@id']) {
+        if (isDefined(product.product) && isDefined(sale.product) && product.product['@id'] === sale.product['@id']) {
             if (isDefined(product.variation) && isDefined(sale.variation) && isDefined(product.size) && isDefined(sale.size)) {
                 if (product.variation['@id'] === sale.variation['@id'] && product.size['@id'] === sale.size['@id']) {
                     return true;
@@ -190,7 +238,7 @@ const StockStats = () => {
         product,
         variation,
         size,
-        stock: stocks.find(s => isDefined(s.platform)),
+        stock: stocks.find(s => !Roles.isStoreManager(currentUser) && isDefined(s.platform) || isDefined(s.store)),
         name: getProductName(product, variation, size),
         ordered: 0,
         provisioned: 0,

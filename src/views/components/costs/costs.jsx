@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import MercureContext from 'src/contexts/MercureContext';
 import ProductActions from '../../../services/ProductActions'
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CCardFooter, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
+import { updateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
 import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import useWindowDimensions from 'src/helpers/screenDimensions';
 import { getWritableProduct } from 'src/helpers/products';
@@ -12,16 +14,26 @@ const Costs = (props) => {
     const itemsPerPage = 30;
     const fields = ['name', 'Avantageux', 'Coût HT'];
     const { width } = useWindowDimensions();
+    const { updatedProducts, setUpdatedProducts } = useContext(MercureContext);
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
     const [details, setDetails] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [mercureOpering, setMercureOpering] = useState(false);
 
     useEffect(() => getDisplayedProducts(), []);
     useEffect(() => getDisplayedProducts(), [search]);
     useEffect(() => getDisplayedProducts(currentPage), [currentPage]);
+
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedProducts) && !mercureOpering) {
+            setMercureOpering(true);
+            updateViewedProducts(displayedProducts, setDisplayedProducts, updatedProducts, setUpdatedProducts)
+                .then(response => setMercureOpering(response));
+        }
+    }, [updatedProducts]);
 
     const getDisplayedProducts = async (page = 1) => {
         try {

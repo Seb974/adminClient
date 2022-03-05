@@ -12,7 +12,7 @@ import Characteristics from 'src/components/productPages/characteristics';
 import Type from 'src/components/productPages/type';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
-import { getDateFrom } from 'src/helpers/utils';
+import { getDateFrom, isDefined } from 'src/helpers/utils';
 import Suppliers from 'src/components/productPages/Suppliers';
 import PlatformContext from 'src/contexts/PlatformContext';
 
@@ -138,7 +138,7 @@ const ProductPage = ({ match, history }) => {
         return savedVariations;
     };
 
-    return (
+    return !isDefined(product) ? <></> : (
         <CRow>
             <CCol xs="12" sm="12">
                 <CCard>

@@ -15,6 +15,33 @@ export const updateBetween = (dates, provisions, setProvisions, data, setData, u
     return new Promise((resolve, reject) => resolve(false));
 };
 
+export const updateAllBetween = (dates, provisions, setProvisions, data, setData) => {
+    const { updatedProvisions, newData } = getAllUpdatedProvisions(data, dates, provisions);
+    setProvisions(updatedProvisions);
+    setData(newData.filter(d => !isDefined(d.treated)));
+    return new Promise((resolve, reject) => resolve(false));
+};
+
+const getAllUpdatedProvisions = (data, dates, provisions) => {
+    let updatedProvisions = provisions;
+    const { start, end } = formatUTC(dates);
+    const newData = data.map(provision => {
+        const isDeleted = !isDefined(provision.id);
+        if (!isDeleted) {
+            const provisionDate = new Date(provision.provisionDate);
+            const provisionToEdit = {...provision, goods : getFormattedGoods(provision)};
+            if (provisionDate >= start && provisionDate <= end) {
+                const index = updatedProvisions.findIndex(p => p.id === provisionToEdit.id);
+                updatedProvisions = index !== -1 ? updatedProvisions.map(p => p.id !== provisionToEdit.id ? p : provisionToEdit) : [...updatedProvisions, provisionToEdit];
+            }
+        } else {
+            updatedProvisions = [...updatedProvisions].filter(p => p['@id'] !== provision['@id']);
+        }
+        return {...provision, treated: true};
+    });
+    return { updatedProvisions, newData };
+};
+
 const getProvisionsWithUpdates = (data, dates, sellers, provisions, user, seller, suppliers = null) => {
     let updatedProvisions = provisions;
     const { start, end } = formatUTC(dates);

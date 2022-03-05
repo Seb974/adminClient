@@ -75,7 +75,7 @@ const MercureHub = ({ children }) => {
         if (data['@id'].includes('order_entities') && updatedOrders.findIndex(o => o.id === data.id) === -1)
             setUpdatedOrders([...updatedOrders, data]);
 
-        if (data['@id'].includes('products') || data['@id'].includes('prices') || data['@id'].includes('stocks'))
+        if (data['@id'].includes('products') || data['@id'].includes('prices') || data['@id'].includes('stocks') || data['@id'].includes('costs'))
             setUpdatedProducts([...updatedProducts, data]);
     };
 

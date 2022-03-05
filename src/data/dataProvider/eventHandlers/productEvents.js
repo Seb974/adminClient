@@ -13,9 +13,40 @@ export const updateContext = (products, setProducts, data, setData) => {
     return new Promise((resolve, reject) => resolve(false));
 };
 
+export const updateViewedProducts = (products, setProducts, data, setData) => {
+    let updatedProducts = products;
+    const newData = data.map(entity => {
+        updatedProducts = entity['@id'].includes('products') ? treatViewedProduct(entity, updatedProducts) : 
+                          entity['@id'].includes('prices') ? treatPrice(entity, updatedProducts) :
+                          treatStock(entity, updatedProducts);
+        return {...entity, treated: true};
+    });
+    setProducts(updatedProducts);
+    setData(newData.filter(d => !isDefined(d.treated)));
+    return new Promise((resolve, reject) => resolve(false));
+};
+
+export const getUpdateViewedProducts = (products, data, setData) => {
+    let updatedProducts = products;
+    const newData = data.map(entity => {
+        updatedProducts = entity['@id'].includes('products') ? treatViewedProduct(entity, updatedProducts) : 
+                          entity['@id'].includes('prices') ? treatPrice(entity, updatedProducts) :
+                          treatStock(entity, updatedProducts);
+        return {...entity, treated: true};
+    });
+    // setProducts(updatedProducts);
+    setData(newData.filter(d => !isDefined(d.treated)));
+    return new Promise((resolve, reject) => resolve(updatedProducts));
+};
+
 const treatProduct = (product, updatedProducts) => {
     return !isDefined(product.id) ? [...updatedProducts].filter(p => p['@id'] !== product['@id']) : getUpdatedProducts(product, updatedProducts);
 };
+
+const treatViewedProduct = (product, updatedProducts) => {
+    return !isDefined(product.id) ? [...updatedProducts].filter(p => p['@id'] !== product['@id']) : getUpdatedViewedProducts(product, updatedProducts);
+};
+
 
 const treatPrice = (price, updatedProducts) => {
     const linkedProduct = updatedProducts.find(pdt => pdt['@id'] === price.product);
@@ -34,9 +65,14 @@ const getUpdatedProducts = (newProduct, updatedProducts) => {
     return index !== -1 ? updatedProducts.map(o => o.id !== newProduct.id ? o : newProduct) : [...updatedProducts, newProduct];
 };
 
+const getUpdatedViewedProducts = (newProduct, updatedProducts) => {
+    const index = updatedProducts.findIndex(o => o.id === newProduct.id);
+    return index !== -1 ? updatedProducts.map(o => o.id !== newProduct.id ? o : newProduct) : updatedProducts;
+};
+
 const getProductWithNewPrice = (product, price) => {
     if (!isDefined(price.id)) {
-        return {...product, prices: product.prices.filter(p => p['@id'] === price['@id'])};
+        return {...product, prices: product.prices.filter(p => p['@id'] !== price['@id'])};
     } else {
         const priceIndex = product.prices.findIndex(p => p.id === price.id);
         const newPrices = priceIndex !== -1 ? product.prices.map(p => p.id !== price.id ? p : price) : [...product.prices, price];

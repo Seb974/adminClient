@@ -13,7 +13,7 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
     const [details, setDetails] = useState([]);
     const [receivedProvision, setReceivedProvision] = useState({
         ...item, 
-        isTruckCompliant: true,        // isDefined(item.isTruckCompliant) ? item.isTruckCompliant :
+        isTruckCompliant: isDefined(item.isTruckCompliant) ? item.isTruckCompliant : true,
         temperature: isDefined(item.temperature) ? item.temperature : 0,
         comments: isDefined(item.comments) ? item.comments : "",
         goods: item.goods.map(g => g.product.needsTraceability ? 
@@ -21,7 +21,6 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
             {...g, received: g.quantity}
         )
     });
-
 
     const getProductName = (product, variation, size) => {
         const variationName = exists(variation, 'color') ? " - " + variation.color : "";

@@ -1,9 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
+import MercureContext from 'src/contexts/MercureContext';
 import PriceGroupActions from '../../../services/PriceGroupActions';
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CCardFooter, CButton } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { updateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
 import Spinner from 'react-bootstrap/Spinner';
 import Select from 'src/components/forms/Select';
 import CIcon from '@coreui/icons-react';
@@ -13,6 +15,7 @@ import ProductActions from 'src/services/ProductActions';
 const Prices = (props) => {
 
     const itemsPerPage = 500;
+    const { updatedProducts, setUpdatedProducts } = useContext(MercureContext);
     const { currentUser, selectedCatalog, supervisor } = useContext(AuthContext);
     const [priceGroups, setPriceGroups] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -24,6 +27,7 @@ const Prices = (props) => {
     const [csvContent, setCsvContent] = useState("");
     const [userGroups, setUserGroups] = useState([]);
     const [displayedProducts, setDisplayedProducts] = useState([]);
+    const [mercureOpering, setMercureOpering] = useState(false);
 
     const csvCode = 'data:text/csv;charset=utf-8,SEP=,%0A' + encodeURIComponent(csvContent);
 
@@ -40,6 +44,14 @@ const Prices = (props) => {
         if (isDefinedAndNotVoid(displayedProducts) && isDefined(selectedPriceGroup))
             setCsvContent(getCsvContent());
     }, [displayedProducts, selectedPriceGroup]);
+
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedProducts) && !mercureOpering) {
+            setMercureOpering(true);
+            updateViewedProducts(displayedProducts, setDisplayedProducts, updatedProducts, setUpdatedProducts)
+                .then(response => setMercureOpering(response));
+        }
+    }, [updatedProducts]);
 
     const fetchPriceGroup = () => {
         PriceGroupActions
@@ -108,8 +120,11 @@ const Prices = (props) => {
     };
 
     const getPriceAmount = product => {
-        const priceEntity = product.prices.find(p => p.priceGroup.name === selectedPriceGroup.name);
-        return isDefined(priceEntity) && isDefined(priceEntity.amount) ? priceEntity.amount : 0;
+        if (isDefined(product) && isDefinedAndNotVoid(product.prices)) {
+            const priceEntity = product.prices.find(p => p.priceGroup.name === selectedPriceGroup.name);
+            return isDefined(priceEntity) && isDefined(priceEntity.amount) ? priceEntity.amount : 0;
+        }
+        return 0;
     };
 
     const getSupervisorRoles = users => {

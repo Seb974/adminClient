@@ -4,6 +4,7 @@ import TaxActions from '../../services/TaxActions';
 import PriceGroupActions from '../../services/PriceGroupActions';
 import Flatpickr from 'react-flatpickr';
 import { French } from "flatpickr/dist/l10n/fr.js";
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 
 const Price = ({product, setProduct, history }) => {
 
@@ -21,7 +22,7 @@ const Price = ({product, setProduct, history }) => {
     }, [product, taxes]);
 
     useEffect(() => {
-        if (product.prices.length === 0 && priceGroups.length > 0)
+        if (!isDefinedAndNotVoid(product.prices) && priceGroups.length > 0)
             setProduct({...product, prices: priceGroups.map(price => ({amount: "", priceGroup: price})) });
     }, [product, priceGroups]);
 
@@ -73,7 +74,7 @@ const Price = ({product, setProduct, history }) => {
         setProduct({...product, offerEnd: newDate});
     };
 
-    return (
+    return !isDefined(product) ? <></> : (
         <>
             <hr className="mt-5 mb-5"/>
             <CFormGroup row>
@@ -88,9 +89,9 @@ const Price = ({product, setProduct, history }) => {
                     <CInputGroup>
                         <CInput
                             type="number"
-                            name={ product.prices.length <=0 ? "price" : product.prices[0].priceGroup.name }
-                            id={ product.prices.length <=0 ? "price" : product.prices[0].priceGroup.name }
-                            value={ product.prices.length <=0 ? "" : product.prices[0].amount }
+                            name={ !isDefinedAndNotVoid(product.prices) ? "price" : product.prices[0].priceGroup.name }
+                            id={  !isDefinedAndNotVoid(product.prices) ? "price" : product.prices[0].priceGroup.name }
+                            value={  !isDefinedAndNotVoid(product.prices) ? "" : product.prices[0].amount }
                             onChange={ handlePriceChange } 
                             placeholder={ product.uniquePrice ? "Prix HT" : "Prix de base HT"}
                         />

@@ -5,11 +5,13 @@ import Select from 'src/components/forms/Select';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
 import Roles from 'src/config/Roles';
 import AuthContext from 'src/contexts/AuthContext';
+import MercureContext from 'src/contexts/MercureContext';
 import PlatformContext from 'src/contexts/PlatformContext';
 import { getUTCDates } from 'src/helpers/days';
 import { getStatus } from 'src/helpers/orders';
 import { extractSales, getFormattedSales, getProductsAndVariations, isItemProduct, isSelectable, isSelectedItem } from 'src/helpers/supplying';
 import { getEvolutionPoints, getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { updateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
 import DepartmentActions from 'src/services/DepartmentActions';
 import OrderActions from 'src/services/OrderActions';
 import ProductActions from 'src/services/ProductActions';
@@ -25,6 +27,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     const rates = getEvolutionPoints();
     const { platform } = useContext(PlatformContext);
     const { currentUser } = useContext(AuthContext);
+    const { updatedProducts, setUpdatedProducts } = useContext(MercureContext);
     const selectedStatus = getStatus().filter(s => !["ON_PAYMENT", "ABORTED"].includes(s.value));
     const failMessage = "Un problème est survenu lors de lu chargement des données. Vérifiez votre l'état de votre connexion.\n";
     const failToast = { position: 'top-right', autohide: 7000, closeButton: true, fade: true, color: 'danger', messsage: failMessage, title: 'Erreur de chargement' };
@@ -40,6 +43,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
 
     const [selectedDepartments, setSelectedDepartments] = useState(null);
     const [hasIndependencies, setHasIndependencies] = useState(false);
+    const [mercureOpering, setMercureOpering] = useState(false);
 
     useEffect(() => getDependencies(), []);
 
@@ -49,6 +53,13 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied, selectedDepartments]);
     useEffect(() => getDisplayedProducts(true), [selectedDepartments]);
 
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedProducts) && !mercureOpering) {
+            setMercureOpering(true);
+            updateViewedProducts(products, setProducts, updatedProducts, setUpdatedProducts)
+                .then(response => setMercureOpering(response));
+        }
+    }, [updatedProducts]);
 
     const getDependencies = () => {
         fetchDepartments();

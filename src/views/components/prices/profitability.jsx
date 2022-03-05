@@ -4,6 +4,7 @@ import PriceGroupActions from '../../../services/PriceGroupActions';
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CInputGroup, CInput, CInputGroupAppend, CInputGroupText, CCardFooter, CFormGroup, CSwitch } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
+import { getUpdateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
@@ -24,7 +25,7 @@ const Profitability = (props) => {
     const fields = ['Produit', 'Coût U', 'Qté', 'Valeur', 'Prix de vente TTC', 'Marge'];
     const { currentUser, seller } = useContext(AuthContext);
     const { platform } = useContext(PlatformContext);
-    const { updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
+    const { updatedProvisions, setUpdatedProvisions, updatedProducts, setUpdatedProducts } = useContext(MercureContext);
     const [provisions, setProvisions] = useState([]);
     const [priceGroups, setPriceGroups] = useState([]);
     const [sellers, setSellers] = useState([]);
@@ -36,6 +37,7 @@ const Profitability = (props) => {
     const [viewedProducts, setViewedProducts] = useState([]);
     const [updated, setUpdated] = useState([]);
     const [mercureOpering, setMercureOpering] = useState(false);
+    const [mercureProductOpering, setMercureProductOpering] = useState(false);
     
     const [stores, setStores] = useState([]);
     const [mainView, setMainView] = useState(!Roles.isStoreManager(currentUser));
@@ -92,6 +94,19 @@ const Profitability = (props) => {
                 .then(response => setMercureOpering(response));
         }
     }, [updatedProvisions]);
+
+    useEffect(() => {
+        if (isDefinedAndNotVoid(updatedProducts) && !mercureProductOpering) {
+            setMercureProductOpering(true);
+            if (mainView)
+                getUpdateViewedProducts(viewedProducts, updatedProducts, setUpdatedProducts)
+                .then(response => {
+                    getProductsWithCosts(response)
+                    setMercureProductOpering(false);
+                })
+                .catch(error => setMercureProductOpering(false));
+        }
+    }, [updatedProducts]);
 
     const fetchProvisions = () => {
         if (isDefined(selectedSeller) && isDefinedAndNotVoid(selectedSuppliers) && valuation === "AVERAGE") {
