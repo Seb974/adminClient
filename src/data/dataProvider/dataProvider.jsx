@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import ProductsContext from '../../contexts/ProductsContext';
 import AuthContext from '../../contexts/AuthContext';
 import AuthActions from '../../services/AuthActions';
-// import ProductActions from 'src/services/ProductActions';
 import DeliveryContext from 'src/contexts/DeliveryContext';
 import CatalogActions from 'src/services/CatalogActions';
 import ContainerContext from 'src/contexts/ContainerContext';
@@ -16,6 +15,7 @@ import Mercure from 'src/mercure/Mercure';
 import CatalogContext from 'src/contexts/CatalogContext';
 import MessageContext from 'src/contexts/MessageContext';
 import MessageActions from 'src/services/MessageActions';
+import { getStore } from 'src/helpers/user';
 
 const DataProvider = ({ children }) => {
 
@@ -37,6 +37,7 @@ const DataProvider = ({ children }) => {
     const [selectedCatalog, setSelectedCatalog] = useState({});
     const [tourings, setTourings] = useState([]);
     const [seller, setSeller] = useState(null);
+    const [store, setStore] = useState(null);
     const [supervisor, setSupervisor] = useState(null);
     const [platform, setPlatform] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -45,8 +46,6 @@ const DataProvider = ({ children }) => {
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
         PlatformActions.find()
                        .then(response => setPlatform(response));
-        // ProductActions.findAll()
-        //               .then(response => setProducts(response));
         CatalogActions.findAll()
                       .then(response => setCatalogs(response));
     },[]);
@@ -55,15 +54,19 @@ const DataProvider = ({ children }) => {
         setCurrentUser(AuthActions.getCurrentUser());
         AuthActions.getUserSettings()
                    .then(response => setSettings(response));
-        // ProductActions.findAll()
-        //               .then(response => setProducts(response));
     }, [isAuthenticated]);
 
     useEffect(() => {
         if (Roles.isSeller(currentUser) || Roles.isStoreManager(currentUser))
             SellerActions
                 .findAll()
-                .then(response => setSeller(response[0]));
+                .then(response => {
+                    setSeller(response[0]);
+                    if (Roles.isStoreManager(currentUser)) {
+                        const managerStore = getStore(response[0], currentUser);
+                        setStore(managerStore);
+                    }
+                });
         else if (Roles.isSupervisor(currentUser))
             SupervisorActions
                 .getSupervisor(currentUser)
@@ -85,7 +88,7 @@ const DataProvider = ({ children }) => {
         <PlatformContext.Provider value={ {platform, setPlatform} }>
         <MessageContext.Provider value={ {messages, setMessages} }>
         <CatalogContext.Provider value={ {catalogs, setCatalogs} }>
-        <AuthContext.Provider value={ {isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, eventSource, setEventSource, settings, setSettings, selectedCatalog, setSelectedCatalog, seller, setSeller, supervisor, setSupervisor} }>
+        <AuthContext.Provider value={ {isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, eventSource, setEventSource, settings, setSettings, selectedCatalog, setSelectedCatalog, seller, setSeller, supervisor, setSupervisor, store, setStore} }>
         <DeliveryContext.Provider value={ {cities, setCities, relaypoints, setRelaypoints, condition, setCondition, packages, setPackages, totalWeight, setTotalWeight, availableWeight, setAvailableWeight, tourings, setTourings} }>
         <ContainerContext.Provider value={{ containers, setContainers }}>
         <ProductsContext.Provider value={ {products, setProducts, categories, setCategories} }>

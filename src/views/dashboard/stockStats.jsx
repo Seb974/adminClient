@@ -8,25 +8,26 @@ import { isSameDate } from 'src/helpers/days';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { updateStatusBetween } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import { updateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
-import { updateAllBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
+import { updateAllBetween, updateAllFromStoreBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
 import MercureContext from 'src/contexts/MercureContext';
 import ItemActions from 'src/services/ItemActions';
 import GoodActions from 'src/services/GoodActions';
 import StoreActions from 'src/services/StoreActions';
+import Spinner from 'react-bootstrap/Spinner';
 import Roles from 'src/config/Roles';
 
 const StockStats = () => {
 
     const itemsPerPage = 6;
     const status = getActiveStatus();
-    const fields = [' ', 'Produit', 'Stock', 'Commandé', 'Vendu', 'Utilisation' ];
-    const { currentUser, supervisor, seller } = useContext(AuthContext);
+    const fields = [' ', 'Produit', 'Disponible', 'Commandé', 'Vendu', 'Utilisation' ];
+    const { currentUser, supervisor, seller, store } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders, updatedProducts, setUpdatedProducts, updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
     const [mercureOpering, setMercureOpering] = useState(false);
     const [mercureProductOpering, setMercureProductOpering] = useState(false);
     const [mercureProvisionOpering, setMercureProvisionOpering] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [sales, setSales] = useState([]);
-    const [store, setStore] = useState(null);
     const [goods, setGoods] =  useState([]);
     const [dates, setDates] = useState({start: new Date(), end: new Date() });
     const [products, setProducts] = useState([]);
@@ -54,19 +55,25 @@ const StockStats = () => {
 
     useEffect(() => {
         if (isDefinedAndNotVoid(updatedProvisions) && !mercureProvisionOpering) {
-            setMercureProvisionOpering(true);
-            updateAllBetween(getUTCDates(), provisions, setProvisions, updatedProvisions, setUpdatedProducts)
-                .then(response => setMercureProvisionOpering(false)); 
+            if (!Roles.isStoreManager(currentUser)) {
+                setMercureProvisionOpering(true);
+                updateAllBetween(getUTCDates(), provisions, setProvisions, updatedProvisions, setUpdatedProducts)
+                    .then(response => setMercureProvisionOpering(false)); 
+            } else if (isDefined(store)) {
+                setMercureProvisionOpering(true);
+                updateAllFromStoreBetween(getUTCDates(), store, provisions, setProvisions, updatedProvisions, setUpdatedProducts)
+                    .then(response => setMercureProvisionOpering(false)); 
+            }
         }
     }, [updatedProvisions]);
 
-    useEffect(() => {
-        getStore();
-        fetchProducts();
-    }, []);
-
+    useEffect(() => fetchProducts(), []);
     useEffect(() => fetchProducts(), [store]);
-    useEffect(() => fetchProducts(currentPage), [currentPage])
+    useEffect(() => fetchProducts(currentPage), [currentPage]);
+
+    useEffect(() => getData(), [products, dates]);
+    useEffect(() => formatDisplayedProducts(), [productsEntities]);
+    useEffect(() => getDisplayedProducts(), [sales, goods]);
 
     useEffect(() => {
         let newGoods = [];
@@ -80,11 +87,6 @@ const StockStats = () => {
         setGoods(displayableGoods);
     }, [provisions]);
 
-    useEffect(() => getData(), [products, dates]);
-    useEffect(() => formatDisplayedProducts(), [productsEntities]);
-    useEffect(() => getDisplayedProducts(), [sales, goods])
-
-
     const getData = async () => {
         const sales = await fetchItems();
         const provisions = await fetchGoods();
@@ -96,14 +98,7 @@ const StockStats = () => {
         const productsWithSales = isDefinedAndNotVoid(sales) ? getProductsWithSales(products, sales) : products;
         const productsWithProvisions = isDefinedAndNotVoid(goods) ? getProductsWithProvisions(productsWithSales, goods) : productsWithSales;
         setDisplayedProducts(productsWithProvisions);
-    };
-
-    const getStore = () => {
-        if (Roles.isStoreManager(currentUser)) {
-            StoreActions
-                .findAll()
-                .then(response => setStore(response[0]));
-        }
+        setLoading(false);
     };
 
     const formatDisplayedProducts = () => {
@@ -115,39 +110,50 @@ const StockStats = () => {
 
     const fetchProducts = ( page = 1 ) => {
         if (page >= 1) {
-            if (!Roles.isStoreManager(currentUser)) {
-                ProductActions
-                    .findBestSales(page, itemsPerPage)
-                    .then(response => {
-                        setTotalItems(response['hydra:totalItems']);
-                        setProductsEntities(response['hydra:member']);
-                    });
-            } else if (isDefined(store)) {
-                StoreActions
-                    .getProducts(store, page)
-                    .then(response => {
-                        const ids = response.map(p => p.products_ref_ext);
-                        ProductActions
-                            .findProductWithIds(ids)
-                            .then(response => {
-                                setTotalItems(response['hydra:totalItems']);
-                                setProductsEntities(response['hydra:member']);
-                            })
-                    })
+            try {
+                if (!Roles.isStoreManager(currentUser)) {
+                    setLoading(true);
+                    ProductActions
+                        .findBestSales(page, itemsPerPage)
+                        .then(response => {
+                            setTotalItems(response['hydra:totalItems']);
+                            setProductsEntities(response['hydra:member']);
+                        });
+                } else if (isDefined(store)) {
+                    setLoading(true);
+                    StoreActions
+                        .getProducts(store, page)
+                        .then(response => {
+                            const ids = response.map(p => p.products_ref_ext);
+                            ProductActions
+                                .findProductWithIds(ids)
+                                .then(response => {
+                                    setTotalItems(response['hydra:totalItems']);
+                                    setProductsEntities(response['hydra:member']);
+                                })
+                        })
+                }
+            } catch (error) {
+                setLoading(false);
             }
         }
     };
 
     const fetchItems = async () => {
         if (isDefinedAndNotVoid(products)) {
-            if (!Roles.isSeller(currentUser)) {
-                return await ItemActions
-                    .findProductsBetween(getUTCDates(dates), products)
-                    .then(response => response['hydra:member']);
-            } else if (isDefined(seller)) {
-                return await ItemActions
-                    .findSellerProductsBetween(getUTCDates(dates), products, seller)
-                    .then(response => response['hydra:member']);
+            try {
+                setLoading(true);
+                if (!Roles.isSeller(currentUser)) {
+                    return await ItemActions
+                        .findProductsBetween(getUTCDates(dates), products)
+                        .then(response => response['hydra:member']);
+                } else if (isDefined(seller)) {
+                    return await ItemActions
+                        .findSellerProductsBetween(getUTCDates(dates), products, seller)
+                        .then(response => response['hydra:member']);
+                }
+            } catch (error) {
+                setLoading(false);
             }
         }
         return new Promise((resolve, reject) => resolve([]));
@@ -155,18 +161,23 @@ const StockStats = () => {
 
     const fetchGoods = async () => {
         if (isDefinedAndNotVoid(products)) {
-            if (Roles.isSeller(currentUser) && isDefined(seller)) {
-                return await GoodActions
-                    .findSellerProductsBetween(getUTCDates(dates), products, seller)
-                    .then(response => response['hydra:member']);
-            } else if (Roles.isStoreManager(currentUser) && isDefined(store)) {
-                return await GoodActions
-                    .findStoreProductsBetween(getUTCDates(dates), products, store)
-                    .then(response => response['hydra:member']);
-            } else {
-                return await GoodActions
-                    .findProductsBetween(getUTCDates(dates), products)
-                    .then(response => response['hydra:member']);
+            try {
+                setLoading(true);
+                if (Roles.isSeller(currentUser) && isDefined(seller)) {
+                    return await GoodActions
+                        .findSellerProductsBetween(getUTCDates(dates), products, seller)
+                        .then(response => response['hydra:member']);
+                } else if (Roles.isStoreManager(currentUser) && isDefined(store)) {
+                    return await GoodActions
+                        .findStoreProductsBetween(getUTCDates(dates), products, store)
+                        .then(response => response['hydra:member']);
+                } else {
+                    return await GoodActions
+                        .findProductsBetween(getUTCDates(dates), products)
+                        .then(response => response['hydra:member']);
+                }
+            } catch (error) {
+                setLoading(false);
             }
         }
         return new Promise((resolve, reject) => resolve([]));
@@ -347,71 +358,79 @@ const StockStats = () => {
                     </CRow>
                 </CCardHeader>
                 <CCardBody>
-                    <CDataTable
-                        items={ displayedProducts }
-                        fields={ !Roles.isStoreManager(currentUser) ? fields : fields.filter(f => f !== 'Vendu'  && f !== 'Utilisation') }
-                        bordered
-                        itemsPerPage={ displayedProducts.length }
-                        pagination={{
-                          'pages': Math.ceil(totalItems / itemsPerPage),
-                          'activePage': currentPage,
-                          'onActivePageChange': page => setCurrentPage(page),
-                          'align': 'center',
-                          'dots': true,
-                          'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
-                        }}
-                        scopedSlots = {{
-                            ' ':
-                                item => <td className="text-center">
-                                            <div className="c-avatar"> 
-                                                { getSign(item) }
-                                            </div>
-                                        </td>
-                            ,
-                            'Produit':
-                                item => <td>
-                                            <div>
-                                                <strong>{ item.name }</strong>
-                                            </div>
-                                            <div className="small text-muted">
-                                                <span>Sécurité : { getSecurity(item) + " " + getUnit(item) }</span> | Alerte : { getAlert(item) + " " + getUnit(item) }
-                                            </div>
-                                        </td>
-                                ,
-                            'Utilisation':
-                                item => <td>
-                                            <div className="clearfix">
-                                                <div className="float-left">
-                                                    <strong>{ (item.ordered / (getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned ): 1) * 100).toFixed(0) + '%' }</strong>
+                    { loading ?
+                        <CRow>
+                            <CCol xs="12" lg="12" className="text-center">
+                                <Spinner animation="border" variant="danger"/>
+                            </CCol>
+                        </CRow>
+                        :
+                        <CDataTable
+                            items={ displayedProducts }
+                            fields={ !Roles.isStoreManager(currentUser) ? fields : fields.filter(f => f !== 'Vendu'  && f !== 'Utilisation') }
+                            bordered
+                            itemsPerPage={ displayedProducts.length }
+                            pagination={{
+                            'pages': Math.ceil(totalItems / itemsPerPage),
+                            'activePage': currentPage,
+                            'onActivePageChange': page => setCurrentPage(page),
+                            'align': 'center',
+                            'dots': true,
+                            'className': Math.ceil(totalItems / itemsPerPage) > 1 ? "d-block" : "d-none"
+                            }}
+                            scopedSlots = {{
+                                ' ':
+                                    item => <td className="text-center">
+                                                <div className="c-avatar"> 
+                                                    { getSign(item) }
                                                 </div>
-                                                <div className="float-right">
-                                                    {/* <small className="text-muted">Jun 11, 2015 - Jul 10, 2015</small> */}
-                                                    <small className="text-muted">{ item.clients + " client" + (item.clients > 1 ? "s" : "") }</small>
+                                            </td>
+                                ,
+                                'Produit':
+                                    item => <td>
+                                                <div>
+                                                    <strong>{ item.name }</strong>
                                                 </div>
-                                            </div>
-                                            <CProgress className="progress-xs" color={ getColor(item) } value={ (item.ordered /(getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned ): 1) * 100) } />
-                                        </td>
+                                                <div className="small text-muted">
+                                                    <span>Sécurité : { getSecurity(item) + " " + getUnit(item) }</span> | Alerte : { getAlert(item) + " " + getUnit(item) }
+                                                </div>
+                                            </td>
+                                    ,
+                                'Utilisation':
+                                    item => <td>
+                                                <div className="clearfix">
+                                                    <div className="float-left">
+                                                        <strong>{ (item.ordered / (getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned ): 1) * 100).toFixed(0) + '%' }</strong>
+                                                    </div>
+                                                    <div className="float-right">
+                                                        {/* <small className="text-muted">Jun 11, 2015 - Jul 10, 2015</small> */}
+                                                        <small className="text-muted">{ item.clients + " client" + (item.clients > 1 ? "s" : "") }</small>
+                                                    </div>
+                                                </div>
+                                                <CProgress className="progress-xs" color={ getColor(item) } value={ (item.ordered /(getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned ): 1) * 100) } />
+                                            </td>
+                                    ,
+                                'Disponible':
+                                    item => <td>
+                                                { getQuantity(item) + " " + getUnit(item) }
+                                            </td>
+                                    ,
+                                'Commandé':
+                                    item => <td>
+                                                {/* <strong> */}
+                                                    { item.provisioned.toFixed(2) + " " + getUnit(item) }
+                                                {/* </strong> */}
+                                            </td>
                                 ,
-                            'Stock':
-                                item => <td>
-                                            { getQuantity(item) + " " + getUnit(item) }
-                                        </td>
-                                ,
-                            'Commandé':
-                                item => <td>
-                                            {/* <strong> */}
-                                                { item.provisioned.toFixed(2) + " " + getUnit(item) }
-                                            {/* </strong> */}
-                                        </td>
-                            ,
-                            'Vendu':
-                                item => <td>
-                                            {/* <strong> */}
-                                                { item.ordered.toFixed(2) + " " + getUnit(item) }
-                                            {/* </strong> */}
-                                        </td>
-                        }} 
-                    />
+                                'Vendu':
+                                    item => <td>
+                                                {/* <strong> */}
+                                                    { item.ordered.toFixed(2) + " " + getUnit(item) }
+                                                {/* </strong> */}
+                                            </td>
+                            }} 
+                        />
+                    }
                 </CCardBody>
             </CCard>
         </CCol>

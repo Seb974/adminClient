@@ -22,6 +22,35 @@ export const updateAllBetween = (dates, provisions, setProvisions, data, setData
     return new Promise((resolve, reject) => resolve(false));
 };
 
+export const updateAllFromStoreBetween = (dates, store, provisions, setProvisions, data, setData) => {
+    const { updatedProvisions, newData } = getAllUpdatedProvisionsFromStore(data, store, dates, provisions);
+    setProvisions(updatedProvisions);
+    setData(newData.filter(d => !isDefined(d.treated)));
+    return new Promise((resolve, reject) => resolve(false));
+};
+
+const getAllUpdatedProvisionsFromStore = (data, store, dates, provisions) => {
+    let updatedProvisions = provisions;
+    const { start, end } = formatUTC(dates);
+    const newData = data.map(provision => {
+        const isDeleted = !isDefined(provision.id);
+        if (!isDeleted && isProvisionFromStore(provision, store)) {
+            const provisionDate = new Date(provision.provisionDate);
+            const provisionToEdit = {...provision, goods : getFormattedGoods(provision)};
+            if (provisionDate >= start && provisionDate <= end) {
+                const index = updatedProvisions.findIndex(p => p.id === provisionToEdit.id);
+                updatedProvisions = index !== -1 ? updatedProvisions.map(p => p.id !== provisionToEdit.id ? p : provisionToEdit) : [...updatedProvisions, provisionToEdit];
+            }
+        } else {
+            updatedProvisions = [...updatedProvisions].filter(p => p['@id'] !== provision['@id']);
+        }
+        return {...provision, treated: true};
+    });
+    return { updatedProvisions, newData };
+};
+
+const isProvisionFromStore = (provision, store) => isDefined(provision.store) && provision.store.id === store.id;
+
 const getAllUpdatedProvisions = (data, dates, provisions) => {
     let updatedProvisions = provisions;
     const { start, end } = formatUTC(dates);
