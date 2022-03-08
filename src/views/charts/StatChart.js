@@ -40,7 +40,6 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
             viewedSales = isDefined(storeSales) && isDefined(sales) ? [...sales, ...storeSales] : [];
         else
             viewedSales = isDefined(sales) ? sales : [];
-
         setOrders(viewedSales);
   }, [sales, storeSales]);
 
@@ -93,7 +92,7 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
           .findBetween(getUTCDates(), sellers)
           .then(response => {
                 let storesProvisions = response;
-                if (Roles.hasAdminPrivileges(currentUser) || Roles.isPicker(currentUser))
+                if ( Roles.isPicker(currentUser))       // Roles.hasAdminPrivileges(currentUser) ||
                     storesProvisions = response.filter(p => isDefined(p.store) && isDefined(p.store.platform));
                 setProvisions(storesProvisions);
             });
@@ -123,13 +122,33 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
 
   const getSalesPerZone = () => zones.map(z => ({ name: z.name, total: orders.reduce((sum, s) => sum += z.cities.findIndex(c => c.zipCode === s.metas.zipcode) !== -1 ? getTotalOrder(s) : 0, 0) }));
 
-  const getTotalOrder = order => order.items.reduce((sum, i) => sum += i.price * (isDefined(i.deliveredQty) ? i.deliveredQty : i.orderedQty), 0);
+  const getTotalOrder = order => order.items.reduce((sum, i) => sum += i.price * getQuantity(i, order.status), 0);
+
+  const getVolumeOrder = order => order.items.reduce((sum, i) => sum += i.product.weight * getQuantity(i, order.status), 0);
+
+  const getVolumes = () => orders.reduce((sum, s) => sum += getVolumeOrder(s), 0).toFixed(2);
 
   const getClients = () => {
       const onlineClients = [...new Set(orders.filter(s => isDefined(s.email)).map(s => s.email))].length;
       const storeClients = orders.reduce((sum, curr) => sum += isDefined(curr.numberOfSales) ? curr.numberOfSales : 0, 0);
       return onlineClients + storeClients;
   };
+
+    const getQuantity = (item, status) => {
+        const { deliveredQty, preparedQty, orderedQty } = item;
+        return (
+            ["WAITING", "PRE-PREPARED"].includes(status) && isDefined(orderedQty) ? 
+                orderedQty : 
+            ["PREPARED", "READY", "ON_TRUCK"].includes(status) ? 
+                isDefined(preparedQty) ? preparedQty : 
+                isDefined(orderedQty) ? orderedQty : 0 :
+            ["COLLECTABLE", "DELIVERED", "SHIPPED"].includes(status) ? 
+                isDefined(deliveredQty) ? deliveredQty : 
+                isDefined(preparedQty) ? preparedQty : 
+                isDefined(orderedQty) ? orderedQty : 0 : 
+            0
+        );
+    };
 
   const getTurnover = () => {
     return orders.reduce((tSum, s) => {
@@ -173,42 +192,10 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
       setPeriod(datesArray);
   };
 
+  const hasAccessToTurnover = user => Roles.hasAdminPrivileges(user) || Roles.isSeller(user) || Roles.isStoreManager(user);
+
   return (
     <>
-        <CRow>
-            <CCol xs="12" sm={ !isDefined(supervisor) ? "6" : "4"} lg={ !isDefined(supervisor) ? "3" : "4"}>
-                <CWidgetIcon text="Commandes" header={ "" + orders.length } color="primary" iconPadding={ false }>
-                    <CIcon width={ 24 } name="cil-clipboard"/>
-                </CWidgetIcon>
-            </CCol>
-            { !isDefined(supervisor) && 
-                <CCol xs="12" sm="6" lg="3">
-                    <CWidgetIcon text="Clients" header={ !isDefined(supervisor) ? "" + getClients() : "0" } color="info" iconPadding={ false }>
-                        <CIcon width={ 24 } name="cil-people"/>
-                    </CWidgetIcon>
-                </CCol>
-            }
-            <CCol xs="12" sm={ !isDefined(supervisor) ? "6" : "4"} lg={ !isDefined(supervisor) ? "3" : "4"}>
-                <CWidgetIcon 
-                    text={ !isDefined(supervisor) ? "Chiffre d'affaires" : "Moyenne" }
-                    header={ !isDefined(supervisor) ? getTurnover() : (isDefinedAndNotVoid(orders) ? (getTurnover() / orders.length).toFixed(2) : 0) + " €" }
-                    color="warning"
-                    iconPadding={ false }
-                >
-                    <CIcon width={ 24 } name="cil-chart"/>
-                </CWidgetIcon>
-            </CCol>
-            <CCol xs="12" sm={ !isDefined(supervisor) ? "6" : "4"} lg={ !isDefined(supervisor) ? "3" : "4"}>
-                <CWidgetIcon 
-                    text={ !isDefined(supervisor) ? "Gain" : "Total" }
-                    header={ (!isDefined(supervisor) ? getGain() : getTurnover()) + " €" }
-                    color="danger" 
-                    iconPadding={ false }
-                >
-                    <CIcon width={ 24 } name="cil-money"/>
-                </CWidgetIcon>
-            </CCol>
-        </CRow>
         <CCard>
             <CCardBody>
               <CRow>
@@ -247,6 +234,70 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
                 </CCardFooter>
             }
           </CCard>
+          <CRow>
+            <CCol xs="12" sm={ hasAccessToTurnover(currentUser) ? "6" : "4"} lg={ hasAccessToTurnover(currentUser) ? "3" : "4"}>
+                <CWidgetIcon text="Commandes" header={ "" + orders.length } color="primary" iconPadding={ false }>
+                    <CIcon width={ 24 } name="cil-clipboard"/>
+                </CWidgetIcon>
+            </CCol>
+            { hasAccessToTurnover(currentUser) ?
+                <>
+                    <CCol xs="12" sm="6" lg="3">
+                        <CWidgetIcon 
+                            text="Clients" 
+                            header={ !isDefined(supervisor) ? "" + getClients() : "0" } 
+                            color="info" 
+                            iconPadding={ false }
+                        >
+                            <CIcon width={ 24 } name="cil-people"/>
+                        </CWidgetIcon>
+                    </CCol>
+                    <CCol xs="12" sm="6" lg="3">
+                        <CWidgetIcon 
+                            text={ "Chiffre d'affaires" }
+                            header={ getTurnover() }
+                            color="warning"
+                            iconPadding={ false }
+                        >
+                            <CIcon width={ 24 } name="cil-chart"/>
+                        </CWidgetIcon>
+                    </CCol>
+                    <CCol xs="12" sm="6" lg="3">
+                        <CWidgetIcon 
+                            text={ "Gain" }
+                            header={ getGain() }
+                            color="danger" 
+                            iconPadding={ false }
+                        >
+                            <CIcon width={ 24 } name="cil-money"/>
+                        </CWidgetIcon>
+                    </CCol>
+                </>
+                :
+                <>
+                    <CCol xs="12" sm={ hasAccessToTurnover(currentUser) ? "6" : "4"} lg={ hasAccessToTurnover(currentUser) ? "3" : "4"}>
+                        <CWidgetIcon 
+                            text={ !isDefined(supervisor) ? "Clients" : "Moyenne" }
+                            header={ !isDefined(supervisor) ? "" + getClients() : (isDefinedAndNotVoid(orders) ? (getTurnover() / orders.length).toFixed(2) : 0) + " €" }
+                            color="warning"
+                            iconPadding={ false }
+                        >
+                            <CIcon width={ 24 } name={!isDefined(supervisor) ? "cil-people" : "cil-chart"}/>
+                        </CWidgetIcon>
+                    </CCol>
+                    <CCol xs="12" sm={ hasAccessToTurnover(currentUser) ? "6" : "4"} lg={ hasAccessToTurnover(currentUser) ? "3" : "4"}>
+                        <CWidgetIcon 
+                            text={ !isDefined(supervisor) ? "Volume" : "Total" }
+                            header={ !isDefined(supervisor) ? (getVolumes() + " Kg" ) : (getTurnover() + " €") }
+                            color="danger" 
+                            iconPadding={ false }
+                        >
+                            <CIcon width={ 24 } name={!isDefined(supervisor) ? "cil-speedometer" : "cil-money"}/>
+                        </CWidgetIcon>
+                    </CCol>
+                </>
+            }
+        </CRow>
       </>
   )
 }

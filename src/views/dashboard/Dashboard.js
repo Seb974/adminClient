@@ -59,7 +59,7 @@ const Dashboard = () => {
                 .findSalesBetween(getUTCDates())
                 .then(response => {
                     let storesPurchases = response;
-                    if (Roles.hasAdminPrivileges(currentUser) || Roles.isPicker(currentUser))
+                    if (Roles.isPicker(currentUser))        // Roles.hasAdminPrivileges(currentUser) ||
                         storesPurchases = response.filter(p => isDefined(p.store.platform));
                     const newSales = getFormattedSales(storesPurchases);
                     setStoreSales(newSales);
@@ -75,7 +75,8 @@ const Dashboard = () => {
                 metas: store.metas,
                 deliveryDate: date,
                 isRemains: false,
-                items: purchases.map(({quantity, ...p}) => ({...p, orderedQty: quantity, unit: p.product.unit })),
+                status: "DELIVERED",
+                items: purchases.map(({quantity, ...p}) => ({...p, deliveredQty: quantity, unit: p.product.unit })),
                 store
             };
         })
@@ -90,9 +91,8 @@ const Dashboard = () => {
     return (
         <>
             <WidgetsDropdown sales={ sales } storeSales={ storeSales } interval={ widgetInterval }/>
-            <SalesStats />
-            { !isDefined(supervisor) && <StockStats /> }
             <StatChart style={{height: '300px', marginTop: '40px'}} sales={ sales } storeSales={ storeSales } interval={ interval }/>
+            { !isDefined(supervisor) ? <StockStats /> : <SalesStats /> }
         </>
     );
 }

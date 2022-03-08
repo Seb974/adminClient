@@ -97,7 +97,7 @@ const StockStats = () => {
     const getDisplayedProducts = () => {
         const productsWithSales = isDefinedAndNotVoid(sales) ? getProductsWithSales(products, sales) : products;
         const productsWithProvisions = isDefinedAndNotVoid(goods) ? getProductsWithProvisions(productsWithSales, goods) : productsWithSales;
-        setDisplayedProducts(productsWithProvisions);
+        setDisplayedProducts(productsWithProvisions.sort((a, b) => (getUsage(a) < getUsage(b)) ? 1 : -1));
         setLoading(false);
     };
 
@@ -142,7 +142,6 @@ const StockStats = () => {
     const fetchItems = async () => {
         if (isDefinedAndNotVoid(products)) {
             try {
-                setLoading(true);
                 if (!Roles.isSeller(currentUser)) {
                     return await ItemActions
                         .findProductsBetween(getUTCDates(dates), products)
@@ -162,7 +161,6 @@ const StockStats = () => {
     const fetchGoods = async () => {
         if (isDefinedAndNotVoid(products)) {
             try {
-                setLoading(true);
                 if (Roles.isSeller(currentUser) && isDefined(seller)) {
                     return await GoodActions
                         .findSellerProductsBetween(getUTCDates(dates), products, seller)
@@ -337,6 +335,8 @@ const StockStats = () => {
         return isDefined(product) ? product.unit : "";
     };
 
+    const getUsage = item => isDefined(item) ? item.ordered / (getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned) : 1) * 100 : 0;
+
     return (
         <CRow>
             <CCol>
@@ -400,14 +400,13 @@ const StockStats = () => {
                                     item => <td>
                                                 <div className="clearfix">
                                                     <div className="float-left">
-                                                        <strong>{ (item.ordered / (getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned ): 1) * 100).toFixed(0) + '%' }</strong>
+                                                        <strong>{ getUsage(item).toFixed(0) + '%' }</strong>
                                                     </div>
                                                     <div className="float-right">
-                                                        {/* <small className="text-muted">Jun 11, 2015 - Jul 10, 2015</small> */}
                                                         <small className="text-muted">{ item.clients + " client" + (item.clients > 1 ? "s" : "") }</small>
                                                     </div>
                                                 </div>
-                                                <CProgress className="progress-xs" color={ getColor(item) } value={ (item.ordered /(getQuantity(item) > 0 ? (getQuantity(item) + item.provisioned ): 1) * 100) } />
+                                                <CProgress className="progress-xs" color={ getColor(item) } value={ getUsage(item) } />
                                             </td>
                                     ,
                                 'Disponible':
