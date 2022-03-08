@@ -97,7 +97,7 @@ const StockStats = () => {
     const getDisplayedProducts = () => {
         const productsWithSales = isDefinedAndNotVoid(sales) ? getProductsWithSales(products, sales) : products;
         const productsWithProvisions = isDefinedAndNotVoid(goods) ? getProductsWithProvisions(productsWithSales, goods) : productsWithSales;
-        setDisplayedProducts(productsWithProvisions.sort((a, b) => (getUsage(a) < getUsage(b)) ? 1 : -1));
+        setDisplayedProducts(productsWithProvisions);       // .sort((a, b) => (getUsage(a) < getUsage(b)) ? 1 : -1)
         setLoading(false);
     };
 
