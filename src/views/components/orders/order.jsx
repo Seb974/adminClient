@@ -55,7 +55,6 @@ const Order = ({ match, history }) => {
     const failMessage = "Des informations sont manquantes ou erronées. Vérifiez s'il vous plaît le formulaire."
     const failToast = { position: 'top-right', autohide: 5000, closeButton: true, fade: true, color: 'danger', messsage: failMessage, title: 'Commande invalide' };
 
-    useEffect(() => console.log(catalog), [catalog]);
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         fetchCities();

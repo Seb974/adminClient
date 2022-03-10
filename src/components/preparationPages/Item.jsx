@@ -91,11 +91,48 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
             let newBatches = [];
             const stock = product.stocks.find(s => isDefined(s.platform));
             if (isDefined(stock) && isDefinedAndNotVoid(stock.batches))
-                newBatches = stock.batches;
-
+                newBatches = (getCompiledBatches(stock.batches)).sort((a, b) => (new Date(a.endDate) > new Date(b.endDate)) ? 1 : -1);
             setBatches(newBatches);
             return newBatches;
         }
+    };
+
+    const getCompiledBatches = batches => {
+        if (isDefinedAndNotVoid(batches)) {
+            const batchesNumbers = [...new Set(batches.map(b => b.number))];
+            return batchesNumbers.map(b => {
+                const currentBatchNumber = batches.filter(batch => batch.number === b);
+                return currentBatchNumber.length <= 1 ? currentBatchNumber[0] : getFormattedMultipleBatches(b, batches, currentBatchNumber);
+            });
+        }
+        return [];
+    };
+
+    const getFormattedMultipleBatches = (number, batches, currentBatchNumber) => {
+        const sumQty = getBatchQuantity(number, batches);
+        const sumInitQty = getBatchInitialQuantity(number, batches);
+        const smallestEndDate = getBatchDate(number, batches);
+        return {number, initialQty: sumInitQty, quantity: sumQty, endDate: smallestEndDate, originals: currentBatchNumber};
+    };
+
+    const getBatchQuantity = (number, batches) => {
+        const quantity = batches.reduce((sum, curr) => {
+            return sum += curr.number === number ? curr.quantity : 0;
+        }, 0);
+        return parseFloat(quantity.toFixed(2));
+    };
+
+    const getBatchInitialQuantity = (number, batches) => {
+        const quantity = batches.reduce((sum, curr) => {
+            return sum += curr.number === number ? curr.initialQty : 0;
+        }, 0);
+        return parseFloat(quantity.toFixed(2));
+    };
+
+    const getBatchDate = (number, batches) => {
+        return batches.reduce((minDate, curr) => {
+            return minDate = curr.number === number && (!isDefined(minDate) || new Date(curr.endDate) < minDate) ? new Date(curr.endDate) : minDate;
+        }, null);
     };
 
     const getBatchMaxQuantity = number => {

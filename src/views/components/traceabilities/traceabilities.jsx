@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BatchActions from '../../../services/BatchActions';
+import LostActions from '../../../services/LostActions';
 import TraceabilityActions from '../../../services/TraceabilityActions';
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CLabel, CInputGroup, CInput, CToaster, CToast, CToastHeader, CToastBody, CSwitch } from '@coreui/react';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
@@ -32,6 +33,7 @@ const Traceabilities = (props) => {
     const [loading, setLoading] = useState(false);
     const batchFields = ['N° de lot', 'DLC', 'Date d\'achat', 'Acheté', 'Reste', 'Fournisseur'];
     const traceabilityFields = ['N° de lot', 'DLC', 'Date de vente', 'Quantité', 'Client'];
+    const lostFields = ['N° de lot', 'Date de destruction', 'Quantité', 'Commentaires'];
     const voidMessage = "Aucun numéro de lot n'est renseigné.\n";
     const failMessage = "Un problème est survenu lors de lu chargement des données. Vérifiez votre l'état de votre connexion.\n";
     const voidToast = { position: 'top-right', autohide: 5000, closeButton: true, fade: true, color: 'warning', messsage: voidMessage, title: 'Information manquante' };
@@ -75,14 +77,15 @@ const Traceabilities = (props) => {
                     if (type === "upstream") {
                         setFields(batchFields);
                         data = await getBatches(page);
-        
                     } else if (type === "downstream") {
                         setFields(traceabilityFields);
                         data = await getTraceabilities(page);
+                    } else if (type === "losts") {
+                        setFields(lostFields);
+                        data = await getLosts(page);
                     }
                     
                     if (isDefined(data)) {
-                        console.log(data['hydra:member']);
                         setData(data['hydra:member']);
                         setTotalItems(data['hydra:totalItems']);
                     }
@@ -111,6 +114,15 @@ const Traceabilities = (props) => {
     const getTraceabilities = async (page) => {
         if ( mainView && isDefined(selectedSeller)) {
             return await TraceabilityActions.findNumberForPlatform(number, selectedSeller, page, itemsPerPage);
+        }
+        return new Promise((resolve, reject) => resolve(null));
+    };
+
+    const getLosts = async (page) => {
+        if ( mainView && isDefined(selectedSeller)) {
+            return await LostActions.findNumberForPlatform(number, selectedSeller, page, itemsPerPage);
+        } else if (isDefined(selectedStore)) {
+            return await LostActions.findNumberForStore(number, selectedStore, page, itemsPerPage);
         }
         return new Promise((resolve, reject) => resolve(null));
     };
@@ -199,11 +211,12 @@ const Traceabilities = (props) => {
                                 </CCol>
                             </CRow>
                         }
-                        <CRow>
+                        <CRow className="mb-3">
                             <CCol xs="12" md="5" className="my-2">
                                 <Select className="mr-2" name="store" label="Type de traçabilité" value={ type } onChange={ onTypeChange }>
                                     <option value="upstream">Amont</option>
                                     { mainView && <option value="downstream">Avale</option> }
+                                    <option value="losts">Destructions</option>
                                 </Select>
                             </CCol>
                             <CCol xs="12" md="5" className="my-2">
@@ -268,6 +281,11 @@ const Traceabilities = (props) => {
                                                     { isDefined(item.good) ? new Date(item.good.provision.provisionDate).toLocaleDateString() : '-' }
                                                 </td>
                                     ,
+                                    'Date de destruction':
+                                        item => <td style={{ width: '15%'}}>
+                                                    { new Date(item.lostDate).toLocaleDateString() }
+                                                </td>
+                                    ,
                                     'Date de vente':
                                         item => <td style={{ width: '15%'}}>
                                                     { new Date(item.item.orderEntity.deliveryDate).toLocaleDateString() }
@@ -305,8 +323,8 @@ const Traceabilities = (props) => {
                                                     {   ( isDefined(item.item) ? 
                                                             isDefined(item.item.deliveredQty) ? item.item.deliveredQty : 
                                                             isDefined(item.item.preparedQty) ? item.item.preparedQty :
-                                                            isDefined(item.item.orderedQty) ? item.item.orderedQty :
-                                                            0 : 0)
+                                                            isDefined(item.item.orderedQty) ? item.item.orderedQty : 0 : 
+                                                          isDefined(item.quantity) ? item.quantity : 0)
                                                         + " " + 
                                                         (isDefined(item.good) ? item.good.product.unit : 
                                                          isDefined(item.item) ? item.item.product.unit : 
@@ -339,6 +357,11 @@ const Traceabilities = (props) => {
                                                         { item.item.orderEntity.email }<br/>
                                                         { item.item.orderEntity.metas.phone }
                                                     </span>
+                                                </td>
+                                    ,
+                                    'Commentaires':
+                                        item => <td style={{ width: '15%'}}>
+                                                    { isDefined(item.comments) ? item.comments : "" }
                                                 </td>
                                 }}
                             />

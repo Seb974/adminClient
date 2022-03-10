@@ -59,5 +59,6 @@
     "in-progress.label": "In progress",
     "departments.label": "Department",
     "physical_sales.label": "Physical sales",
-    "traceability.label": "Traceability"
+    "traceability.label": "Traceability",
+    "losts.label": "Losts"
 }

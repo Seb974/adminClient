@@ -21,6 +21,8 @@ const Sellers = React.lazy(() => import('./views/components/sellers/sellers'));
 const Seller = React.lazy(() => import('./views/components/sellers/seller'));
 const Profitability = React.lazy(() => import('./views/components/prices/profitability'));
 const Traceabilities = React.lazy(() => import('./views/components/traceabilities/traceabilities'));
+const Losts = React.lazy(() => import('./views/components/losts/losts'));
+const Lost = React.lazy(() => import('./views/components/losts/lost'));
 const Prices = React.lazy(() => import('./views/components/prices/prices'));
 const Costs = React.lazy(() => import('./views/components/costs/costs'));
 const SellerAccount = React.lazy(() => import('./views/components/sellers/sellerAccount'));
@@ -147,6 +149,8 @@ const routes = [
   { path: '/components/sellers', name: 'Sellers', component: Sellers },
   { path: '/components/profitability', name: 'Profitability', component: Profitability },
   { path: '/components/traceabilities', name: 'Traceabilities', component: Traceabilities },
+  { path: '/components/losts/:id', name: 'Lost', component: Lost },
+  { path: '/components/losts', name: 'Losts', component: Losts },
   { path: '/components/prices', name: 'Prices', component: Prices },
   { path: '/components/costs', name: 'Costs', component: Costs },
   { path: '/components/account/sellers', name: 'Sellers', component: SellerAccount },

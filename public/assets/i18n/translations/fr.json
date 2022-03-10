@@ -59,5 +59,6 @@
     "in-progress.label": "En cours",
     "departments.label": "Rayons",
     "physical_sales.label": "Ventes physiques",
-    "traceability.label": "Traçabilité"
+    "traceability.label": "Traçabilité",
+    "losts.label": "Pertes"
 }

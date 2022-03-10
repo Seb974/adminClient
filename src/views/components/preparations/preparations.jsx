@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CWidgetIcon } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -14,9 +13,6 @@ import DayOffActions from 'src/services/DayOffActions';
 import CIcon from '@coreui/icons-react';
 import { updatePreparations } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import MercureContext from 'src/contexts/MercureContext';
-import { getPackagesPlan } from 'src/helpers/packagePlanner';
-import api from 'src/config/api';
-
 
 const Preparations = (props) => {
 

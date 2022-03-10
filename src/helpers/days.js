@@ -21,6 +21,13 @@ export const getWeekDays = () => {
     ];
 };
 
+export const formatUTC = dates => {
+    return {
+        start: new Date(dates.start.toUTCString()), 
+        end: new Date(dates.end.toUTCString())
+    };
+}
+
 export const getStringDate = date => {
     return date.getFullYear() + "-" + getTwoDigits(date.getMonth() + 1) + "-" + getTwoDigits(date.getDate());
 };

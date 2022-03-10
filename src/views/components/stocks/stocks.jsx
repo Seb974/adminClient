@@ -21,7 +21,7 @@ const Stocks = (props) => {
     const { currentUser, seller } = useContext(AuthContext);
     const { platform } = useContext(PlatformContext);
     const mainStore = { id: -1, name: "Principal" };
-    const fields = ['name', 'Sécurité', 'Alerte', 'Niveau'];
+    const fields = ['name', 'Sécurité', 'Alerte', 'Disponible'];
     const [stocks, setStocks] = useState([]);
     const { width } = useWindowDimensions();
     const [totalItems, setTotalItems] = useState(0);
@@ -40,8 +40,7 @@ const Stocks = (props) => {
             setSelectedStore(seller.stores[0]);
     }, []);
 
-
-    useEffect(() => getStocks(), [platform, selectedStore])
+    useEffect(() => getStocks(), [platform, selectedStore]);
     useEffect(() => getStocks(currentPage), [currentPage]);
 
     const getStocks = async (page = 1) => {
@@ -53,7 +52,7 @@ const Stocks = (props) => {
                 const response = page >=1 ? await StockActions.findAllPaginated(main, entity, page, itemsPerPage) : null;
                 if (isDefined(response)) {
                     const newStocks = response['hydra:member']
-                            .map(s => ({...s, unit: getUnit(s), updated: false}))       // name: getStockName(s),
+                            .map(s => ({...s, unit: getUnit(s), updated: false, batches: getCompiledBatches(s.batches)}))       // name: getStockName(s),
                             .sort((a, b) => (a.name > b.name) ? 1 : -1);
                     setStocks(newStocks);
                     setTotalItems(response['hydra:totalItems']);
@@ -75,17 +74,42 @@ const Stocks = (props) => {
             .catch(error => console.log(error));
     };
 
-    const getStockName = stock => {
-        const { product, size } = stock;
-        if (isDefined(size)) {
-            const { variation } = size;
-            const sizeName = exists(size, size.name) ? size.name : "";
-            const variationName = exists(variation, variation.color) ? variation.color : "";
-            const productName = exists(variation.product, variation.product.name) ? variation.product.name : ""; 
-            return productName + " "  + variationName + " " + sizeName;
-        } else {
-            return isDefined(product) ? product.name : "";
+    const getCompiledBatches = batches => {
+        if (isDefinedAndNotVoid(batches)) {
+            const batchesNumbers = [...new Set(batches.map(b => b.number))];
+            return batchesNumbers.map(b => {
+                const currentBatchNumber = batches.filter(batch => batch.number === b);
+                return currentBatchNumber.length <= 1 ? currentBatchNumber[0] : getFormattedMultipleBatches(b, batches, currentBatchNumber);
+            });
         }
+        return [];
+    };
+
+    const getFormattedMultipleBatches = (number, batches, currentBatchNumber) => {
+        const sumQty = getBatchQuantity(number, batches);
+        const sumInitQty = getBatchInitialQuantity(number, batches);
+        const smallestEndDate = getBatchDate(number, batches);
+        return {number, initialQty: sumInitQty, quantity: sumQty, endDate: smallestEndDate, originals: currentBatchNumber};
+    };
+
+    const getBatchQuantity = (number, batches) => {
+        const quantity = batches.reduce((sum, curr) => {
+            return sum += curr.number === number ? curr.quantity : 0;
+        }, 0);
+        return parseFloat(quantity.toFixed(2));
+    };
+
+    const getBatchInitialQuantity = (number, batches) => {
+        const quantity = batches.reduce((sum, curr) => {
+            return sum += curr.number === number ? curr.initialQty : 0;
+        }, 0);
+        return parseFloat(quantity.toFixed(2));
+    };
+
+    const getBatchDate = (number, batches) => {
+        return batches.reduce((minDate, curr) => {
+            return minDate = curr.number === number && (!isDefined(minDate) || new Date(curr.endDate) < minDate) ? new Date(curr.endDate) : minDate;
+        }, null);
     };
 
     const getUnit = stock  => {
@@ -97,10 +121,6 @@ const Stocks = (props) => {
                     size.variation.product.unit : 'U';
         }
     }
-
-    const exists = (entity, entityName) => {
-        return isDefined(entity) && isDefined(entityName) && entityName.length > 0 && entityName !== " ";
-    };
 
     const handleChange = ({ currentTarget }, stock) => {
         const index = stocks.findIndex(s => parseInt(s.id) === parseInt(stock.id));
@@ -167,13 +187,52 @@ const Stocks = (props) => {
             store: isDefined(stock.store) ? (typeof stock.store === 'string' ? stock.store : stock.store['@id']) : null,
             product: isDefined(stock.product) ? (typeof stock.product === 'string' ? stock.product : stock.product['@id']) : null,
             platform: isDefined(stock.platform) ? (typeof stock.platform === 'string' ? stock.platform : stock.platform['@id']) : null,
-        }
+        };
     };
 
-    const getFormattedBatches = batches =>{ 
-        return batches.map(({id, isNew, ...b}) => {
-            const formattedBatch = {...b, initialQty: getFloat(b.initialQty), quantity: getFloat(b.quantity)};
-            return isNew ? formattedBatch : {...formattedBatch, id: b['@id']};
+    const getFormattedBatches = batches => {
+        let stockBatches = [];
+        batches.map(({id, isNew, originals, ...b}) => {
+            if (isDefined(originals)) {
+                const updatedBatches = updateOriginalsCombinatedBatches(b, originals);
+                stockBatches = [...stockBatches, ...updatedBatches];
+            } else {
+                const formattedBatch = {...b, initialQty: getFloat(b.initialQty), quantity: getFloat(b.quantity)};
+                stockBatches = isNew ? [...stockBatches, formattedBatch] : [...stockBatches, {...formattedBatch, id: b['@id']}];
+            }
+        });
+        return stockBatches;
+    };
+
+    const updateOriginalsCombinatedBatches = (update, originals) => {
+        const previousQty = originals.reduce((sum, curr) => sum += curr.quantity, 0);
+        if (update.quantity > previousQty) {
+            const qtyToDecrease = update.quantity - previousQty;
+            return increaseOriginals(qtyToDecrease, originals);
+        } else if (update.quantity < previousQty) {
+            const qtyToIncrease = previousQty - update.quantity;
+            return decreaseOriginals(qtyToIncrease, originals);
+        }
+        return originals;
+    };
+
+    const increaseOriginals = (quantity, originals) => {
+        let qtyToIncrease = quantity;
+        const orderedOriginals = originals.sort((a, b) => (a.quantity > b.quantity) ? 1 : -1);
+        return orderedOriginals.map(batch => {
+            let newQty = batch.quantity + qtyToIncrease > batch.initialQty ? batch.initialQty : batch.quantity + qtyToIncrease;
+            qtyToIncrease = batch.quantity + qtyToIncrease > batch.initialQty ? qtyToIncrease + batch.quantity - batch.initialQty : 0;
+            return {...batch, id: batch['@id'], quantity: newQty};
+        });
+    };
+
+    const decreaseOriginals = (quantity, originals) => {
+        let qtyToDecrease = quantity;
+        const orderedOriginals = originals.sort((a, b) => (a.quantity > b.quantity) ? 1 : -1);
+        return orderedOriginals.map(batch => {
+            let newQty = batch.quantity > qtyToDecrease ? batch.quantity - qtyToDecrease : 0;
+            qtyToDecrease = batch.quantity > qtyToDecrease ? 0 : qtyToDecrease - batch.quantity;
+            return {...batch, id: batch['@id'], quantity: newQty};
         });
     };
 
@@ -185,7 +244,7 @@ const Stocks = (props) => {
 
     const onBatchDelete = (batch, stock) => {
         const newQty = stock.quantity - batch.quantity;
-        const newStock = {...stock, batches: stock.batches.filter(b => b.id !== batch.id), quantity: newQty, updated: true};
+        const  newStock = {...stock, batches: stock.batches.filter(b => b.number !== batch.number), quantity: newQty, updated: true};
         const newStocks = stocks.map(s => s.id !== newStock.id ? s : newStock);
         setStocks(newStocks);
     };
@@ -253,7 +312,7 @@ const Stocks = (props) => {
                     :
                     <CDataTable
                         items={ stocks }
-                        fields={ width < 576 ? ['name', 'Niveau'] : fields }
+                        fields={ width < 576 ? ['name', 'Disponible'] : fields }
                         bordered
                         itemsPerPage={ stocks.length }
                         pagination={{
@@ -310,7 +369,7 @@ const Stocks = (props) => {
                                         </CInputGroup>
                                     </td>
                             ,
-                            'Niveau':
+                            'Disponible':
                             item => <td>
                                         <CInputGroup>
                                             <CInput
@@ -330,7 +389,7 @@ const Stocks = (props) => {
                             item => <CCollapse show={details.includes(item.id)}>
                                         <CDataTable
                                             items={ item.batches }
-                                            fields={ width < 576 ? ['Lot', 'Niveau'] : ['Lot', 'Date de fin', 'Qté Initiale', 'Niveau'] }
+                                            fields={ width < 576 ? ['Lot', 'Disponible'] : ['Lot', 'Date de fin', 'Qté Initiale', 'Disponible'] }
                                             bordered
                                             itemsPerPage={ item.batches.length }
                                             scopedSlots = {{
@@ -387,7 +446,7 @@ const Stocks = (props) => {
                                                                 </CInputGroup>
                                                             </td>
                                                 ,
-                                                'Niveau':
+                                                'Disponible':
                                                     batch => <td style={{ width: '25%'}}>
                                                                 <CInputGroup>
                                                                     <CInput
