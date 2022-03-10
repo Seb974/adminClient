@@ -1,6 +1,7 @@
 import CIcon from '@coreui/icons-react';
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CRow, CValidFeedback, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
 import React, { useState } from 'react';
+import { useRef } from 'react';
 import { useEffect } from 'react';
 import Spinner from 'react-bootstrap/Spinner';
 import Needs from 'src/components/supplyingPages/Needs';
@@ -14,6 +15,7 @@ const Supplying = (props) => {
 
     const itemsPerPage = 3;
     const {  width } = useWindowDimensions();
+    const previousSupplier = useRef();
     const fields = ['Produit', 'Coût', 'Stock', 'Besoin', 'Commande', 'Sélection'];
 
     const [toasts, setToasts] = useState([]);
@@ -29,7 +31,14 @@ const Supplying = (props) => {
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [selection, setSelection] = useState([]);
 
-    useEffect(() => initializeSelections(), [selectedSeller, selectedSupplier, selectedStore, mainView]);
+    useEffect(() => initializeSelections(), [selectedSeller, selectedStore, mainView]);
+    useEffect(() => {
+        if ((!isDefined(previousSupplier.current)) || (selectedSupplier.id !== previousSupplier.current.id)) {
+            initializeSelections();
+            previousSupplier.current = selectedSupplier;
+        }
+    }, [selectedSupplier]);
+
     useEffect(() => isAllSelected(), [displayedProducts, selection])
 
     const addToast = newToast => setToasts([...toasts, newToast]);
@@ -109,6 +118,7 @@ const Supplying = (props) => {
                             setTotalItems={ setTotalItems }
                             selection={ selection }
                             setSelection={ setSelection }
+                            previousSupplier={ previousSupplier }
                         />
                         { loading ?
                             <CRow>

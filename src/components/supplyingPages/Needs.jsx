@@ -22,7 +22,7 @@ import Supplier from './Supplier';
 
 const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setSelectedSupplier, selectedSeller, setSelectedSeller,
                  selectedStore, setSelectedStore, mainView, setMainView, selectAll, setSelectAll, loading, setLoading, supplied,
-                 addToast, currentPage, setCurrentPage, itemsPerPage, setTotalItems, selection, setSelection }) => 
+                 addToast, currentPage, setCurrentPage, itemsPerPage, setTotalItems, selection, setSelection, previousSupplier }) => 
 {
     const rates = getEvolutionPoints();
     const { platform } = useContext(PlatformContext);
@@ -48,7 +48,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     useEffect(() => getDependencies(), []);
 
     useEffect(() => getSelectedProducts(currentPage), [currentPage]);
-    useEffect(() => getSelectedProducts(), [selectedSeller, selectedSupplier, selectedStore, mainView]);
+    useEffect(() => getSelectedProducts(), [selectedSeller, previousSupplier, selectedStore, mainView]);        // selectedSupplier
     useEffect(() => getSelectedOrders(), [dates, selectedSeller, selectedStore, mainView]);
     useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied, selectedDepartments]);
     useEffect(() => getDisplayedProducts(true), [selectedDepartments]);
