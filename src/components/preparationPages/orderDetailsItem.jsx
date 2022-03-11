@@ -16,6 +16,8 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
 
     useEffect(() => getStock(), [displayedProduct]);
 
+    useEffect(() => setDefaultTraceability(), [batches, item.traceabilities]);
+
     const getStock = () => {
         const entity = getStockEntity();
         if (isDefined(entity) && isDefinedAndNotVoid(entity.stocks)) {
@@ -24,14 +26,17 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
                 const stockBatches = getCompiledBatches(onlineStock.batches);
                 const orderedBatches = stockBatches.sort((a, b) => (new Date(a.endDate) > new Date(b.endDate)) ? 1 : -1);
                 setBatches(orderedBatches);
-                if (!isDefinedAndNotVoid(item.traceabilities) && order.status == "WAITING") {
-                    const newTraceability = { number: orderedBatches[0].number, endDate: new Date(orderedBatches[0].endDate), quantity: 0, id: new Date().getTime()};     // item.orderedQty
-                    const newItems = order.items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: [newTraceability]}) : i);
-                    setOrder({...order, items: newItems});
-                } 
             }
         }
     };
+
+    const setDefaultTraceability = () => {
+        if (isDefinedAndNotVoid(batches) && !isDefinedAndNotVoid(item.traceabilities) && order.status == "WAITING") {
+            const newTraceability = { number: batches[0].number, endDate: new Date(batches[0].endDate), quantity: 0, id: new Date().getTime()};
+            const newItems = order.items.map(i => i.id === parseInt(item.id) ? ({...item, traceabilities: [newTraceability]}) : i);
+            setOrder({...order, items: newItems});
+        }
+    }
 
     const getCompiledBatches = batches => {
         if (isDefinedAndNotVoid(batches)) {

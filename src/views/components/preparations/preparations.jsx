@@ -145,9 +145,9 @@ const Preparations = (props) => {
 
     const isOffDay = date => daysOff.find(day => isSameDate(new Date(day.date), date)) !== undefined || date.getDay() === 0;
 
-    const getTurnover = () => orders.reduce((sum, current) => sum + current.totalHT, 0);
+    // const getTurnover = () => orders.reduce((sum, current) => sum + current.totalHT, 0);
 
-    const getUserCount = () => [...new Set(orders.map(order => order.email))].length;
+    // const getUserCount = () => [...new Set(orders.map(order => order.email))].length;
 
     const toggleDetails = (index, e) => {
         e.preventDefault();
@@ -244,7 +244,7 @@ const Preparations = (props) => {
                 }
             </CCardHeader>
             <CCardBody>
-                <CRow>
+                {/* <CRow>
                     <CCol xs="12" sm="6" lg="3">
                         <CWidgetIcon text="Commandes" header={ orders.length } color="primary" iconPadding={false}>
                             <CIcon width={24} name="cil-clipboard"/>
@@ -265,7 +265,7 @@ const Preparations = (props) => {
                             <CIcon width={24} name="cil-money"/>
                         </CWidgetIcon>
                     </CCol>
-                </CRow>
+                </CRow> */}
                 <CRow>
                     <CCol xs="12" lg="6">
                     <RangeDatePicker
