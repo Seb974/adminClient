@@ -100,7 +100,6 @@ const DelivererAccount = (props) => {
                 deliverer: touring.deliverer['@id']
             };
         });
-        console.log(newTourings);
         updateTourings(newTourings)
             .then(response => {
                 const newDeliveries = viewedDeliveries.map(delivery => {

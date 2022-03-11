@@ -46,7 +46,6 @@ const Bills = (props) => {
         OrderActions
             .getInvoices(user, UTCDates)
             .then(response => {
-                console.log(response);
                 setOrders(response.map(data => ({...data, selected: false})));
                 setLoading(false);
             })

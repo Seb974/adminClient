@@ -59,7 +59,6 @@ const Orders = (props) => {
             const UTCDates = getUTCDates(dates);
             OrderActions.findPaginatedOrdersWithStatus(UTCDates, selectedStatus, page, itemsPerPage)
                     .then(response => {
-                        console.log(response['hydra:member']);
                         setOrders(response['hydra:member']);
                         setTotalItems(response['hydra:totalItems']);
                         setLoading(false);

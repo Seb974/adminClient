@@ -82,7 +82,6 @@ const DayOff = ({ match, history }) => {
             for (let i = 0; i <= days; i++) {
                 let day = getDateFrom(dayOff.date, i);
                 let dayRangeMember = {name: dayOff.name, date: day, openedFor: formattedOpenedFor};
-                console.log(dayRangeMember);
                 DayOffActions
                     .create(dayRangeMember)
                         .then(response => {

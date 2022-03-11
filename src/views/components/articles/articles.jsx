@@ -29,15 +29,6 @@ const Articles = (props) => {
     const getArticles = (page = 1) => page >=1 ? ArticleActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedArticles = (word, page = 1) => ArticleActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     ArticleActions.findAll()
-    //         .then(response => {
-    //             console.log(response);
-    //             setArticles(response);
-    //         })
-    //         .catch(error => console.log(error));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalArticles = [...articles];
         setArticles(articles.filter(article => article.id !== id));

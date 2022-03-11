@@ -29,12 +29,6 @@ const Homepages = (props) => {
     const getHomepages = (page = 1) => page >=1 ? HomepageActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedHomepages = (word, page = 1) => HomepageActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     HomepageActions.findAll()
-    //         .then(response => setHomepages(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (homepageToDelete) => {
         const originalHomepages = [...homepages];
         setHomepages(homepages.filter(zone => zone.id !== homepageToDelete.id));

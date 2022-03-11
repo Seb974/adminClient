@@ -22,7 +22,6 @@ const TouringModal = ({ order, touring, tourings, setTourings }) => {
 
     const handleSubmit = () => {
         const orderToWrite = getDeliveredOrder(viewedOrder);
-        console.log(orderToWrite);
         OrderActions
             .update(order.id, orderToWrite)
             .then(response => {

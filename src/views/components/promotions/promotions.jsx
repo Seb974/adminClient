@@ -29,15 +29,6 @@ const Promotions = (props) => {
     const getPromotions = (page = 1) => page >=1 ? PromotionActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedPromotions = (word, page = 1) => PromotionActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     PromotionActions.findAll()
-    //         .then(response => {
-    //             console.log(response);
-    //             setPromotions(response.filter(promotion => promotion.code !== "relaypoint"));
-    //         })
-    //         .catch(error => console.log(error));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalPromotions = [...promotions];
         setPromotions(promotions.filter(p => p.id !== id));

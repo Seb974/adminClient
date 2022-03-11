@@ -91,8 +91,6 @@ const CategoryPage = ({ match, history }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formattedCategory = getFormattedCategory();
-        console.log(formattedCategory);
-
         const request = !editing ? CategoryActions.create(formattedCategory) : CategoryActions.update(id, formattedCategory);
         request.then(response => {
                     setErrors({name: "", });

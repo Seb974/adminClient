@@ -24,12 +24,6 @@ const Supervisors = (props) => {
       }
   };
 
-    // useEffect(() => {
-    //     SupervisorActions.findAll()
-    //         .then(response => setSupervisors(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalSupervisors = [...supervisors];
         setSupervisors(supervisors.filter(supervisor => supervisor.id !== id));

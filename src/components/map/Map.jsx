@@ -43,10 +43,6 @@ const Map = ({ informations, initialPosition, updatePosition }) => {
                         onClear={() => {
                             updatePosition({latlng: {lat: initialPosition[0], lng: initialPosition[1]}});
                         }}
-                        // onSuggestions={({ rawAnswer, query, suggestions }) => console.log('On suggestion')}
-                        // onCursorChanged={({ rawAnswer, query, suggestion, suggestionIndex }) => console.log('On cursor changed')}
-                        // onLimit={({ message }) => console.log('On limit')}
-                        // onError={({ message }) => console.log('On Error')}
                     />
                 </div>
             </div>

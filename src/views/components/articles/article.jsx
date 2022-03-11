@@ -5,7 +5,7 @@ import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CForm
 import CIcon from '@coreui/icons-react';
 import Image from 'src/components/forms/image';
 import ReactQuill from 'react-quill';
-import 'src/views/editors/text-editors/TextEditors.scss';
+import 'src/scss/TextEditors.scss';
 import api from 'src/config/api';
 
 const Article = ({ match, history }) => {

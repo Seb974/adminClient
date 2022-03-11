@@ -97,10 +97,7 @@ const DeliveryNote = ({ match }) => {
     const fetchTouring = id => {
         TouringActions
             .find(id)
-            .then(response => {
-                setOrders(response.orderEntities);
-                console.log(response.orderEntities);
-            })
+            .then(response => setOrders(response.orderEntities))
             .catch(error => console.log(error));
     };
 

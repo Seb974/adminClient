@@ -101,7 +101,6 @@ const PackagePlan = ({ match }) => {
             .find(id)
             .then(response => {
                 const newPackages = getPackagesPlan(response);
-                console.log(newPackages);
                 setOrder(response);
                 setPackages(newPackages);
             })

@@ -1,18 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import {
-  CForm,
-  CButtonToolbar,
-  CDropdown,
-  CDropdownToggle,
-  CDropdownMenu,
-  CDropdownItem,
-  CBadge,
-  CButton,
-  CButtonGroup,
-  CFormGroup,
-  CTextarea
- } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
+import { CForm, CButton, CFormGroup, CTextarea } from '@coreui/react'
 import MessageActions from 'src/services/MessageActions';
 import { isDefined } from 'src/helpers/utils';
 
@@ -48,7 +35,6 @@ const Message = ({ match, history }) => {
 
   const handleSubmit = e => {
       e.preventDefault();
-      console.log(response);
       MessageActions
           .update(id, {...message, response})
           .then(response => {

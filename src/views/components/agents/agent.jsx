@@ -25,11 +25,7 @@ const Agent = ({ match, history }) => {
         if (id !== "new") {
             setEditing(true);
             AgentActions.find(id)
-                .then(response => {
-                    console.log("ici");
-                    console.log(response);
-                    setAgent(response);
-                })
+                .then(response => setAgent(response))
                 .catch(error => {
                     console.log(error);
                     // TODO : Notification flash d'une erreur

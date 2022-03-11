@@ -31,12 +31,6 @@ const Containers = (props) => {
     const getContainers = (page = 1) => page >=1 ? ContainerActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedContainers = (word, page = 1) => ContainerActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     ContainerActions.findAll()
-    //         .then(response => setContainers(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalContainers = [...containers];
         setContainers(containers.filter(container => container.id !== id));

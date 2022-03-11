@@ -9,7 +9,7 @@ import api from 'src/config/api';
 import Roles from 'src/config/Roles';
 import AuthContext from 'src/contexts/AuthContext';
 import { CONTAINER } from 'src/helpers/platform';
-import 'src/views/editors/text-editors/TextEditors.scss';
+import 'src/scss/TextEditors.scss';
 import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import PlatformActions from 'src/services/PlatformActions';
 import { Tabs, Tab } from 'react-bootstrap';

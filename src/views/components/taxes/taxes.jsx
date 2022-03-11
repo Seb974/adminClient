@@ -29,12 +29,6 @@ const Taxes = (props) => {
     const getTaxes = (page = 1) => page >=1 ? TaxActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedTaxes = (word, page = 1) => TaxActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     TaxActions.findAll()
-    //         .then(response => setTaxes(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalTaxes = [...taxes];
         setTaxes(taxes.filter(tax => tax.id !== id));

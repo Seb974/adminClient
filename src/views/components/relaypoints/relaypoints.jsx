@@ -29,15 +29,6 @@ const Relaypoints = (props) => {
     const getRelaypoints = (page = 1) => page >=1 ? RelaypointActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedRelaypoints = (word, page = 1) => RelaypointActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     RelaypointActions.findAll()
-    //         .then(response => {
-    //             console.log(response);
-    //             setRelaypoints(response);
-    //         })
-    //         .catch(error => console.log(error));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalRelaypoints = [...relaypoints];
         setRelaypoints(relaypoints.filter(city => city.id !== id));

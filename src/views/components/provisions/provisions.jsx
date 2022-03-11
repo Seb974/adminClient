@@ -61,7 +61,6 @@ const Provisions = (props) => {
             const UTCDates = getUTCDates(dates);
             ProvisionActions.findPaginatedProvisionsPerSupplier(UTCDates, selectedSuppliers, selectedSellers, page, itemsPerPage)
                     .then(response => {
-                        console.log(response['hydra:member']);
                         setProvisions(response['hydra:member']);
                         setTotalItems(response['hydra:totalItems']);
                         setLoading(false);

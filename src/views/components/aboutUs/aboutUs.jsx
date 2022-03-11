@@ -96,15 +96,9 @@ const AboutUs = ({ history, match }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // const aboutUsToWrite = getAboutUsToWrite();
         const aboutUsToWrite = await getAboutUsWithImage();
-        console.log(aboutUsToWrite);
         const request = !isDefined(aboutUs['@id']) ? AboutUsActions.create(aboutUsToWrite) : AboutUsActions.update(aboutUs.id, aboutUsToWrite);
-        request.then(response => {
-                    setErrors(initialErrors);
-                    //TODO : Flash notification de succès
-                    // history.replace("#");
-                })
+        request.then(response => setErrors(initialErrors))
                 .catch( ({ response }) => {
                     if (response) {
                         const { violations } = response.data;

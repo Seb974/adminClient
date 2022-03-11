@@ -35,15 +35,6 @@ const Deliverers = (props) => {
     const getDeliverers = (page = 1) => page >=1 ? DelivererActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedDeliverers = (word, page = 1) => DelivererActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     DelivererActions.findAll()
-    //         .then(response => {
-    //             console.log(response);
-    //             setDeliverers(response);
-    //         })
-    //         .catch(error => console.log(error));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalDeliverers = [...deliverers];
         setDeliverers(deliverers.filter(deliverer => deliverer.id !== id));

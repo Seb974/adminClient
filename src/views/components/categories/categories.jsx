@@ -29,17 +29,6 @@ const Categories = (props) => {
     const getCategories = (page = 1) => page >=1 ? CategoryActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedCategories = (word, page = 1) => CategoryActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => fetchCategories(), []);
-
-    // const fetchCategories = () => {
-    //     CategoryActions.findAll()
-    //         .then(response => {
-    //           console.log(response);
-    //           setCategories(response);
-    //         })
-    //         .catch(error => console.log(error.response));
-    // };
-
     const handleDelete = (id) => {
         const originalCategories = [...categories];
         setCategories(categories.filter(category => category.id !== id));

@@ -1,4 +1,4 @@
-# CoreUI React version
+# CREAZOT
 
 ## Intro 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app)
@@ -9,7 +9,7 @@ Dependencies are handled by **npm**.
 
 ## Directories
 ```
-CoreUI-React#v2.0.0
+ADMIN PANEL
 ├── public/      (static files)
 │   ├── assets/    (assets)
 │   ├── favicon.ico  

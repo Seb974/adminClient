@@ -29,12 +29,6 @@ const PriceGroups = (props) => {
     const getGroups = (page = 1) => page >=1 ? PriceGroupActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedGroups = (word, page = 1) => PriceGroupActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     PriceGroupActions.findAll()
-    //         .then(response => setPriceGroups(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalPriceGroups = [...priceGroups];
         setPriceGroups(priceGroups.filter(group => group.id !== id));

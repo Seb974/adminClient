@@ -101,10 +101,7 @@ const DeliveryNoteSingle = ({ match }) => {
     const fetchOrder = id => {
         OrderActions
             .find(id)
-            .then(response => {
-                console.log(response);
-                setOrder(response);
-            })
+            .then(response => setOrder(response))
             .catch(error => console.log(error));
     };
 

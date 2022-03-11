@@ -45,8 +45,6 @@ const Container = ({ match, history }) => {
         }
     }, [catalogs, container]);
 
-    useEffect(() => console.log(catalogOptions), [catalogOptions]);
-
     const handleChange = ({ currentTarget }) => setContainer({...container, [currentTarget.name]: currentTarget.value});
     const handleCheckBoxes = ({ currentTarget }) => setContainer({...container, [currentTarget.name]: !container[currentTarget.name]});
     const handleStockChange = ({ currentTarget }) => setContainer({...container, stock: {...container.stock, [currentTarget.name]: currentTarget.value}})
@@ -59,7 +57,6 @@ const Container = ({ match, history }) => {
                     const { catalogPrices, ...container } = response; 
                     setContainer(container);
                     if (catalogPrices.length > 0) {
-                        // setCatalogOptions(catalogPrices.map(catalog => ({...catalog.catalog, amount: catalog.amount})));
                         setCatalogOptions(catalogPrices);
                     }
                 })

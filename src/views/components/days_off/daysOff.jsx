@@ -29,12 +29,6 @@ const DaysOff = (props) => {
     const getDays = (page = 1) => page >=1 ? DayOffActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedDays = (word, page = 1) => DayOffActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     DayOffActions.findAll()
-    //         .then(response => setDaysOff(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalDaysOff = [...daysOff];
         setDaysOff(daysOff.filter(day => day.id !== id));

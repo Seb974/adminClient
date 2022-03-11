@@ -14,7 +14,6 @@ export const updatePreparations = (data, dates, orders, setOrders, user, supervi
     const { updatedOrders, newData } = getOrdersWithUpdates(data, dates, status, orders, user, supervisor);
     const ordersWithUpdate = Roles.isSeller(user) ? updatedOrders.filter(o => o.items.findIndex(i => !i.isPrepared) !== -1) : updatedOrders;
     setOrders(ordersWithUpdate);
-    // setOrders(updatedOrders);
     setData(newData.filter(d => !isDefined(d.treated)));
     return new Promise((resolve, reject) => resolve(false));
 };

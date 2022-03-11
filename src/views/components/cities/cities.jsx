@@ -29,15 +29,6 @@ const Cities = (props) => {
     const getCities = (page = 1) => page >=1 ? CityActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedCities = (word, page = 1) => CityActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     CityActions.findAll()
-    //         .then(response => {
-    //             console.log(response);
-    //             setCities(response);
-    //         })
-    //         .catch(error => console.log(error));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalCities = [...cities];
         setCities(cities.filter(city => city.id !== id));

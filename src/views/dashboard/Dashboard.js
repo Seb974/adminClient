@@ -1,5 +1,5 @@
 import React, { lazy, useContext, useEffect, useState } from 'react';
-import StatChart from '../charts/StatChart.js';
+import StatChart from 'src/components/charts/StatChart.js';
 import SalesStats from './salesStats.jsx';
 import StockStats from './stockStats.jsx';
 import AuthContext from 'src/contexts/AuthContext.js';

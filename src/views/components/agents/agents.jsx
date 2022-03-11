@@ -29,12 +29,6 @@ const Agents = (props) => {
     const getAgents = (page = 1) => page >=1 ? AgentActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedAgents = (word, page = 1) => AgentActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     AgentActions.findAll()
-    //         .then(response => setAgents(response))
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalAgents = [...agents];
         setAgents(agents.filter(day => day.id !== id));

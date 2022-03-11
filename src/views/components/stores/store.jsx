@@ -82,7 +82,6 @@ const Store = ({ match, history }) => {
             setEditing(true);
             StoreActions.find(id)
                 .then( response => {
-                    console.log(response);
                     const {metas, isTaxIncluded, ...dbStore} = response;
                     setStore({...dbStore, isTaxIncluded: isDefined(isTaxIncluded) ? isTaxIncluded : store.isTaxIncluded});
                     setInformations(metas);

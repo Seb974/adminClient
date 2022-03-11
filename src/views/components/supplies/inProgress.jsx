@@ -64,7 +64,6 @@ const InProgress = (props) => {
             ProvisionActions
                 .findSellerInProgress(selectedSeller, main, entity)
                 .then(response => {
-                    console.log(response);
                     setProvisions(response);
                     setLoading(false);
                 })

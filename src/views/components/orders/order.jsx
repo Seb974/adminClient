@@ -176,7 +176,6 @@ const Order = ({ match, history }) => {
     const handleSubmit = () => {
         const newErrors = validateForm(order, informations, (isDefined(order.calalog) ? order.catalog : catalog), condition, relaypoints);
         if (isDefined(newErrors) && Object.keys(newErrors).length > 0) {
-            console.log(Object.values(newErrors)[0]);
             setErrors({...errors, ...newErrors});
             addToast(failToast);
         } else {

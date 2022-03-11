@@ -29,15 +29,6 @@ const Catalogs = (props) => {
     const getCatalogs = (page = 1) => page >=1 ? CatalogActions.findAllPaginated(page, itemsPerPage) : undefined;
     const getSearchedCatalogs = (word, page = 1) => CatalogActions.findWord(word, page, itemsPerPage);
 
-    // useEffect(() => {
-    //     CatalogActions.findAll()
-    //         .then(response => {
-    //           console.log(response);
-    //           setCatalogs(response);
-    //         })
-    //         .catch(error => console.log(error.response));
-    // }, []);
-
     const handleDelete = (id) => {
         const originalCatalogs = [...catalogs];
         setCatalogs(catalogs.filter(catalog => catalog.id !== id));

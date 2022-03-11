@@ -128,7 +128,7 @@ const Profitability = (props) => {
 
     const getProducts = (page = 1) => {
         if (page >= 1 && isDefined(selectedSeller)) {
-            if (mainView )      // || !isDefined(selectedStore)
+            if (mainView )
                 getOnlineProducts(page);
             else if (isDefined(selectedStore))
                 getStoreProducts(page);

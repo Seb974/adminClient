@@ -9,10 +9,11 @@ const LocationMarker = ({ position, initialPosition }) => {
     }, [position])
 
     return position === null ? null : (
-        <Marker position={ position } eventHandlers={{ click: e => console.log("Click on position")}}>
+        <Marker position={ position }>
             <Popup>Vous êtes ici !</Popup>
         </Marker>
     );
 }
+// eventHandlers={{ click: e => console.log("Click on position")}}
  
 export default LocationMarker;

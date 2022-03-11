@@ -137,7 +137,6 @@ const Products = (props) => {
 
   const handleSendProducts = e => {
       e.preventDefault();
-      console.log(newSelected);
       StoreActions
           .sendSelectedProducts(selectedStore, newSelected)
           .then(response  => addToast(successToast))
