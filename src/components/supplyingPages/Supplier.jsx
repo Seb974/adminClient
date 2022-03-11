@@ -5,7 +5,7 @@ import Select from 'src/components/forms/Select';
 import { isDefined } from 'src/helpers/utils';
 import SupplierActions from 'src/services/SupplierActions';
 
-const Supplier = ({ selectedSupplier, setSelectedSupplier, loading, setLoading, addToast, failToast }) => {
+const Supplier = ({ selectedSupplier, setSelectedSupplier, loading, setLoading, addToast, failToast, setPreviousSupplier }) => {
 
     const [suppliers, setSuppliers] = useState([]);
 
@@ -27,6 +27,7 @@ const Supplier = ({ selectedSupplier, setSelectedSupplier, loading, setLoading, 
 
     const handleSupplierChange = ({ currentTarget }) => {
         const newSupplier = suppliers.find(supplier => supplier.id === parseInt(currentTarget.value));
+        setPreviousSupplier(selectedSupplier);
         setSelectedSupplier(newSupplier);
     };
 

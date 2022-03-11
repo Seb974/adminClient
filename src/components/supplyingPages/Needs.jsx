@@ -22,7 +22,8 @@ import Supplier from './Supplier';
 
 const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setSelectedSupplier, selectedSeller, setSelectedSeller,
                  selectedStore, setSelectedStore, mainView, setMainView, selectAll, setSelectAll, loading, setLoading, supplied,
-                 addToast, currentPage, setCurrentPage, itemsPerPage, setTotalItems, selection, setSelection, previousSupplier }) => 
+                 addToast, currentPage, setCurrentPage, itemsPerPage, setTotalItems, selection, setSelection, previousSupplier, 
+                 setPreviousSupplier }) => 
 {
     const rates = getEvolutionPoints();
     const { platform } = useContext(PlatformContext);
@@ -48,7 +49,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     useEffect(() => getDependencies(), []);
 
     useEffect(() => getSelectedProducts(currentPage), [currentPage]);
-    useEffect(() => getSelectedProducts(), [selectedSeller, previousSupplier, selectedStore, mainView, selectedSupplier.id]);        // selectedSupplier
+    useEffect(() => getSelectedProducts(), [selectedSeller, selectedStore, mainView, previousSupplier]);        // selectedSupplier previousSupplier
     useEffect(() => getSelectedOrders(), [dates, selectedSeller, selectedStore, mainView]);
     useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied, selectedDepartments]);
     useEffect(() => getDisplayedProducts(true), [selectedDepartments]);
@@ -280,7 +281,9 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
                         loading={ loading } 
                         setLoading={ setLoading }
                         addToast={ addToast } 
-                        failToast={ failToast } 
+                        failToast={ failToast }
+                        previousSupplier={ previousSupplier }
+                        setPreviousSupplier={ setPreviousSupplier }
             />
             <CRow>
                 <CCol xs="12" lg="5" className="mt-4">

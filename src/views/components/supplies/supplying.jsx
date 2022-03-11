@@ -15,7 +15,6 @@ const Supplying = (props) => {
 
     const itemsPerPage = 3;
     const {  width } = useWindowDimensions();
-    const previousSupplier = useRef();
     const fields = ['Produit', 'Coût', 'Stock', 'Besoin', 'Commande', 'Sélection'];
 
     const [toasts, setToasts] = useState([]);
@@ -28,16 +27,11 @@ const Supplying = (props) => {
     const [selectedStore, setSelectedStore] = useState(null);
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [selectedSupplier, setSelectedSupplier] = useState(null);
+    const [previousSupplier, setPreviousSupplier] = useState(null);
     const [displayedProducts, setDisplayedProducts] = useState([]);
     const [selection, setSelection] = useState([]);
 
     useEffect(() => initializeSelections(), [selectedSeller, selectedStore, mainView]);
-    useEffect(() => {
-        if ((!isDefined(previousSupplier.current)) || (selectedSupplier.id !== previousSupplier.current.id)) {
-            initializeSelections();
-            previousSupplier.current = selectedSupplier;
-        }
-    }, [selectedSupplier]);
 
     useEffect(() => isAllSelected(), [displayedProducts, selection])
 
@@ -119,6 +113,7 @@ const Supplying = (props) => {
                             selection={ selection }
                             setSelection={ setSelection }
                             previousSupplier={ previousSupplier }
+                            setPreviousSupplier={ setPreviousSupplier }
                         />
                         { loading ?
                             <CRow>
