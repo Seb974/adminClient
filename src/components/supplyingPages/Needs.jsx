@@ -48,7 +48,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     useEffect(() => getDependencies(), []);
 
     useEffect(() => getSelectedProducts(currentPage), [currentPage]);
-    useEffect(() => getSelectedProducts(), [selectedSeller, previousSupplier, selectedStore, mainView]);        // selectedSupplier
+    useEffect(() => getSelectedProducts(), [selectedSeller, previousSupplier, selectedStore, mainView, selectedSupplier.id]);        // selectedSupplier
     useEffect(() => getSelectedOrders(), [dates, selectedSeller, selectedStore, mainView]);
     useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied, selectedDepartments]);
     useEffect(() => getDisplayedProducts(true), [selectedDepartments]);
