@@ -20,7 +20,7 @@ const Banner = ({ match, history }) => {
     const { id = "new" } = match.params;
     const { catalogs } = useContext(CatalogContext);
     const defaultError = { title: "", subtitle: "", image: "", homepage: "", product: "", category: "", isMain: "", bannerNumber: "", textColor: "", titleColor: "", textShadow: "", catalogs: "" };
-    const { products, categories } = useContext(ProductsContext);
+    const { categories } = useContext(ProductsContext);
     const [editing, setEditing] = useState(false);
     const [banner, setBanner] = useState({ title: "", subtitle: "", image: null, homepage: null, product: null, category: null, isMain: false, bannerNumber: 1, textColor: '#fff', titleColor: '#fff', textShadow: true, catalogs: [] });
     const [homepages, setHomepages] = useState([]);
@@ -89,11 +89,7 @@ const Banner = ({ match, history }) => {
                     setBanner({...response, catalogs: dbCatalogs});
                     setNumberSelect(Array.from(Array(response.homepage.bannersNumber).keys()).filter(i => i > 0));
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/banners");
-                });
+                .catch(error => history.replace("/components/banners"));
         }
     };
 
@@ -101,11 +97,7 @@ const Banner = ({ match, history }) => {
         HomepageActions
             .findAll()
             .then(response => setHomepages(response))
-            .catch(error => {
-                console.log(error);
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/banners");
-            });
+            .catch(error => history.replace("/components/banners"));
     };
 
     const getFormattedCatalogs = () => {
@@ -133,7 +125,6 @@ const Banner = ({ match, history }) => {
         const request = !editing ? BannerActions.create(bannerToWrite) : BannerActions.update(id, bannerToWrite);
         request.then(response => {
                     setErrors(defaultError);
-                    //TODO : Flash notification de succès
                     history.replace("/components/banners");
                 })
                .catch( ({ response }) => {
@@ -145,7 +136,6 @@ const Banner = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

@@ -51,11 +51,7 @@ const DayOff = ({ match, history }) => {
                 .then( response => {
                     setDayOff({...response, date: new Date(response.date)});
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/days_off");
-                });
+                .catch(error => history.replace("/components/days_off"));
         }
     }
 
@@ -97,7 +93,6 @@ const DayOff = ({ match, history }) => {
             const request = !editing ? DayOffActions.create(formattedDayOff) : DayOffActions.update(id, formattedDayOff);
             request.then(response => {
                         setErrors({name: "", date: "", openedFor: ""});
-                        //TODO : Flash notification de succès
                         history.replace("/components/days_off");
                     })
                    .catch( ({ response }) => {
@@ -109,7 +104,6 @@ const DayOff = ({ match, history }) => {
                             });
                             setErrors(apiErrors);
                         }
-                        //TODO : Flash notification d'erreur
                    });
         }
     }

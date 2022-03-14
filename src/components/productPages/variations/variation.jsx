@@ -24,9 +24,7 @@ const Variation = ({ variation, handleOptionAdd, handleOptionDelete, handleVaria
                             value={ variation.name }
                             onChange={ handleNameChange }
                             placeholder={"Nom de la variante " + (total > 1 ? index + 1 : "")}
-                            // invalid={ errors.name.length > 0 } 
                         />
-                        {/* <CInvalidFeedback>{ errors.name }</CInvalidFeedback> */}
                     </CFormGroup>
                 </CCol>
                 <CCol xs="11" md="4" className="mt-4 ml-3 d-flex align-items-flex-end">
@@ -79,9 +77,7 @@ const Variation = ({ variation, handleOptionAdd, handleOptionDelete, handleVaria
                                 value={ option.name }
                                 onChange={ handleSizeNameChange }
                                 placeholder={"Nom de l'option " + (variation.sizes.length > 1 ? (i + 1) : "")}
-                                // invalid={ errors.name.length > 0 } 
                             />
-                            {/* <CInvalidFeedback>{ errors.name }</CInvalidFeedback> */}
                         </CCol>
                         { variation.sizes.length > 1 && 
                             <CCol xs="12" sm="1" className="d-flex align-items-start mt-5 ml-2">

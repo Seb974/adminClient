@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import classNames from 'classnames'
-import { TheContent, TheSidebar, TheAside, TheFooter, TheHeader } from './index'
+import { TheContent, TheSidebar, TheFooter, TheHeader } from './index'
 import '../assets/css/sidebar.css';
 
 const TheLayout = () => {
@@ -11,7 +11,6 @@ const TheLayout = () => {
   return (
     <div className={classes}>
       <TheSidebar/>
-      {/* <TheAside/> */}
       <div className="c-wrapper">
         <TheHeader/>
         <div className="c-body">

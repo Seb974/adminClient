@@ -6,7 +6,6 @@ function findAll() {
         .then(response => response.data['hydra:member'].sort((a, b) => (a.id > b.id) ? 1 : -1));
 }
 
-// &productSearch=1
 function findAllPaginated(main, entity, page = 1, items = 30) {
     const entitySelection = main ? `platform=${ entity }` : `store=${ entity }`;
     return api

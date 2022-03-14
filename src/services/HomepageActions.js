@@ -1,5 +1,4 @@
 import api from 'src/config/api';
-import { isDefined } from 'src/helpers/utils';
 
 function findAll() {
     return api

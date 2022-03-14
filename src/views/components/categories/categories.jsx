@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import CategoryActions from '../../../services/CategoryActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
 const Categories = (props) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [categories, setCategories] = useState([]);
     const [totalItems, setTotalItems] = useState(0);

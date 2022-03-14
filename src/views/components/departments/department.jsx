@@ -33,11 +33,7 @@ const DepartmentPage = ({ match, history }) => {
                     if (isDefined(response.parentDepartment))
                         setSelectedParent(response.parentDepartment);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/departments");
-                });
+                .catch(error => history.replace("/components/departments"));
         }
     };
 
@@ -68,7 +64,6 @@ const DepartmentPage = ({ match, history }) => {
         const request = !editing ? DepartmentActions.create(newDepartment) : DepartmentActions.update(id, newDepartment);
         request.then(response => {
                     setErrors({name: "", });
-                    //TODO : Flash notification de succès
                     history.replace("/components/departments");
                 })
                .catch( ({ response }) => {
@@ -80,7 +75,6 @@ const DepartmentPage = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

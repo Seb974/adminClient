@@ -16,7 +16,7 @@ import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 
 const Accounting = (props) => {
 
-    const itemsPerPage = 6;
+    const itemsPerPage = 50;
     const fields = ['name', 'date', 'CodePaiement', 'Etat', 'selection', ' '];
     const deliveredStatus = getDeliveredStatus();
     const { currentUser, supervisor } = useContext(AuthContext);

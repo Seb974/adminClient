@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Flatpickr from 'react-flatpickr';
-import { French } from "flatpickr/dist/l10n/fr.js";
 import { Link } from 'react-router-dom';
 import GroupActions from 'src/services/GroupActions';
 import RelaypointActions from 'src/services/RelaypointActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CTextarea, CSwitch, CInputGroup, CInputGroupAppend, CInputGroupText } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getDateFrom, isDefined, getNumericOrNull, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined, getNumericOrNull, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Condition from 'src/components/conditions/condition';
 import { getWeekDays } from 'src/helpers/days';
 import TaxActions from 'src/services/TaxActions';
@@ -20,7 +18,7 @@ const Relaypoint = ({ match, history }) => {
     const [groups, setGroups] = useState([]);
     const [taxes, setTaxes] = useState([]);
     const initialInformations =  AddressPanel.getInitialInformations();
-    const  defaultDays = getWeekDays().filter(day => day.value !== 0);
+    const defaultDays = getWeekDays().filter(day => day.value !== 0);
     const [informations, setInformations] = useState(initialInformations);
     const defaultCondition = {userGroups: [], days: defaultDays, price: "", tax: {}, minForFree: "", count: 0};
     const defaultErrors = {name:"", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", informations: "", available: "", private: "", accessCode: "", discount: "" };
@@ -61,11 +59,7 @@ const Relaypoint = ({ match, history }) => {
                     if (isDefinedAndNotVoid(response.managers))
                         setManagers(response.managers);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/relaypoints");
-                });
+                .catch(error => history.replace("/components/relaypoints"));
         }
     };
 
@@ -73,20 +67,14 @@ const Relaypoint = ({ match, history }) => {
         GroupActions
             .findAll()
             .then(response => setGroups(response.map(group => ({...group, isFixed: false}))))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/relaypoints");
-            });
+            .catch(error => history.replace("/components/relaypoints"));
     };
 
     const fetchTaxes = () => {
         TaxActions
             .findAll()
             .then(response => setTaxes(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/relaypoints");
-            });
+            .catch(error => history.replace("/components/relaypoints"));
     };
 
     const getFormattedRelaypoint = () => {
@@ -129,7 +117,6 @@ const Relaypoint = ({ match, history }) => {
         const request = !editing ? RelaypointActions.create(relaypointToWrite) : RelaypointActions.update(id, relaypointToWrite);
         request.then(response => {
                     setErrors(defaultErrors);
-                    //TODO : Flash notification de succès
                     history.replace("/components/relaypoints");
                 })
                .catch( ({ response }) => {
@@ -142,7 +129,6 @@ const Relaypoint = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };

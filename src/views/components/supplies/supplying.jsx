@@ -1,20 +1,19 @@
-import CIcon from '@coreui/icons-react';
+
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CRow, CValidFeedback, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
+import { getCheapestSupplier, getSelectedQuantity, getSignPostName, getSubTotalCost, getSupplierCostMessage, getTotal, isItemProduct, isSelectedItem } from 'src/helpers/supplying';
 import React, { useState } from 'react';
-import { useRef } from 'react';
 import { useEffect } from 'react';
 import Spinner from 'react-bootstrap/Spinner';
 import Needs from 'src/components/supplyingPages/Needs';
 import Purchase from 'src/components/supplyingPages/Purchase';
 import UpdateCost from 'src/components/supplyingPages/UpdateCost';
 import useWindowDimensions from 'src/helpers/screenDimensions';
-import { getCheapestSupplier, getSelectedQuantity, getSignPostName, getSubTotalCost, getSupplierCostMessage, getTotal, isItemProduct, isSelectedItem } from 'src/helpers/supplying';
 import { isDefined } from 'src/helpers/utils';
 
 const Supplying = (props) => {
 
-    const itemsPerPage = 3;
-    const {  width } = useWindowDimensions();
+    const itemsPerPage = 50;
+    const { width } = useWindowDimensions();
     const fields = ['Produit', 'Coût', 'Stock', 'Besoin', 'Commande', 'Sélection'];
 
     const [toasts, setToasts] = useState([]);
@@ -194,7 +193,6 @@ const Supplying = (props) => {
                                                             className="mx-1 my-1"
                                                             type="checkbox"
                                                             name="inline-checkbox"
-                                                            // checked={ item.selected }
                                                             checked={ isSelectedItem(item, selection) }
                                                             onClick={ () => handleSelect(item) }
                                                             disabled={ item.status === "WAITING" }

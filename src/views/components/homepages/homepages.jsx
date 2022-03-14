@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import HomepageActions from '../../../services/HomepageActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
 const Homepages = (props) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [homepages, setHomepages] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -34,10 +33,7 @@ const Homepages = (props) => {
         setHomepages(homepages.filter(zone => zone.id !== homepageToDelete.id));
         HomepageActions
             .delete(homepageToDelete.id)
-            .catch(error => {
-                setHomepages(originalHomepages);
-                console.log(error.response);
-            });
+            .catch(error => setHomepages(originalHomepages));
     }
 
     return (

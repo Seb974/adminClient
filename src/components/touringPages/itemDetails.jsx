@@ -1,7 +1,6 @@
 import { CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow } from '@coreui/react';
-import React, { useState } from 'react';
-import { getFloat, isDefined } from 'src/helpers/utils';
-import OrderActions from 'src/services/OrderActions';
+import React from 'react';
+import { isDefined } from 'src/helpers/utils';
 
 const ItemDetails = ({ item, order, setOrder }) => {
 

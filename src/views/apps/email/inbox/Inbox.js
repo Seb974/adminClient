@@ -1,6 +1,4 @@
 import React, { useContext } from 'react'
-import CIcon from '@coreui/icons-react'
-import { CButtonToolbar, CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem, CBadge, CButton, CButtonGroup } from '@coreui/react'
 import MessageContext from 'src/contexts/MessageContext'
 import { isDefinedAndNotVoid } from 'src/helpers/utils'
 

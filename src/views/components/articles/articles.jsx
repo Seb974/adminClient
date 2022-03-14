@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import ArticleActions from '../../../services/ArticleActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
 const Articles = (props) => {
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 50;
     const fields = ['title', ' '];
     const [articles, setArticles] = useState([]);
     const [totalItems, setTotalItems] = useState(0);

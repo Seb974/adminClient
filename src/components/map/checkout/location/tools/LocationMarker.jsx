@@ -1,10 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
-// import { isDefinedAndNotVoid } from '../../../../../helpers/utils';
-// import AddressPanel from '../../../../forms/address/AddressPanel';
 import { Marker } from 'react-map-gl';
 import AuthContext from 'src/contexts/AuthContext';
 import { isDefinedAndNotVoid } from 'src/helpers/utils';
-// import AuthContext from '../../../../../contexts/AuthContext';
 
 const LocationMarker = ({ position, informations, isRelaypoint, setTooltip, setPopup }) => {
 

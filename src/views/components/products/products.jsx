@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ProductActions from '../../../services/ProductActions'
 import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CToaster, CToast, CToastHeader, CToastBody } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -12,7 +11,7 @@ import Spinner from 'react-bootstrap/Spinner';
 
 const Products = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 50;
     const fields = ['name', 'promo', 'disponibilité', ' '];
     const { currentUser } = useContext(AuthContext);
     const [displayedProducts, setDisplayedProducts] = useState([]);
@@ -171,7 +170,6 @@ const Products = (props) => {
                 </CCol>
                 <CCol col="6" sm="4" md="2" className="ml-auto">
                     <Link role="button" to="/components/products/new" variant="outline" color="success">CRÉER</Link>    
-                    {/* block */}
                 </CCol>
             </CCardHeader>
             <CCardBody>

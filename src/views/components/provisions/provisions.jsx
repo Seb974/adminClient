@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ProvisionActions from '../../../services/ProvisionActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup, CInputCheckbox, CLabel, CWidgetIcon } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CWidgetIcon } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -8,7 +8,6 @@ import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { isSameDate, getDateFrom } from 'src/helpers/days';
 import Spinner from 'react-bootstrap/Spinner'
-import OrderDetails from 'src/components/preparationPages/orderDetails';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
 import SupplierActions from 'src/services/SupplierActions';
 import SellerActions from 'src/services/SellerActions';
@@ -17,9 +16,9 @@ import CIcon from '@coreui/icons-react';
 import MercureContext from 'src/contexts/MercureContext';
 import { updateSuppliersBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
 
-const Provisions = (props) => {
+const Provisions = ({ history }) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 20;
     const fields = ['Vendeur', 'Fournisseur', 'Date', 'Total', ' '];
     const { currentUser, seller } = useContext(AuthContext);
     const [provisions, setProvisions] = useState([]);
@@ -66,8 +65,8 @@ const Provisions = (props) => {
                         setLoading(false);
                     })
                     .catch(error => {
-                        console.log(error);
                         setLoading(false);
+                        history.replace("/");
                     });
         }
     };
@@ -79,7 +78,7 @@ const Provisions = (props) => {
                 setSuppliers(response);
                 setSelectedSuppliers(getFormattedEntities(response));
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const fetchSellers = () => {
@@ -89,7 +88,7 @@ const Provisions = (props) => {
                 setSellers(response);
                 setSelectedSellers(getFormattedEntities(response));
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const handleDelete = item => {
@@ -98,7 +97,7 @@ const Provisions = (props) => {
         ProvisionActions.delete(item, isAdmin)
                       .catch(error => {
                            setProvisions(originalProvisions);
-                           console.log(error.response);
+                           history.replace("/");
                       });
     }
 
@@ -294,10 +293,10 @@ const Provisions = (props) => {
                                                                 item => <td>{ item.quantity.toFixed(2) + " " + item.unit }</td>
                                                             ,
                                                             'Reçu':
-                                                                item => <td>{ isDefined(item.received) ? item.received.toFixed(2) + " " + item.unit : "-" }</td>        //  item.received.toFixed(2) + " " + item.unit item.received + " U :" + (typeof item.received)
+                                                                item => <td>{ isDefined(item.received) ? item.received.toFixed(2) + " " + item.unit : "-" }</td>
                                                             ,
                                                             'Prix U':
-                                                                item => <td>{ isDefined(item.price) ? item.price.toFixed(2) + " €" : "-" }</td>     // item.price.toFixed(2) + " €"  item.price + " € :" + (typeof item.price)
+                                                                item => <td>{ isDefined(item.price) ? item.price.toFixed(2) + " €" : "-" }</td>
                                                             ,
                                                             'Sous-total':
                                                                 item => <td>{ isDefined(item.price) && isDefined(item.received) ? (item.received * item.price).toFixed(2) + " €" : "-" }</td>

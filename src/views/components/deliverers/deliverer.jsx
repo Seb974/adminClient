@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import DelivererActions from 'src/services/DelivererActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import '../../../assets/css/searchBar.css';
 import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 import UserSearchSimple from 'src/components/forms/UserSearchSimple';
@@ -49,7 +49,6 @@ const Deliverer = ({ match, history }) => {
     }, [catalogs, selectedTax]);
     
     const handleChange = ({ currentTarget }) => setDeliverer({...deliverer, [currentTarget.name]: currentTarget.value});
-    const handleIsPercent = ({ currentTarget }) => setDeliverer({... deliverer, [currentTarget.name] : !deliverer[currentTarget.name]});
     const handleIsIntern = ({ currentTarget }) => {
         setUsers(!deliverer[currentTarget.name] ? null : []);
         setDeliverer({... deliverer, [currentTarget.name] : !deliverer[currentTarget.name]});
@@ -65,31 +64,21 @@ const Deliverer = ({ match, history }) => {
                     getCatalog(response);
                     getTax(response);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/deliverers");
-                });
+                .catch(error => history.replace("/components/deliverers"));
         }
     };
 
     const fetchCatalogs = () => {
         CatalogActions.findAll()
             .then(response => setCatalogs(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/deliverers");
-            });
+            .catch(error => history.replace("/components/deliverers"));
     };
 
     const fetchTaxes = () => {
         let request = TaxActions.findAll();
         request
             .then(response => setTaxes(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/deliverers");
-            });
+            .catch(error => history.replace("/components/deliverers"));
     };
 
     const handleCatalogChange = ({ currentTarget }) => {
@@ -108,7 +97,6 @@ const Deliverer = ({ match, history }) => {
         const request = !editing ? DelivererActions.create(delivererToWrite) : DelivererActions.update(id, delivererToWrite);
         request.then(response => {
                     setErrors(defaultDeliverer);
-                    //TODO : Flash notification de succès
                     history.replace("/components/deliverers");
                 })
                .catch( ({ response }) => {
@@ -121,7 +109,6 @@ const Deliverer = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };
@@ -247,16 +234,6 @@ const Deliverer = ({ match, history }) => {
                                                 </CFormGroup>
                                             </CCol>
                                     </CRow>
-                                    {/* <CRow>
-                                        <CCol xs="12" md="6" className="mt-4">
-                                            <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
-                                                <CCol xs="3" sm="2" md="3">
-                                                    <CSwitch name="isPercent" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ deliverer.isPercent } onChange={ handleIsPercent }/>
-                                                </CCol>
-                                                <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Coût en pourcentage</CCol>
-                                            </CFormGroup>
-                                        </CCol>
-                                    </CRow> */}
                                     <UserSearchMultiple users={ users } setUsers={ setUsers }/>
                                 </>
                             :

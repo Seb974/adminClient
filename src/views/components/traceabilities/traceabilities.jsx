@@ -14,7 +14,7 @@ import SellerActions from 'src/services/SellerActions';
 
 const Traceabilities = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 50;
     const { currentUser } = useContext(AuthContext);
     const [type, setType] = useState("upstream");
     const [number, setNumber] = useState("");

@@ -1,9 +1,9 @@
 import React from 'react';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputFile, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CTextarea } from '@coreui/react';
+import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow } from '@coreui/react';
 import Select from 'src/components/forms/Select';
 import CIcon from '@coreui/icons-react';
 
-const CatalogTax = ({ index, details, options, catalogs, setCatalogOptions }) => {      // handleCatalogChange
+const CatalogTax = ({ index, details, options, catalogs, setCatalogOptions }) => {
 
     const handleCatalogChange = ({ currentTarget }) => {
         const { name, value } = currentTarget;
@@ -62,9 +62,9 @@ const CatalogTax = ({ index, details, options, catalogs, setCatalogOptions }) =>
                 { options.length > 1 &&
                     <CCol xs="12" sm="2" className="d-flex align-items-center mt-2">
                         <CButton 
-                            name={ index } 
-                            size="sm" 
-                            color="danger" 
+                            name={ index }
+                            size="sm"
+                            color="danger"
                             onClick={ handleDelete }
                         >
                             <CIcon name="cil-trash"/>

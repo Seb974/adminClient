@@ -60,11 +60,7 @@ const Container = ({ match, history }) => {
                         setCatalogOptions(catalogPrices);
                     }
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/containers");
-                });
+                .catch(error => history.replace("/components/containers"));
         }
     };
 
@@ -78,10 +74,7 @@ const Container = ({ match, history }) => {
         TaxActions
             .findAll()
             .then(response => setTaxes(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/containers");
-            });
+            .catch(error => history.replace("/components/containers"));
     };
 
     const handleAdd = e => {
@@ -100,7 +93,6 @@ const Container = ({ match, history }) => {
         const request = !editing ? ContainerActions.create(containerToWrite) : ContainerActions.update(id, containerToWrite);
         request.then(response => {
                     setErrors(defaultErrors);
-                    //TODO : Flash notification de succès
                     history.replace("/components/containers");
                 })
                .catch( ({ response }) => {
@@ -113,7 +105,6 @@ const Container = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };

@@ -1,5 +1,5 @@
 export const logoNegative = ['690 134', `
-  <title>coreui react pro logo</title>
+  <title>CREAZOT logo</title>
   <g>
     <rect x="617.4894" y="46" width="70.0001" height="37.9161" rx="2"/>
     <g style="fill:#80d0ff;">

@@ -62,11 +62,7 @@ const Hero = ({ match, history }) => {
                     }
                     setHero({...response, catalogs: dbCatalogs});
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/heroes");
-                });
+                .catch(error => history.replace("/components/heroes"));
         }
     };
 
@@ -74,11 +70,7 @@ const Hero = ({ match, history }) => {
         HomepageActions
             .findAll()
             .then(response => setHomepages(response))
-            .catch(error => {
-                console.log(error);
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/heroes");
-            });
+            .catch(error => history.replace("/components/heroes"));
     };
 
     const getFormattedCatalogs = () => {
@@ -104,7 +96,6 @@ const Hero = ({ match, history }) => {
         const request = !editing ? HeroActions.create(heroToWrite) : HeroActions.update(id, heroToWrite);
         request.then(response => {
                     setErrors(defaultError);
-                    //TODO : Flash notification de succès
                     history.replace("/components/heroes");
                 })
                .catch( ({ response }) => {
@@ -116,7 +107,6 @@ const Hero = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

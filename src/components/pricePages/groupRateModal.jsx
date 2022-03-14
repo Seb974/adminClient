@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import { CButton, CCol, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CRow } from '@coreui/react';
+import { CButton, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText } from '@coreui/react';
 
 const GroupRateModal = ({ priceGroups, setPriceGroups, mainView = true }) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const [modalShow, setModalShow] = useState(false);
 
     const handleSubmit = () => setModalShow(false);
@@ -27,7 +27,7 @@ const GroupRateModal = ({ priceGroups, setPriceGroups, mainView = true }) => {
                 <Modal.Body style={{ maxHeight: '300px', overflow: 'scroll' }}>
                     <CDataTable
                         items={ priceGroups }
-                        fields={ ['Groupe', 'Marge'] }     // fields
+                        fields={ ['Groupe', 'Marge'] }
                         bordered
                         itemsPerPage={ itemsPerPage }
                         pagination

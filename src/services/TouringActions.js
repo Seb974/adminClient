@@ -1,8 +1,6 @@
 import api from 'src/config/api';
-import Roles from 'src/config/Roles';
 import { getStringDate } from 'src/helpers/days';
 import { formatUTC, isDefined } from 'src/helpers/utils';
-import OrderActions from './OrderActions';
 
 function findAll() {
     return api

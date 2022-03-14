@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import Flatpickr from 'react-flatpickr';
-import { French } from "flatpickr/dist/l10n/fr.js";
 import { Link } from 'react-router-dom';
 import GroupActions from 'src/services/GroupActions';
 import CityActions from 'src/services/CityActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSelect } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getDateFrom, getNumericOrNull, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getNumericOrNull, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Condition from 'src/components/conditions/condition';
 import { getWeekDays } from 'src/helpers/days';
 import TaxActions from 'src/services/TaxActions';
@@ -54,11 +52,7 @@ const City = ({ match, history }) => {
                         conditions : !isDefined(response.conditions) ? [] :
                                      response.conditions.map((condition, i) => ({...condition, count: i})) })
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/cities");
-                });
+                .catch(error => history.replace("/components/cities"));
         }
     };
 
@@ -66,20 +60,14 @@ const City = ({ match, history }) => {
         GroupActions
             .findAll()
             .then(response => setGroups(response.map(group => ({...group, isFixed: false}))))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/cities");
-            });
+            .catch(error => history.replace("/components/cities"));
     };
 
     const fetchTaxes = () => {
         TaxActions
             .findAll()
             .then(response => setTaxes(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/cities");
-            });
+            .catch(error => history.replace("/components/cities"));
     };
 
     const handleSubmit = (e) => {
@@ -97,7 +85,6 @@ const City = ({ match, history }) => {
         const request = !editing ? CityActions.create(cityToWrite) : CityActions.update(id, cityToWrite);
         request.then(response => {
                     setErrors({ name: "", zipCode: "", conditions: ""});
-                    //TODO : Flash notification de succès
                     history.replace("/components/cities");
                 })
                .catch( ({ response }) => {
@@ -110,7 +97,6 @@ const City = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };

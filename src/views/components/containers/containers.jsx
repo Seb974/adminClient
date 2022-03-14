@@ -1,15 +1,12 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ContainerActions from '../../../services/ContainerActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
-import ContainerContext from 'src/contexts/ContainerContext';
 import { isDefined } from 'src/helpers/utils';
 
 const Containers = (props) => {
 
-    // const { containers, setContainers } = useContext(ContainerContext);
-    const itemsPerPage = 2;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [containers, setContainers] = useState([]);
     const [totalItems, setTotalItems] = useState(0);

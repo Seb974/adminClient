@@ -12,10 +12,7 @@ const AdminSection = ({ user, onUserChange, errors}) => {
     const fetchGroups = () => {
         GroupActions.findAll()
                     .then(response => setGroups(response.filter(group => group.hasShopAccess)))
-                    .catch(error => {
-                        // TODO : Notification flash d'une erreur
-                        window.location.replace("/components/users");
-                    });
+                    .catch(error => window.location.replace("/components/users"));
     };
 
     const handleUserChange = ({ currentTarget }) => {

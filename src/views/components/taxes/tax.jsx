@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TaxActions from 'src/services/TaxActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputFile, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CTextarea } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import Roles from 'src/config/Roles';
-import StateInput from 'src/components/taxPages/stateInput';
 import CatalogActions from 'src/services/CatalogActions';
-import Select from 'src/components/forms/Select';
 import { isDefinedAndNotVoid, getFloat } from 'src/helpers/utils';
 import CatalogTax from 'src/components/taxPages/catalogTax';
 
@@ -52,18 +49,14 @@ const TaxPage = ({ match, history }) => {
                         }));
                     }
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/taxes");
-                });
+                .catch(error => history.replace("/components/taxes"));
         }
     };
 
     const fetchCatalogs = () => {
         CatalogActions.findAll()
             .then(response => setCatalogs(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/taxes"));
     };
 
     const handleChange = ({ currentTarget }) => setTax({...tax, [currentTarget.name]: currentTarget.value});
@@ -84,7 +77,6 @@ const TaxPage = ({ match, history }) => {
         const request = !editing ? TaxActions.create(taxToWrite) : TaxActions.update(id, taxToWrite);
         request.then(response => {
                     setErrors({name: ""});
-                    //TODO : Flash notification de succès
                     history.replace("/components/taxes");
                 })
                .catch( ({ response }) => {
@@ -96,7 +88,6 @@ const TaxPage = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

@@ -1,4 +1,4 @@
-import { CFormGroup, CInvalidFeedback, CLabel, CSelect, CValidFeedback } from '@coreui/react';
+import { CFormGroup, CInvalidFeedback, CLabel, CSelect } from '@coreui/react';
 import React from 'react';
 
 const Select = ({ name, id, value, error = "", label, onChange, children, required = false, disabled = false, valid = false, multiple = false, style = null}) => {

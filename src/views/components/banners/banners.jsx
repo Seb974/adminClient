@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BannerActions from '../../../services/BannerActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import HomepageActions from 'src/services/HomepageActions';
@@ -9,7 +8,7 @@ import Select from 'src/components/forms/Select';
 
 const Banners = ({ match, history }) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['title', 'espace', ' '];
     const [banners, setBanners] = useState([]);
     const [homepages, setHomepages] = useState([]);
@@ -42,11 +41,7 @@ const Banners = ({ match, history }) => {
         HomepageActions
           .findAll()
           .then(response => setHomepages(response))
-          .catch(error => {
-              console.log(error);
-              // TODO : Notification flash d'une erreur
-              history.replace("/components/banners");
-          });
+          .catch(error => history.replace("/components/banners"));
     };
 
     const handleHomepageChange = ({ currentTarget }) => {

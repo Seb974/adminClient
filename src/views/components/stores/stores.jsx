@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import StoreActions from '../../../services/StoreActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
-import { useContext } from 'react';
-import AuthContext from 'src/contexts/AuthContext';
-import Roles from 'src/config/Roles';
 
-const Stores = (props) => {
+const Stores = ({ history }) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
-    const { currentUser } = useContext(AuthContext);
     const [stores, setStores] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -23,10 +18,14 @@ const Stores = (props) => {
     useEffect(() => getDisplayedStores(currentPage), [currentPage]);
 
     const getDisplayedStores = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedStores(search, page) : await getStores(page);
-        if (isDefined(response)) {
-            setStores(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
+        try {
+          const response = isDefined(search) && search.length > 0 ? await getSearchedStores(search, page) : await getStores(page);
+          if (isDefined(response)) {
+              setStores(response['hydra:member']);
+              setTotalItems(response['hydra:totalItems']);
+          }
+        } catch (error) {
+            history.replace("/");
         }
     };
 
@@ -36,11 +35,9 @@ const Stores = (props) => {
     const handleDelete = (id) => {
         const originalStores = [...stores];
         setStores(stores.filter(city => city.id !== id));
-        StoreActions.delete(id)
-                   .catch(error => {
-                        setStores(originalStores);
-                        console.log(error.response);
-                   });
+        StoreActions
+            .delete(id)
+            .catch(error => setStores(originalStores));
     }
 
     return (

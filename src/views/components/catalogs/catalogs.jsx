@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import CatalogActions from '../../../services/CatalogActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
 const Catalogs = (props) => {
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 50;
     const fields = ['name', 'code', 'etat', ' '];
     const [catalogs, setCatalogs] = useState([]);
     const [totalItems, setTotalItems] = useState(0);

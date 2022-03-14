@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import SupplierActions from '../../../services/SupplierActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
-const Suppliers = (props) => {
+const Suppliers = ({ history }) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['seller', 'name', ' '];
     const [suppliers, setSuppliers] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -19,10 +18,14 @@ const Suppliers = (props) => {
     useEffect(() => getDisplayedSuppliers(currentPage), [currentPage]);
 
     const getDisplayedSuppliers = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedSuppliers(search, page) : await getSuppliers(page);
-        if (isDefined(response)) {
-            setSuppliers(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
+        try {
+          const response = isDefined(search) && search.length > 0 ? await getSearchedSuppliers(search, page) : await getSuppliers(page);
+          if (isDefined(response)) {
+              setSuppliers(response['hydra:member']);
+              setTotalItems(response['hydra:totalItems']);
+          }
+        } catch (error) {
+          history.replace("/");
         }
     };
 
@@ -33,10 +36,7 @@ const Suppliers = (props) => {
         const originalSuppliers = [...suppliers];
         setSuppliers(suppliers.filter(supplier => supplier.id !== id));
         SupplierActions.delete(id)
-                       .catch(error => {
-                            setSuppliers(originalSuppliers);
-                            console.log(error.response);
-                       });
+                       .catch(error => setSuppliers(originalSuppliers));
     }
 
     return (

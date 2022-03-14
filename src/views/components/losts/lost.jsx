@@ -80,10 +80,7 @@ const Lost = ({ match, history }) => {
                     setQuantity(response.quantity);
                     setLostDate(new Date(response.lostDate));
                 })
-                .catch(error => {
-                    console.log(error);
-                    history.replace("/");
-                });
+                .catch(error => history.replace("/components/losts"));
         }
     };
 

@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import TaxActions from '../../../services/TaxActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
-const Taxes = (props) => {
+const Taxes = ({ history }) => {
 
-    const itemsPerPage = 2;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [taxes, setTaxes] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -19,10 +18,14 @@ const Taxes = (props) => {
     useEffect(() => getDisplayedTaxes(currentPage), [currentPage]);
 
     const getDisplayedTaxes = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedTaxes(search, page) : await getTaxes(page);
-        if (isDefined(response)) {
-            setTaxes(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
+        try {
+            const response = isDefined(search) && search.length > 0 ? await getSearchedTaxes(search, page) : await getTaxes(page);
+            if (isDefined(response)) {
+                setTaxes(response['hydra:member']);
+                setTotalItems(response['hydra:totalItems']);
+            }
+        } catch (error) {
+          history.replace("/");
         }
     };
 
@@ -32,11 +35,9 @@ const Taxes = (props) => {
     const handleDelete = (id) => {
         const originalTaxes = [...taxes];
         setTaxes(taxes.filter(tax => tax.id !== id));
-        TaxActions.delete(id)
-                       .catch(error => {
-                            setTaxes(originalTaxes);
-                            console.log(error.response);
-                       });
+        TaxActions
+            .delete(id)
+            .catch(error => setTaxes(originalTaxes));
     }
 
     return (

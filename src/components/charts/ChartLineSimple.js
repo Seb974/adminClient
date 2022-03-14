@@ -118,8 +118,6 @@ const ChartLineSimple = props => {
     return deepObjectsMerge(defaultOptions, attributes.options || {})
   })()
 
-  // render
-
   return (
     <CChartLine
       {...attributes}
@@ -133,7 +131,6 @@ const ChartLineSimple = props => {
 ChartLineSimple.propTypes = {
   tag: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
   className: PropTypes.string,
-  //
   borderColor: PropTypes.string,
   backgroundColor: PropTypes.string,
   pointHoverBackgroundColor: PropTypes.string,

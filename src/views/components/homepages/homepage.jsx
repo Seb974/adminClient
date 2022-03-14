@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import HomepageActions from 'src/services/HomepageActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import {  getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Select from 'src/components/forms/Select';
 import Countdown from './countdown';
 import CatalogContext from 'src/contexts/CatalogContext';
@@ -38,11 +38,7 @@ const Homepage = ({ match, history }) => {
                         setCountdowns(response.countdowns.map((c, i) => ({...c, date: new Date(c.date), catalogs: getFormattedCatalogs(c.catalogs), selectableCatalogs: getFormattedCatalogs(catalogs), count: i})))
                     }
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/homepages");
-                });
+                .catch(error => history.replace("/components/homepages"));
         }
     }
 
@@ -59,7 +55,6 @@ const Homepage = ({ match, history }) => {
         const request = !editing ? HomepageActions.create(homepageToEdit) : HomepageActions.update(id, homepageToEdit);
         request.then(response => {
                     setErrors(defaultError);
-                    //TODO : Flash notification de succès
                     history.replace("/components/homepages");
                 })
                .catch( ({ response }) => {
@@ -71,7 +66,6 @@ const Homepage = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

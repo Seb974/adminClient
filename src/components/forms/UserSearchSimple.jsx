@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Card from 'react-bootstrap/Card'
 import ListGroup from 'react-bootstrap/ListGroup';
 import { CCol, CLabel, CRow } from '@coreui/react';
@@ -16,7 +16,6 @@ const UserSearchSimple = ({ user, setUser, label="Utilisateur associé" }) => {
 
     return (
         <>
-            {/* <hr className="mx-2 my-4"/> */}
             <CRow className="ml-2 my-4">
                 <CLabel htmlFor="name">{ label }</CLabel>
             </CRow>
@@ -26,7 +25,6 @@ const UserSearchSimple = ({ user, setUser, label="Utilisateur associé" }) => {
                 </CCol>
                 <CCol xs="12" sm="12" md="6">
                     <Card >
-                        {/* <Card.Header className="text-center"><strong>Utilisateur associés</strong></Card.Header> */}
                         <ListGroup variant="flush">
                             { !isDefined(user) ?
                                 <ListGroup.Item className="text-center">

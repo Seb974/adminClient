@@ -12,7 +12,7 @@ import { Spinner } from 'react-bootstrap';
 
 const DelivererAccount = (props) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const { currentUser } = useContext(AuthContext);
     const [isAdmin, setIsAdmin] = useState(false);
     const [details, setDetails] = useState([]);
@@ -289,7 +289,6 @@ const DelivererAccount = (props) => {
                                 name="inline-checkbox"
                                 checked={ selectAll }
                                 onClick={ handleSelectAll }
-                                disabled={ viewedDeliveries.length === 0 }
                                 style={{zoom: 2.3}}
                                 disabled={ viewedDeliveries.filter(d => !d.regulated).length <= 0 }
                             />

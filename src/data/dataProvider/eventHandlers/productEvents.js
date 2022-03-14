@@ -34,7 +34,6 @@ export const getUpdateViewedProducts = (products, data, setData) => {
                           treatStock(entity, updatedProducts);
         return {...entity, treated: true};
     });
-    // setProducts(updatedProducts);
     setData(newData.filter(d => !isDefined(d.treated)));
     return new Promise((resolve, reject) => resolve(updatedProducts));
 };

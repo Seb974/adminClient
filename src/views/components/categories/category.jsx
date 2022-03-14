@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CategoryActions from 'src/services/CategoryActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputFile, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CTextarea } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import SelectMultiple from 'src/components/forms/SelectMultiple';
 import GroupActions from 'src/services/GroupActions';
 import CatalogActions from 'src/services/CatalogActions';
-import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getFloat, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Restriction from 'src/components/restrictions/restriction';
 
 
@@ -38,10 +38,7 @@ const CategoryPage = ({ match, history }) => {
         GroupActions
             .findAll()
             .then(response => setGroups(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/categories");
-            });
+            .catch(error => history.replace("/components/categories"));
     };
 
     const fetchCatalogs = () => {
@@ -53,10 +50,7 @@ const CategoryPage = ({ match, history }) => {
                 });
                 setCatalogs(suitedCatalogs);
             })
-            .catch(error => {
-            // TODO : Notification flash d'une erreur
-            history.replace("/components/categories");
-        });
+            .catch(error => history.replace("/components/categories"));
     };
 
     const fetchCategory = id => {
@@ -76,11 +70,7 @@ const CategoryPage = ({ match, history }) => {
                         restrictions: isDefinedAndNotVoid(response.restrictions) ? response.restrictions : []
                     });
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/categories");
-                });
+                .catch(error => history.replace("/components/categories"));
         }
     };
 
@@ -94,7 +84,6 @@ const CategoryPage = ({ match, history }) => {
         const request = !editing ? CategoryActions.create(formattedCategory) : CategoryActions.update(id, formattedCategory);
         request.then(response => {
                     setErrors({name: "", });
-                    //TODO : Flash notification de succès
                     history.replace("/components/categories");
                 })
                .catch( ({ response }) => {
@@ -106,7 +95,6 @@ const CategoryPage = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

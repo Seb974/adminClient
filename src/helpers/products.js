@@ -1,4 +1,4 @@
-import { getFloat } from "./utils";
+import { getFloat, isDefined, isDefinedAndNotVoid } from "./utils";
 
 export const getFormattedVariations = (variations, defaultVariation) => {
     if (variations && variations.length > 0) {
@@ -63,7 +63,6 @@ export const getProductToWrite = (product, type, categories, variations, adapted
             product.stocks.map(s => s["@id"] === stock["@id"] ? getFormattedStock(stock, s.quantity) : s) : [getFormattedStock(stock, 0)];
     return {
         ...noImgProduct,
-        // stock: type === "simple" ? {...stock, name: noImgProduct.name, unit: type === "mixed" ? "U" : noImgProduct.unit} : null,
         stocks: type === "simple" ? newStocks : [],
         userGroups: userGroups.map(userGroup => userGroup['@id']),
         catalogs: catalogs.map(catalog => catalog['@id']),
@@ -141,14 +140,6 @@ export const getVariationToWrite = (variation, product) => {
                 ...noStockSize,
                 name: size.name,
                 stocks: newStocks,
-                // stock: {
-                //     ...size.stock,
-                //     name: getProductName(product, variation, size),
-                //     unit: product.unit,
-                //     quantity: size.stock !== undefined && size.stock !== null && size.stock.quantity ? size.stock.quantity : 0,
-                //     alert: parseFloat(product.stock.alert), 
-                //     security: parseFloat(product.stock.security)
-                // }
             }
         })
     };
@@ -180,7 +171,6 @@ export const formatProduct = (product, defaultStock) => {
         suppliers: isDefinedAndNotVoid(product.suppliers) ? isDefined(product.suppliers[0].label) ? product.suppliers : product.suppliers.map(supplier => ({...supplier, value: supplier['@id'], label: supplier.name, isFixed: false})) : [],
         categories: categories.map(category => ({value: category.id, label: category.name, isFixed: false})),
         uniquePrice: isDefinedAndNotVoid(prices) ? prices.every(price => price.amount === basePrice) : true,
-        // stock: isDefined(stock) ? stock : isDefinedAndNotVoid(variations) ? variations[0].sizes[0].stock : defaultStock,
         stock: isDefined(viewableStock) ? viewableStock : defaultStock, 
         discount: isDefined(discount) ? discount : "",
         offerEnd: isDefined(offerEnd) ? new Date(offerEnd) : new Date(),
@@ -220,6 +210,3 @@ export const getWritableProduct = product => {
 
     }
 }
-
-const isDefined = variable => variable !== undefined && variable !== null;
-const isDefinedAndNotVoid = variable => Array.isArray(variable) ? isDefined(variable) && variable.length > 0 : isDefined(variable);

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CWidgetIcon } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -10,13 +10,12 @@ import { isSameDate, getDateFrom } from 'src/helpers/days';
 import Spinner from 'react-bootstrap/Spinner'
 import OrderDetails from 'src/components/preparationPages/orderDetails';
 import DayOffActions from 'src/services/DayOffActions';
-import CIcon from '@coreui/icons-react';
 import { updatePreparations } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import MercureContext from 'src/contexts/MercureContext';
 
-const Preparations = (props) => {
+const Preparations = ({ history }) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 20;
     const fields = ['name', 'date', 'total', 'préparateur', ' '];
     const { currentUser, seller, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
@@ -61,8 +60,8 @@ const Preparations = (props) => {
                     setLoading(false);
                 })
                 .catch(error => {
-                    console.log(error);
                     setLoading(false);
+                    history.replace("/");
                 });
         }
     }
@@ -71,7 +70,7 @@ const Preparations = (props) => {
         DayOffActions
             .findActives()
             .then(closedDays => setDaysOff(closedDays))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const handleDelete = item => {
@@ -81,7 +80,7 @@ const Preparations = (props) => {
             .delete(item, isAdmin)
             .catch(error => {
                 setOrders(originalOrders);
-                console.log(error.response);
+                history.replace("/")
             });
     }
 
@@ -106,7 +105,7 @@ const Preparations = (props) => {
             UTCEnd = new Date(dates.end.getFullYear(), dates.end.getMonth(), dates.end.getDate() + 1, 3, 59, 0);
         }
         return {start: UTCStart, end: UTCEnd};
-    }
+    };
 
     const getStart = date => {
         let i = 0;
@@ -116,7 +115,7 @@ const Preparations = (props) => {
             i--;
         }
         return dateStart
-    }
+    };
 
     const getEnd = date => {
         let i = 1;
@@ -126,7 +125,7 @@ const Preparations = (props) => {
             i++;
         }
         return getDateFrom(date, i - 1);
-    }
+    };
 
     const getReverseDeliveryDay = date => {
         let i = 0;
@@ -144,10 +143,6 @@ const Preparations = (props) => {
     const getDeliveryDate = (date, delta) => new Date(date.getFullYear(), date.getMonth(), (date.getDate() + delta), 9, 0, 0);
 
     const isOffDay = date => daysOff.find(day => isSameDate(new Date(day.date), date)) !== undefined || date.getDay() === 0;
-
-    // const getTurnover = () => orders.reduce((sum, current) => sum + current.totalHT, 0);
-
-    // const getUserCount = () => [...new Set(orders.map(order => order.email))].length;
 
     const toggleDetails = (index, e) => {
         e.preventDefault();
@@ -178,9 +173,9 @@ const Preparations = (props) => {
                     });
             })
             .catch(error => {
-                console.log(error);
                 setLabelLoading(false);
                 setIdTreating(0);
+                history.replace("/")
             });
     };
 
@@ -192,7 +187,7 @@ const Preparations = (props) => {
                 const newOrders = orders.map(o => o.id === order.id ? {...order, preparator: response.data.preparator} : o);
                 setOrders(newOrders);
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const getOrderWithPreparator = order => {
@@ -207,7 +202,8 @@ const Preparations = (props) => {
             user: isDefined(user) && typeof user === 'object' ? user['@id'] : typeof user === 'string' ? user : null,
             preparator: '/api/users/' + currentUser.id
         };
-    }
+    };
+
     const getSign = item => {
         return item.isRemains ? 
             <i className="fas fa-sync-alt mr-2"></i> :
@@ -223,7 +219,7 @@ const Preparations = (props) => {
     const hasUnpreparedItems = item => {
         const hasUnprepared = item.items.filter(i => i.product.seller.id === seller.id).find(i => !i.isPrepared) === undefined;
         return hasUnprepared;
-    }
+    };
  
     const getNameContent = item => {
         const sign = getSign(item);
@@ -244,28 +240,6 @@ const Preparations = (props) => {
                 }
             </CCardHeader>
             <CCardBody>
-                {/* <CRow>
-                    <CCol xs="12" sm="6" lg="3">
-                        <CWidgetIcon text="Commandes" header={ orders.length } color="primary" iconPadding={false}>
-                            <CIcon width={24} name="cil-clipboard"/>
-                        </CWidgetIcon>
-                        </CCol>
-                        <CCol xs="12" sm="6" lg="3">
-                        <CWidgetIcon text="Clients" header={ getUserCount() } color="info" iconPadding={false}>
-                            <CIcon width={24} name="cil-people"/>
-                        </CWidgetIcon>
-                        </CCol>
-                        <CCol xs="12" sm="6" lg="3">
-                        <CWidgetIcon text="Moyenne" header={ (getUserCount() > 0 ? (getTurnover() / getUserCount()).toFixed(2) : "0.00") + " €"} color="warning" iconPadding={false}>
-                            <CIcon width={24} name="cil-chart"/>
-                        </CWidgetIcon>
-                        </CCol>
-                        <CCol xs="12" sm="6" lg="3">
-                        <CWidgetIcon text="Total" header={ getTurnover().toFixed(2) + " €" } color="danger" iconPadding={false}>
-                            <CIcon width={24} name="cil-money"/>
-                        </CWidgetIcon>
-                    </CCol>
-                </CRow> */}
                 <CRow>
                     <CCol xs="12" lg="6">
                     <RangeDatePicker

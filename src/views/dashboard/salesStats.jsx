@@ -4,7 +4,7 @@ import OrderActions from 'src/services/OrderActions';
 import ProductActions from 'src/services/ProductActions';
 import { getActiveStatus } from 'src/helpers/orders';
 import AuthContext from 'src/contexts/AuthContext';
-import { getDateFrom, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { isSameDate } from 'src/helpers/days';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import Roles from 'src/config/Roles';

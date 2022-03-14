@@ -1,11 +1,7 @@
-import React, { Suspense } from 'react'
-import {
-  Redirect,
-  Route,
-  Switch
-} from 'react-router-dom'
-import { CFade } from '@coreui/react'
-import { Compose, Inbox, Message, Template } from './index'
+import React, { Suspense } from 'react';
+import { Redirect, Route, Switch } from 'react-router-dom';
+import { CFade } from '@coreui/react';
+import { Compose, Inbox, Message, Template } from './index';
   
 const loading = (
   <div className="pt-3 text-center">

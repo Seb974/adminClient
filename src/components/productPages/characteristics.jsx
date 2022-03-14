@@ -11,7 +11,6 @@ import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import Suppliers from './Suppliers';
 import DepartmentActions from 'src/services/DepartmentActions';
-import ParentDepartmentActions from 'src/services/ParentDepartmentActions';
 
 const Characteristics = ({ product, categories, type, setProduct, errors, history}) => {
 
@@ -64,20 +63,14 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
     const fetchGroups = () => {
         GroupActions.findAll()
                     .then(response => setGroups(response))
-                    .catch(error => {
-                        // TODO : Notification flash d'une erreur
-                        history.replace("/components/products");
-                    });
+                    .catch(error => history.replace("/components/products"));
     };
 
     const fetchDepartments = () => {
         DepartmentActions
             .findAll()
             .then(response => setDepartments(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/products");
-            });
+            .catch(error => history.replace("/components/products"));
     };
 
     const fetchCatalogs = () => {
@@ -89,19 +82,13 @@ const Characteristics = ({ product, categories, type, setProduct, errors, histor
                 });
                 setCatalogs(suitedCatalogs);
             })
-            .catch(error => {
-            // TODO : Notification flash d'une erreur
-            history.replace("/components/products");
-        });
+            .catch(error => history.replace("/components/products"));
     };
 
     const fetchSellers = () => {
         SellerActions.findAll()
                     .then(response => setSellers(response))
-                    .catch(error => {
-                        // TODO : Notification flash d'une erreur
-                        history.replace("/components/products");
-                    });
+                    .catch(error => history.replace("/components/products"));
     };
 
     return (

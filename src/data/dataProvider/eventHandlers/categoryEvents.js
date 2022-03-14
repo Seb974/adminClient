@@ -1,4 +1,3 @@
-import Roles from "src/config/Roles";
 import { isDefined, isDefinedAndNotVoid } from "src/helpers/utils";
 
 export const updateCategories = (categories, setCategories, products, setProducts, data, setData) => {

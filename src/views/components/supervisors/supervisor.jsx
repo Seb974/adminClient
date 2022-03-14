@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SupervisorActions from 'src/services/SupervisorActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputFile, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CTextarea } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import Select from 'src/components/forms/Select';
-import { isDefinedAndNotVoid, getFloat, isDefined } from 'src/helpers/utils';
+import { isDefined } from 'src/helpers/utils';
 import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 import UserSearchSimple from 'src/components/forms/UserSearchSimple';
 
@@ -24,11 +23,7 @@ const Supervisor = ({ match, history }) => {
             SupervisorActions
                 .find(id)
                 .then(response => setSupervisorEntity(response))
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/supervisors");
-                });
+                .catch(error => history.replace("/components/supervisors"));
         }
     };
 
@@ -43,12 +38,11 @@ const Supervisor = ({ match, history }) => {
         const request = !editing ? SupervisorActions.create(supervisorToWrite) : SupervisorActions.update(id, supervisorToWrite);
         request.then(response => {
                     setErrors({name: ""});
-                    //TODO : Flash notification de succès
                     history.replace("/components/supervisors");
                 })
                .catch( error => {
                     const { response } = error.response;
-                    if ( isDefined(response) ) {
+                    if (isDefined(response) ) {
                         const { violations } = response.data;
                         if (violations) {
                             const apiErrors = {};
@@ -57,9 +51,8 @@ const Supervisor = ({ match, history }) => {
                             });
                             setErrors(apiErrors);
                         }
-                        //TODO : Flash notification d'erreur
                     } else {
-                        console.log(error);
+                        history.replace("/components/supervisors");
                     }
                });
     };

@@ -13,7 +13,6 @@ import Type from 'src/components/productPages/type';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import { getDateFrom, isDefined } from 'src/helpers/utils';
-import Suppliers from 'src/components/productPages/Suppliers';
 import PlatformContext from 'src/contexts/PlatformContext';
 
 const ProductPage = ({ match, history }) => {
@@ -59,11 +58,7 @@ const ProductPage = ({ match, history }) => {
                     setVariations(getFormattedVariations(response.variations, defaultVariation));
                     setComponents(getFormattedComponents(response.components, defaultComponent));
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    // history.replace("/components/products");
-                });
+                .catch(error => history.replace("/components/products"));
         } else
             setEditing(false);
     };
@@ -72,10 +67,7 @@ const ProductPage = ({ match, history }) => {
         let request = CategoryActions.findAll()
         request
             .then(response => setCategories(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/products");
-            });
+            .catch(error => history.replace("/components/products"));
     };
 
     const handleSubmit = async (e) => {
@@ -105,7 +97,6 @@ const ProductPage = ({ match, history }) => {
         const request = !editing ? ProductActions.create(productToWrite) : ProductActions.update(id, productToWrite);
         request.then(response => {
                     setErrors({name: ""});
-                    //TODO : Flash notification de succès
                     history.replace("/components/products");
                 })
                .catch( ({ response }) => {
@@ -117,7 +108,6 @@ const ProductPage = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                 });
     };
 

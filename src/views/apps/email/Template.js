@@ -1,7 +1,6 @@
 import React, { useContext } from 'react'
 import { CSidebar, CSidebarBrand, CSidebarNav, CSidebarNavItem, CContainer, CCard, CCardBody, CSidebarMinimizer} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { TheAside, TheFooter, TheHeader } from '../../../containers'
+import { TheFooter, TheHeader } from '../../../containers'
 import MessageContext from 'src/contexts/MessageContext'
 import { isDefinedAndNotVoid } from 'src/helpers/utils'
 import { useSelector } from 'react-redux'
@@ -54,7 +53,6 @@ const EmailNav = ({children}) => {
         </CSidebarNav>
         <CSidebarMinimizer/>
       </CSidebar>
-      <TheAside/>
       <div className="c-wrapper">
         <TheHeader/>
         <div className="c-body">

@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import DepartmentActions from '../../../services/DepartmentActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CToaster, CToast, CToastHeader, CToastBody, CCollapse } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup, CToaster, CToast, CToastHeader, CToastBody, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import Spinner from 'react-bootstrap/Spinner';
 import StoreActions from 'src/services/StoreActions';
 import Select from 'src/components/forms/Select';
 import ParentDepartmentActions from 'src/services/ParentDepartmentActions';
-import Item from 'src/components/preparationPages/Item';
 
 const Departments = (props) => {
 
-    const itemsPerPage = 20;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [details, setDetails] = useState([]);
     const [departments, setDepartments] = useState([]);

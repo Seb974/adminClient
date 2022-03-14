@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AgentActions from 'src/services/AgentActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSwitch } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getDateFrom, isDefined } from 'src/helpers/utils';
+import { isDefined } from 'src/helpers/utils';
 import Image from 'src/components/forms/image';
 
 const Agent = ({ match, history }) => {
@@ -13,10 +13,7 @@ const Agent = ({ match, history }) => {
     const [agent, setAgent] = useState({ name: "", role: "", image: null });
     const [errors, setErrors] = useState({ name: "", role: "", image: "" });
 
-    useEffect(() => {
-        fetchAgent(id);
-    }, []);
-
+    useEffect(() => fetchAgent(id), []);
     useEffect(() => fetchAgent(id), [id]);
 
     const handleChange = ({ currentTarget }) => setAgent({...agent, [currentTarget.name]: currentTarget.value});
@@ -26,11 +23,7 @@ const Agent = ({ match, history }) => {
             setEditing(true);
             AgentActions.find(id)
                 .then(response => setAgent(response))
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/agents");
-                });
+                .catch(error => history.replace("/components/agents"));
         }
     }
 
@@ -40,7 +33,6 @@ const Agent = ({ match, history }) => {
         const request = !editing ? AgentActions.create(formattedAgent) : AgentActions.update(id, formattedAgent);
         request.then(response => {
                     setErrors({ name: "", role: "", image: "" });
-                    //TODO : Flash notification de succès
                     history.replace("/components/agents");
                 })
                 .catch( ({ response }) => {
@@ -52,7 +44,6 @@ const Agent = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                 });
     };
 

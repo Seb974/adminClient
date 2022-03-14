@@ -12,13 +12,11 @@ import MercureContext from 'src/contexts/MercureContext';
 import CIcon from '@coreui/icons-react';
 import Roles from 'src/config/Roles';
 import { updateBetween } from 'src/data/dataProvider/eventHandlers/provisionEvents';
-import PlatformContext from 'src/contexts/PlatformContext';
 
 const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
 
   const target = 60;
   const now = new Date();
-  const { platform } = useContext(PlatformContext);
   const { currentUser, supervisor, seller } = useContext(AuthContext);
   const dates = { start: getDateFrom(now, -interval, 0), end: now };
   const { updatedProvisions, setUpdatedProvisions } = useContext(MercureContext);
@@ -92,7 +90,7 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
           .findBetween(getUTCDates(), sellers)
           .then(response => {
                 let storesProvisions = response;
-                if ( Roles.isPicker(currentUser))       // Roles.hasAdminPrivileges(currentUser) ||
+                if ( Roles.isPicker(currentUser))
                     storesProvisions = response.filter(p => isDefined(p.store) && isDefined(p.store.platform));
                 setProvisions(storesProvisions);
             });
@@ -110,7 +108,7 @@ const StatChart = ({ sales, storeSales, interval, ...attributes }) => {
       return {start: UTCStart, end: UTCEnd};
   };
 
-  const getFormattedSales = () => period.map(d => orders.reduce((sum, s) => sum += isSameDate(d, new Date(s.deliveryDate)) ? getTotalOrder(s) : 0, 0));     // s.totalHT
+  const getFormattedSales = () => period.map(d => orders.reduce((sum, s) => sum += isSameDate(d, new Date(s.deliveryDate)) ? getTotalOrder(s) : 0, 0));
 
   const getFormattedProvisions = () => period.map(d => provisions.reduce((sum, p) => sum += isSameDate(d, new Date(p.provisionDate)) ? getTotalProvision(p.goods) : 0, 0));
   

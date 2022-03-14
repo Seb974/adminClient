@@ -9,7 +9,6 @@ import 'src/assets/css/payment-form.css';
 import { Spinner } from 'react-bootstrap';
 import { isDefined } from '../../helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
-import AuthActions from 'src/services/AuthActions';
 import { cardStyle, updateError, paymentConnexionError } from '../../helpers/checkout';
 
 const PaymentForm = ({ name, available, bills, orders, setOrders }) => {

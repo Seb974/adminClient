@@ -31,7 +31,6 @@ const StateInput = ({ rate, handleChange, handleDelete }) => {
                             value={ rate.rate }
                             onChange={ handleChange }
                             placeholder="taux à appliquer"
-                            // required
                         />
                         <CInputGroupAppend>
                             <CInputGroupText>%</CInputGroupText>

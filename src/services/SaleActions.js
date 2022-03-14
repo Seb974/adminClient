@@ -1,9 +1,7 @@
-import axios from 'axios';
 import api from 'src/config/api';
-import Roles from 'src/config/Roles';
 import { setOrderStatus } from 'src/helpers/checkout';
 import { getStringDate } from 'src/helpers/days';
-import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined } from 'src/helpers/utils';
 
 function findAll() {
     return api

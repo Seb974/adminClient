@@ -3,7 +3,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { StaticMap } from 'react-map-gl';
 import mapboxgl from "mapbox-gl";
 import DeckGL, { IconLayer } from "deck.gl";
-import { shop } from 'src/helpers/checkout';
 import TouringActions from 'src/services/TouringActions';
 import DeliveryContext from 'src/contexts/DeliveryContext';
 import AuthContext from 'src/contexts/AuthContext';
@@ -14,7 +13,6 @@ const TouringLocation = (props) => {
 
     const apiToken = process.env.REACT_APP_MAPBOX_TOKEN;
     const Truck = "/assets/img/icon-img/package.png";
-    const initialLocation = shop.coordinates;
     const { selectedCatalog } = useContext(AuthContext);
     const { tourings, setTourings } = useContext(DeliveryContext);
     const [defaultView, setDefaultView] = useState({ latitude: selectedCatalog.center[0], longitude: selectedCatalog.center[1], zoom: 9.4});

@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 import CityActions from 'src/services/CityActions';
 import { isDefined } from 'src/helpers/utils';
 
-const Zones = (props) => {
+const Zones = ({ history }) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [zones, setZones] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -19,11 +19,15 @@ const Zones = (props) => {
     useEffect(() => getDisplayedZones(currentPage), [currentPage]);
 
     const getDisplayedZones = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedZones(search, page) : await getZones(page);
-        if (isDefined(response)) {
-            setZones(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
-        }
+       try {
+         const response = isDefined(search) && search.length > 0 ? await getSearchedZones(search, page) : await getZones(page);
+         if (isDefined(response)) {
+             setZones(response['hydra:member']);
+             setTotalItems(response['hydra:totalItems']);
+         }
+       } catch (error) {
+          history.replace("/");
+       }
     };
 
     const getZones = (page = 1) => page >=1 ? ZoneActions.findAllPaginated(page, itemsPerPage) : undefined;
@@ -37,10 +41,7 @@ const Zones = (props) => {
             .then(response => {
                 ZoneActions
                     .delete(zoneToDelete.id)
-                    .catch(error => {
-                        setZones(originalZones);
-                        console.log(error.response);
-                    });
+                    .catch(error => setZones(originalZones));
             });
     }
 

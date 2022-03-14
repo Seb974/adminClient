@@ -23,11 +23,7 @@ const Message = ({ match, history }) => {
                 if (isDefined(data.response && data.response.length > 0))
                     setResponse(data.response);
               })
-            .catch(error => {
-                console.log(error);
-                // TODO : Notification flash d'une erreur
-                history.replace("/apps/email/inbox");
-            });
+            .catch(error => history.replace("/apps/email/inbox"));
     }
   };
 

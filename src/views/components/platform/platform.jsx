@@ -1,5 +1,5 @@
 import CIcon from '@coreui/icons-react';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSwitch } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import ReactQuill from 'react-quill';
 import { Link } from 'react-router-dom';
@@ -10,9 +10,10 @@ import Roles from 'src/config/Roles';
 import AuthContext from 'src/contexts/AuthContext';
 import { CONTAINER } from 'src/helpers/platform';
 import 'src/scss/TextEditors.scss';
-import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import PlatformActions from 'src/services/PlatformActions';
 import { Tabs, Tab } from 'react-bootstrap';
+
 const Platform = ({ history, match }) => {
 
     const termsRef = useRef(null);
@@ -62,22 +63,14 @@ const Platform = ({ history, match }) => {
                 if (isDefinedAndNotVoid(socials))
                     setSocials(socials.map((s, i) => ({...s, count: i})))
             })
-            .catch(error => {
-                console.log(error);
-                // TODO : Notification flash d'une erreur
-                history.replace("/dashboard");
-            });
+            .catch(error => history.replace("/dashboard"));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const platformToWrite = getPlatformToWrite();
         const request = !isDefined(platform['@id']) ? PlatformActions.create(platformToWrite) : PlatformActions.update(platform.id, platformToWrite);
-        request.then(response => {
-                    setErrors(initialErrors);
-                    //TODO : Flash notification de succès
-                    // history.replace("#");
-                })
+        request.then(response => setErrors(initialErrors))
                 .catch( ({ response }) => {
                     if (response) {
                         const { violations } = response.data;
@@ -88,7 +81,6 @@ const Platform = ({ history, match }) => {
                             });
                             setErrors(apiErrors);
                         }
-                        //TODO : Flash notification d'erreur
                     }
                 });
     };

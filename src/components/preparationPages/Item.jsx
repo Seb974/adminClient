@@ -344,7 +344,6 @@ const Item = ({ item, items, setItems, handleChange, handleDelete, total, index,
                                             name={ item.id }
                                             value={ t.quantity }
                                             onChange={ e => onBatchQuantityChange(e, t) }
-                                            // disabled={ isDelivery }
                                         />
                                         <CInputGroupAppend>
                                             <CInputGroupText>{ item.product.unit }</CInputGroupText>

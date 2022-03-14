@@ -124,7 +124,7 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
         }, 0);
 
         const quantityToAdd = item.orderedQty - usedBatchesTotal > 0 ? item.orderedQty - usedBatchesTotal : 0;
-        const newTraceability = { number: batchToAdd.number, endDate: new Date(batchToAdd.endDate), quantity: quantityToAdd, id: new Date().getTime()};     // quantityToAdd
+        const newTraceability = { number: batchToAdd.number, endDate: new Date(batchToAdd.endDate), quantity: quantityToAdd, id: new Date().getTime()};
         updateTotalPreparated([...item.traceabilities, newTraceability], item.id);
     };
 
@@ -241,7 +241,7 @@ const OrderDetailsItem = ({ item, order, setOrder, total, index, isDelivery }) =
                     </CCol>
                 }
             </CRow>
-            { item.product.needsTraceability && item.traceabilities.map((t, i) => {   // !isDelivery &&
+            { item.product.needsTraceability && item.traceabilities.map((t, i) => {
                 return (<CRow className="d-flex justify-content-end" key={ i }>
                     <CCol xs="12" sm="3">
                         <CFormGroup>

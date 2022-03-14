@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Popup } from 'react-map-gl';
 import { isDefined, isSameAddress } from 'src/helpers/utils';
-// import { isSameAddress } from '../../../../../helpers/days';
-// import { isDefined } from '../../../../../helpers/utils';
 
 const RelaypointTooltip = ({ relaypoint, informations }) => {
 

@@ -9,7 +9,7 @@ import MercureContext from 'src/contexts/MercureContext';
 import PlatformContext from 'src/contexts/PlatformContext';
 import { getUTCDates } from 'src/helpers/days';
 import { getStatus } from 'src/helpers/orders';
-import { extractSales, getFormattedSales, getProductsAndVariations, isItemProduct, isSelectable, isSelectedItem } from 'src/helpers/supplying';
+import { extractSales, getFormattedSales, getProductsAndVariations, isItemProduct, isSelectedItem } from 'src/helpers/supplying';
 import { getEvolutionPoints, getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import { updateViewedProducts } from 'src/data/dataProvider/eventHandlers/productEvents';
 import DepartmentActions from 'src/services/DepartmentActions';
@@ -49,7 +49,7 @@ const Needs = ({ displayedProducts, setDisplayedProducts, selectedSupplier, setS
     useEffect(() => getDependencies(), []);
 
     useEffect(() => getSelectedProducts(currentPage), [currentPage]);
-    useEffect(() => getSelectedProducts(), [selectedSeller, selectedStore, mainView, previousSupplier]);        // selectedSupplier previousSupplier
+    useEffect(() => getSelectedProducts(), [selectedSeller, selectedStore, mainView, previousSupplier]);
     useEffect(() => getSelectedOrders(), [dates, selectedSeller, selectedStore, mainView]);
     useEffect(() => getDisplayedProducts(), [products, orders, evolution, supplied, selectedDepartments]);
     useEffect(() => getDisplayedProducts(true), [selectedDepartments]);

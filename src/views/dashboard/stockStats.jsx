@@ -18,7 +18,7 @@ import Roles from 'src/config/Roles';
 
 const StockStats = () => {
 
-    const itemsPerPage = 6;
+    const itemsPerPage = 10;
     const status = getActiveStatus();
     const fields = [' ', 'Produit', 'Disponible', 'Commandé', 'Vendu', 'Utilisation' ];
     const { currentUser, supervisor, seller, store } = useContext(AuthContext);
@@ -97,7 +97,7 @@ const StockStats = () => {
     const getDisplayedProducts = () => {
         const productsWithSales = isDefinedAndNotVoid(sales) ? getProductsWithSales(products, sales) : products;
         const productsWithProvisions = isDefinedAndNotVoid(goods) ? getProductsWithProvisions(productsWithSales, goods) : productsWithSales;
-        setDisplayedProducts(productsWithProvisions);       // .sort((a, b) => (getUsage(a) < getUsage(b)) ? 1 : -1)
+        setDisplayedProducts(productsWithProvisions);
         setLoading(false);
     };
 
@@ -416,16 +416,12 @@ const StockStats = () => {
                                     ,
                                 'Commandé':
                                     item => <td>
-                                                {/* <strong> */}
-                                                    { item.provisioned.toFixed(2) + " " + getUnit(item) }
-                                                {/* </strong> */}
+                                                { item.provisioned.toFixed(2) + " " + getUnit(item) }
                                             </td>
                                 ,
                                 'Vendu':
                                     item => <td>
-                                                {/* <strong> */}
-                                                    { item.ordered.toFixed(2) + " " + getUnit(item) }
-                                                {/* </strong> */}
+                                                { item.ordered.toFixed(2) + " " + getUnit(item) }
                                             </td>
                             }} 
                         />

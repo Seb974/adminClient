@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CatalogActions from 'src/services/CatalogActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch, CSelect } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { getFloat, isDefined } from 'src/helpers/utils';
 
@@ -36,11 +36,7 @@ const Catalog = ({ match, history }) => {
                         longitude: selected.center[1]
                     });
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/catalogs");
-                });
+                .catch(error => history.replace("/components/catalogs"));
         }
     };
 
@@ -50,7 +46,6 @@ const Catalog = ({ match, history }) => {
         const request = !editing ? CatalogActions.create(catalogToWrite) : CatalogActions.update(id, catalogToWrite);
         request.then(response => {
                     setErrors(defaultErrors);
-                    //TODO : Flash notification de succès
                     history.replace("/components/catalogs");
                 })
                .catch( ({ response }) => {
@@ -63,7 +58,6 @@ const Catalog = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };
@@ -252,7 +246,6 @@ const Catalog = ({ match, history }) => {
                                     </CFormGroup>
                                 </CCol>
                             </CRow>
-                            {/* <hr className="mt-5"/> */}
                             <CRow className="mt-4 d-flex justify-content-center">
                                 <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
                             </CRow>

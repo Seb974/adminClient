@@ -1,15 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
 import SellerActions from '../../../services/SellerActions';
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 
-const Sellers = (props) => {
+const Sellers = ({ history }) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const { currentUser } = useContext(AuthContext);
     const fields = ['name', 'turnover', 'totalToPay', ' '];
     const [sellers, setSellers] = useState([]);
@@ -43,7 +42,7 @@ const Sellers = (props) => {
             .delete(id)
             .catch(error => {
                 setSellers(originalSellers);
-                console.log(error.response);
+                history.replace("/");
             });
     }
 

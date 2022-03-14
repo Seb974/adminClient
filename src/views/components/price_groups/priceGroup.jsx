@@ -35,11 +35,7 @@ const PriceGroup = ({ match, history }) => {
                                       response.userGroup.map(group => ({...group, isFixed: false}));
                     setPriceGroup({...response, userGroup});
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/price_groups");
-                });
+                .catch(error => history.replace("/components/price_groups"));
         }
     }
 
@@ -50,7 +46,7 @@ const PriceGroup = ({ match, history }) => {
                 const filteredGroups = response.filter(group => group.hasShopAccess && (group.priceGroup === null || group.priceGroup === undefined));
                 setGroups(filteredGroups.map(group => ({...group, isFixed: false})));
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/price_groups"));
     };
 
     const handleSubmit = (e) => {
@@ -61,12 +57,11 @@ const PriceGroup = ({ match, history }) => {
 
         request.then(response => {
                     setErrors(defaultError);
-                    //TODO : Flash notification de succès
                     history.replace("/components/price_groups");
                 })
                .catch( error => {
                     const { response } = error;
-                    if (!isDefined(response)) {
+                    if (isDefined(response)) {
                         const { violations } = response.data;
                         if (violations) {
                             const apiErrors = {};
@@ -75,9 +70,8 @@ const PriceGroup = ({ match, history }) => {
                             });
                             setErrors(apiErrors);
                         }
-                        //TODO : Flash notification d'erreur
                     } else {
-                        console.log(error)
+                        history.replace("/components/price_groups");
                     }
                });
     }

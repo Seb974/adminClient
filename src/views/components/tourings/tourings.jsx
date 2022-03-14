@@ -1,22 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
-import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup, CInputCheckbox, CLabel } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
-import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import { isSameDate, getDateFrom } from 'src/helpers/days';
+import { isDefined } from 'src/helpers/utils';
 import Spinner from 'react-bootstrap/Spinner'
 import Button from 'react-bootstrap/Button';
 import TouringDetails from 'src/components/touringPages/touringDetails';
-import CIcon from '@coreui/icons-react';
 import TouringActions from 'src/services/TouringActions';
 import TruckLocation from 'src/components/map/touring/truckLocation';
-import TouringLocation from 'src/components/map/touring/touringLocation';
 
-const Tourings = (props) => {
+const Tourings = ({ history }) => {
 
     const itemsPerPage = 3;
     const fields = ['Livreur', 'Départ', 'Livraisons', 'Terminer', ' '];
@@ -55,8 +50,8 @@ const Tourings = (props) => {
                     setLoading(false);
                 })
                 .catch(error => {
-                    console.log(error);
                     setLoading(false);
+                    history.replace('/');
                 });
         }
     }
@@ -65,10 +60,7 @@ const Tourings = (props) => {
         const originalTourings = [...tourings];
         setTourings(tourings.filter(order => order.id !== item.id));
         TouringActions.delete(item.id)
-                      .catch(error => {
-                           setTourings(originalTourings);
-                           console.log(error.response);
-                      });
+                      .catch(error => setTourings(originalTourings));
     }
 
     const handleDateChange = datetime => {

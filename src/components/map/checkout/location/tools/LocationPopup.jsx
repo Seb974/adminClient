@@ -1,19 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Popup, FlyToInterpolator } from 'react-map-gl';
-// import { useToasts } from 'react-toast-notifications';
-// import AuthContext from '../../../../../contexts/AuthContext';
-// import DeliveryContext from '../../../../../contexts/DeliveryContext';
-// import { isSameAddress } from '../../../../../helpers/days';
 import { getCityCondition } from 'src/helpers/map';
-// import { isDefined } from '../../../../../helpers/utils';
 import { isDefined, isSameAddress } from 'src/helpers/utils';
-// import AddressPanel from '../../../../forms/address/AddressPanel';
 import AuthContext from 'src/contexts/AuthContext';
 import DeliveryContext from 'src/contexts/DeliveryContext';
 
 const LocationPopup = ({ location, informations, setViewport, setPopup, onClear, setIsRelaypoint, isRelaypoint, updatePosition }) => {
 
-    // const { addToast } = useToasts();
     const { settings } = useContext(AuthContext);
     const { condition, cities } = useContext(DeliveryContext);
     const [ownPosition, setOwnPosition] = useState([]);
@@ -51,7 +44,6 @@ const LocationPopup = ({ location, informations, setViewport, setPopup, onClear,
         });
         updatePosition(suggestion);
         setPopup(undefined);
-        // addToast("Point de livraison sélectionné", { appearance: "success", autoDismiss: true });
     };
 
     const onDeleteSelection = () => {
@@ -63,7 +55,6 @@ const LocationPopup = ({ location, informations, setViewport, setPopup, onClear,
             transitionInterpolator: new FlyToInterpolator(),
         });
         onClear();
-        // addToast("Point de livraison effacé", { appearance: "error", autoDismiss: true });
         setPopup(undefined);
     };
 

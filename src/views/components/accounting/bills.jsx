@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CFormGroup } from '@coreui/react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
@@ -12,7 +12,7 @@ import PaymentForm from 'src/components/payment/PaymentForm';
 
 const Bills = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 50;
     const fields = ['client', 'facture', 'échéance', 'total HT', 'total TTC', 'etat', 'selection'];
     const { currentUser, supervisor } = useContext(AuthContext);
     const [orders, setOrders] = useState([]);

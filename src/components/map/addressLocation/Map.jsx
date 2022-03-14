@@ -21,7 +21,6 @@ const Map = ({ informations, setInformations, errors }) => {
     const [viewport, setViewport] = useState(defaultView);
     const [locationTooltip, setLocationTooltip] = useState(undefined);
     const mapStyle = { top: 0, left: 0, height: '520px', width: '100', mapStyle: 'mapbox://styles/mapbox/streets-v11' };
-    // 'mapbox://styles/mapbox/light-v8'
 
     useEffect(() => {
         if (isDefined(selectedCatalog) && Object.keys(selectedCatalog).length > 0 && isDefinedAndNotVoid(selectedCatalog.center)) {

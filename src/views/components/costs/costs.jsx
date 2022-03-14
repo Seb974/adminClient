@@ -11,7 +11,7 @@ import Spinner from 'react-bootstrap/Spinner';
 
 const Costs = (props) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 50;
     const fields = ['name', 'Avantageux', 'Coût HT'];
     const { width } = useWindowDimensions();
     const { updatedProducts, setUpdatedProducts } = useContext(MercureContext);

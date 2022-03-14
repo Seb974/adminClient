@@ -40,11 +40,7 @@ const Group = ({ match, history }) => {
                     };
                     setGroup(newGroup);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/groups");
-                });
+                .catch(error => history.replace("/components/groups"));
         }
     }
 
@@ -65,7 +61,6 @@ const Group = ({ match, history }) => {
         const request = !editing ? GroupActions.create(groupToWrite) : GroupActions.update(id, groupToWrite);
         request.then(response => {
                     setErrors({label: ""});
-                    //TODO : Flash notification de succès
                     history.replace("/components/groups");
                 })
                .catch( ({ response }) => {
@@ -78,7 +73,6 @@ const Group = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     }

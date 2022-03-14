@@ -12,7 +12,7 @@ import CIcon from '@coreui/icons-react';
 import { getArchiveDate } from 'src/helpers/days';
 import ProductActions from 'src/services/ProductActions';
 
-const Prices = (props) => {
+const Prices = ({ history }) => {
 
     const itemsPerPage = 500;
     const { updatedProducts, setUpdatedProducts } = useContext(MercureContext);
@@ -57,7 +57,7 @@ const Prices = (props) => {
         PriceGroupActions
             .findAll()
             .then(response => setPriceGroups(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const getDisplayedProducts = async (page = 1) => {
@@ -71,7 +71,7 @@ const Prices = (props) => {
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            console.log(error);
+            history.replace("/");
         }
     };
 

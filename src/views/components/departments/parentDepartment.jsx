@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import DepartmentActions from 'src/services/DepartmentActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import ParentDepartmentActions from 'src/services/ParentDepartmentActions';
@@ -21,11 +20,7 @@ const ParentDepartmentPage = ({ match, history }) => {
             setEditing(true);
             ParentDepartmentActions.find(id)
                 .then(response => setParentDepartment(response))
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/departments");
-                });
+                .catch(error => history.replace("/components/departments"));
         }
     };
 
@@ -36,7 +31,6 @@ const ParentDepartmentPage = ({ match, history }) => {
         const request = !editing ? ParentDepartmentActions.create(parentDepartment) : ParentDepartmentActions.update(id, parentDepartment);
         request.then(response => {
                     setErrors({name: "", });
-                    //TODO : Flash notification de succès
                     history.replace("/components/departments");
                 })
                .catch( ({ response }) => {
@@ -48,7 +42,6 @@ const ParentDepartmentPage = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

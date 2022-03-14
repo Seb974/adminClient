@@ -14,6 +14,5 @@ const LocationMarker = ({ position, initialPosition }) => {
         </Marker>
     );
 }
-// eventHandlers={{ click: e => console.log("Click on position")}}
- 
+
 export default LocationMarker;

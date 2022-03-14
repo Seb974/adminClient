@@ -11,9 +11,9 @@ import Roles from 'src/config/Roles';
 import CIcon from '@coreui/icons-react';
 import { Spinner } from 'react-bootstrap';
 
-const SellerAccount = (props) => {
+const SellerAccount = ({ history }) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const status = getDeliveredStatus();
     const { currentUser } = useContext(AuthContext);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -61,8 +61,8 @@ const SellerAccount = (props) => {
                     setTotalItems(response['hydra:totalItems']);
                 })
                 .catch(error => {
-                    console.log(error);
                     setLoading(false);
+                    history.replace("/");
                 });
         }
     };
@@ -74,7 +74,7 @@ const SellerAccount = (props) => {
                 setSellers(response);
                 setSelectedSeller(response[0]);
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const handleSellerChange = ({ currentTarget }) => {
@@ -120,7 +120,7 @@ const SellerAccount = (props) => {
                 });
                 setViewedOrders(getFilteredResults(newRegisteredOrders));
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const handleSelect = item => updateSelection(item);
@@ -161,7 +161,6 @@ const SellerAccount = (props) => {
 
     const getFilteredResults = orders => {
         return orders.filter(order => {
-            // order.totalHT > 0 &&
             return (selectedStatus === "all" || 
                    (selectedStatus === "true" && order.regulated) ||
                    (selectedStatus === "false" && !order.regulated));
@@ -312,7 +311,6 @@ const SellerAccount = (props) => {
                                 name="inline-checkbox"
                                 checked={ selectAll }
                                 onClick={ handleSelectAll }
-                                disabled={ viewedOrders.length === 0 }
                                 style={{zoom: 2.3}}
                                 disabled={ viewedOrders.filter(o => !o.regulated).length <= 0 }
                             />

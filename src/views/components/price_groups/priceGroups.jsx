@@ -7,7 +7,7 @@ import { isDefined } from 'src/helpers/utils';
 
 const PriceGroups = (props) => {
 
-    const itemsPerPage = 2;
+    const itemsPerPage = 50;
     const fields = ['name', ' '];
     const [priceGroups, setPriceGroups] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -33,10 +33,7 @@ const PriceGroups = (props) => {
         const originalPriceGroups = [...priceGroups];
         setPriceGroups(priceGroups.filter(group => group.id !== id));
         PriceGroupActions.delete(id)
-                       .catch(error => {
-                            setPriceGroups(originalPriceGroups);
-                            console.log(error.response);
-                       });
+                       .catch(error => setPriceGroups(originalPriceGroups));
     }
 
     return (

@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import StoreActions from '../../../services/StoreActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow } from '@coreui/react';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import { useContext } from 'react';
-import AuthContext from 'src/contexts/AuthContext';
-import Roles from 'src/config/Roles';
 import Spinner from 'react-bootstrap/Spinner';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 
-const SalesPerStore = (props) => {
+const SalesPerStore = ({ history }) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const fields = ['name', 'TOTAL', 'CB', 'ESP', 'CHE'];
     const [stores, setStores] = useState([]);
     const [turnovers, setTurnovers] = useState([]);
@@ -42,6 +39,7 @@ const SalesPerStore = (props) => {
           return newTurnovers;
         } catch (e) {
           setLoading(false);
+          history.replace("/");
         }
     };
 
@@ -61,6 +59,7 @@ const SalesPerStore = (props) => {
           }
       } catch(e) {
           setLoading(false);
+          history.replace("/");
       } 
     };
 

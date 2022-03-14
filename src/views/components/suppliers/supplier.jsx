@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import SupplierActions from 'src/services/SupplierActions';
 import SellerActions from '../../../services/SellerActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputFile, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSelect, CSwitch, CTextarea } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -23,7 +23,7 @@ const Supplier = ({ match, history }) => {
     const [editing, setEditing] = useState(false);
     const { currentUser } = useContext(AuthContext);
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const  defaultDays = getWeekDays().filter(day => day.value !== 0);
+    const defaultDays = getWeekDays().filter(day => day.value !== 0);
     const defaultErrors = { name: "", seller: "", email: "", phone: "", provisionMin: "", deliveryMin: "", dayInterval: "", maxHour: "", days: "" };
     const [supplier, setSupplier] = useState({ name: "", seller: null, email: "", phone: "", provisionMin: 0, deliveryMin: 0, dayInterval: 1, maxHour: getDateFrom(now, 0, 12, 0), days: defaultDays});
     const [sellers, setSellers] = useState([]);
@@ -52,18 +52,14 @@ const Supplier = ({ match, history }) => {
                     const supplierToUpdate = getSupplierToUpdate(response);
                     setSupplier(supplierToUpdate);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/suppliers");
-                });
+                .catch(error => history.replace("/components/suppliers"));
         }
     };
 
     const fetchSellers = () => {
         SellerActions.findAll()
             .then(response => setSellers(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/suppliers"));
     };
 
     const handleChange = ({ currentTarget }) => setSupplier({...supplier, [currentTarget.name]: currentTarget.value});
@@ -83,7 +79,6 @@ const Supplier = ({ match, history }) => {
         const request = !editing ? SupplierActions.create(formattedSupplier) : SupplierActions.update(id, formattedSupplier);
         request.then(response => {
                     setErrors(defaultErrors);
-                    //TODO : Flash notification de succès
                     history.replace("/components/suppliers");
                 })
                .catch( error => {
@@ -97,9 +92,8 @@ const Supplier = ({ match, history }) => {
                             });
                             setErrors(apiErrors);
                         }
-                        //TODO : Flash notification d'erreur
                     } else 
-                        console.log(error);
+                        history.replace("/components/suppliers")
                });
     }
 

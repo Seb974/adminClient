@@ -1,15 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import { isSameDate, getDateFrom, isBetween } from 'src/helpers/days';
+import { isSameDate, getDateFrom } from 'src/helpers/days';
 import Spinner from 'react-bootstrap/Spinner'
-import { Button } from 'bootstrap';
 import OrderDetails from 'src/components/preparationPages/orderDetails';
 import DayOffActions from 'src/services/DayOffActions';
 import SellerActions from 'src/services/SellerActions';
@@ -17,9 +15,9 @@ import { updateRecoveries } from 'src/data/dataProvider/eventHandlers/orderEvent
 import MercureContext from 'src/contexts/MercureContext';
 import Select from 'src/components/forms/Select';
 
-const Recoveries = (props) => {
+const Recoveries = ({ history }) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['commande', 'date', 'statut', ' '];
     const { currentUser, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
@@ -63,8 +61,8 @@ const Recoveries = (props) => {
                     setLoading(false);
                 })
                 .catch(error => {
-                    console.log(error);
                     setLoading(false);
+                    history.replace("/");
                 });
         }
     };
@@ -73,7 +71,7 @@ const Recoveries = (props) => {
         DayOffActions
             .findActives()
             .then(closedDays => setDaysOff(closedDays))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const fetchSellers = () => {
@@ -83,7 +81,7 @@ const Recoveries = (props) => {
                 setSellers(response);
                 setSelectedSeller(response[0]);
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const handleSellerChange = ({ currentTarget }) => {
@@ -98,7 +96,7 @@ const Recoveries = (props) => {
             .delete(item, isAdmin)
             .catch(error => {
                 setOrders(originalOrders);
-                console.log(error.response);
+                history.replace("/");
             });
     }
 

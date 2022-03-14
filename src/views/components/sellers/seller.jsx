@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerActions from 'src/services/SellerActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getDateFrom, getFloat, getHourFrom, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import '../../../assets/css/searchBar.css';
 import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 import AuthContext from 'src/contexts/AuthContext';
@@ -48,11 +48,7 @@ const Seller = ({ match, history }) => {
                     if (isDefinedAndNotVoid(response.users))
                         setUsers(response.users);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/sellers");
-                });
+                .catch(error => history.replace("/components/sellers"));
         }
     };
 
@@ -67,7 +63,6 @@ const Seller = ({ match, history }) => {
             const request = !editing ? SellerActions.create(sellerToWrite) : SellerActions.update(id, sellerToWrite);
             request.then(response => {
                         setErrors(defaultSeller);
-                        //TODO : Flash notification de succès
                         history.replace("/components/sellers");
                     })
                    .catch( ({ response }) => {
@@ -80,7 +75,6 @@ const Seller = ({ match, history }) => {
                                });
                                setErrors(apiErrors);
                            }
-                           //TODO : Flash notification d'erreur
                        }
                    });
         } else {

@@ -82,7 +82,6 @@ const DeliveryTable = ({ order, items }) => {
 
     return (
         <View style={styles.table}> 
-            {/* TableHeader */} 
             <View style={styles.tableRow}> 
                 <View style={styles.productCol}> 
                     <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Produit</Text> 
@@ -100,7 +99,6 @@ const DeliveryTable = ({ order, items }) => {
                     <Text style={{...styles.tableCell, fontWeight: 'extrabold'}}>Prix</Text> 
                 </View> 
             </View>
-            {/* TableContent */}
             { items.map(item => {
                 if (!item.isPackage) {
                     const invoicedQty = !isDefined(order.user) || isDefined(order.paymentId) ? item.orderedQty : item.preparedQty;

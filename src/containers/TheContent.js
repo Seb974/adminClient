@@ -1,8 +1,6 @@
 import React, { Suspense } from 'react'
-import { Redirect, Route, Switch } from 'react-router-dom'
-import { CContainer, CFade } from '@coreui/react'
-
-// routes config
+import { Redirect, Switch } from 'react-router-dom'
+import { CContainer } from '@coreui/react'
 import routes from '../routes'
 import AdminRoute from 'src/components/route/AdminRoute'
   

@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Popup } from 'react-map-gl';
-// import { isSameAddress } from '../../../../../helpers/days';
-// import { isDefined } from '../../../../../helpers/utils';
 import { isDefined, isSameAddress } from 'src/helpers/utils';
-// import AddressPanel from '../../../../forms/address/AddressPanel';
 
 const LocationTooltip = ({ location, informations, isRelaypoint }) => {
 

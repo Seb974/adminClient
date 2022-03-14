@@ -14,12 +14,12 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import ProvisionActions from 'src/services/ProvisionActions';
 import SellerActions from 'src/services/SellerActions';
 
-const InProgress = (props) => {
+const InProgress = ({ history }) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 50;
     const { width } = useWindowDimensions();
     const { currentUser } = useContext(AuthContext);
-    const  { platform } = useContext(PlatformContext);
+    const { platform } = useContext(PlatformContext);
     const fields = ['Produit', 'Quantité', 'Date de réception'];
     const [loading, setLoading] = useState(false);
     const [sellers, setSellers] = useState([]);
@@ -53,7 +53,7 @@ const InProgress = (props) => {
                 if (Roles.isStoreManager(currentUser))
                     setSelectedStore(response[0].stores[0])
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const fetchProvisions = () => {
@@ -67,7 +67,10 @@ const InProgress = (props) => {
                     setProvisions(response);
                     setLoading(false);
                 })
-                .catch(error => setLoading(false));
+                .catch(error => {
+                    setLoading(false);
+                    history.replace("/");
+                });
 
         }
     };

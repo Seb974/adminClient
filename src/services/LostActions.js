@@ -62,13 +62,6 @@ function create(lost) {
     return api.post('/api/losts', {...lost});
 }
 
-// function formatUTC(dates) {
-//     return {
-//         start: new Date(dates.start.toUTCString()), 
-//         end: new Date(dates.end.toUTCString())
-//     };
-// }
-
 export default {
     findAll,
     findAllPaginated,

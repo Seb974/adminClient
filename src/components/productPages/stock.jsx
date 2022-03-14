@@ -1,5 +1,5 @@
 import React from 'react';
-import { CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText,  CLabel, CSelect, CSwitch } from '@coreui/react';
+import { CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CSelect, CSwitch } from '@coreui/react';
 
 const Stock = ({ product, setProduct }) => {
 
@@ -54,16 +54,6 @@ const Stock = ({ product, setProduct }) => {
                         </CInputGroupAppend>
                     </CInputGroup>
                 </CCol>
-
-                {/* <CCol xs="12" md="4">
-                    <CLabel htmlFor="select">Durée de vie</CLabel>
-                    <CSelect custom name="productGroup" id="productGroup" value={ product.productGroup } onChange={ handleChange }>
-                        <option value="J + 1">J + 1</option>
-                        <option value="J + 3">J + 3</option>
-                        <option value="J + 6">J + 6</option>
-                        <option value="J + 10">J + 10</option>
-                    </CSelect>
-                </CCol> */}
             </CFormGroup>
             <CFormGroup row>
                 <CCol xs="12" md="4" className="mt-4">

@@ -1,5 +1,4 @@
-import React, { useContext, useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useContext, useEffect, useState } from 'react'
 import { CButton, CCard, CCardBody, CCardGroup, CCol, CContainer, CForm, CInput, CInputGroup, CInputGroupPrepend, CInputGroupText, CInvalidFeedback, CRow, CFormGroup } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import AuthContext from 'src/contexts/AuthContext'
@@ -15,24 +14,25 @@ const Login = ({ history }) => {
   const { platform } = useContext(PlatformContext);
   const [credentials, setCredentials] = useState({username: '', password: ''});
   const [error, setError] = useState("");
-  const { t, i18n } = useTranslation()
+  const { t, i18n } = useTranslation();
 
-  const handleChange = ({currentTarget}) => {
-      setCredentials({...credentials, [currentTarget.name]: currentTarget.value});
-  }
+  useEffect(() => {
+    if (error.length > 0)
+        setError("");
+  }, [credentials]);
+
+  const handleChange = ({currentTarget}) => setCredentials({...credentials, [currentTarget.name]: currentTarget.value});
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    AuthActions.authenticate(credentials)
-               .then(response => {
-                   setError("");
-                   setIsAuthenticated(true);
-                   history.push('/');
-                })
-               .catch(error => {
-                   console.log(error);
-                   setError("Paramètres de connexion invalides")
-                });
+    AuthActions
+        .authenticate(credentials)
+        .then(response => {
+            setError("");
+            setIsAuthenticated(true);
+            history.push('/');
+        })
+        .catch(error => setError("Paramètres de connexion invalides"));
   }
 
   return (
@@ -45,7 +45,6 @@ const Login = ({ history }) => {
                 <CCardBody>
                   <CForm onSubmit={ handleSubmit }>
                     <h1 className="text-center mb-0">
-                      {/* { t("login.title.label") } */}
                       <img src="assets/img/logo/logo_fp_4.png" alt={ isDefined(platform) ? platform.name : "" } width={ 150 }/>
                     </h1>
                     <p className="text-muted mt-0 text-center">{ t("login.text-muted.label") }</p>
@@ -53,7 +52,6 @@ const Login = ({ history }) => {
                       <CInputGroup className="mb-3">
                         <CInputGroupPrepend>
                           <CInputGroupText>@
-                            {/* <CIcon name="cil-user" /> */}
                           </CInputGroupText>
                         </CInputGroupPrepend>
                         <CInput 
@@ -67,8 +65,8 @@ const Login = ({ history }) => {
                             autoComplete="username"
                             required
                         />
+                        <CInvalidFeedback>{ error }</CInvalidFeedback>
                       </CInputGroup>
-                      <CInvalidFeedback>{ error }</CInvalidFeedback>
                     </CFormGroup>
                     <CFormGroup className="mt-4">
                       <CInputGroup className="mb-4">
@@ -77,12 +75,13 @@ const Login = ({ history }) => {
                             <CIcon name="cil-lock-locked" />
                           </CInputGroupText>
                         </CInputGroupPrepend>
-                        <CInput type="password" placeholder="Password"
+                        <CInput 
                             type="password" 
                             id="password"
                             name="password"
                             placeholder={ t("login.password.label") }
                             value={ credentials.password }
+                            invalid={ error.length > 0 }
                             onChange={ handleChange }
                             autoComplete="current-password"
                             required
@@ -101,10 +100,8 @@ const Login = ({ history }) => {
                 </CCardBody>
               </CCard>
               <CCard className="text-white py-5 d-md-down-none" style={{ width: '44%', backgroundColor: "#2a2b36"}}>  
-              {/* bg-dark */}
                 <CCardBody className="text-center">
                   <div>
-                    {/* <h2>{ isDefined(platform) ? platform.name : "" }</h2> */}
                     <img src="assets/img/logo/logo_fp_2.png" alt={ isDefined(platform) ? platform.name : "" } width={ 300 }/>
                     <p className="my-3">Accès réservé aux administrateurs.</p>
                     <a href={ api.CLIENT_DOMAIN } target="_blank">

@@ -3,9 +3,9 @@ import Flatpickr from 'react-flatpickr';
 import { French } from "flatpickr/dist/l10n/fr.js";
 import { Link } from 'react-router-dom';
 import PromotionActions from 'src/services/PromotionActions';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch, CSelect } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { getDateFrom, getFloat, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getDateFrom, getFloat } from 'src/helpers/utils';
 import '../../../assets/css/datepicker.css';
 
 const Promotion = ({ match, history }) => {
@@ -43,11 +43,7 @@ const Promotion = ({ match, history }) => {
             setEditing(true);
             PromotionActions.find(id)
                 .then(response => setPromotion(response))
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/promotions");
-                });
+                .catch(error => history.replace("/components/promotions"));
         }
     };
 
@@ -57,7 +53,6 @@ const Promotion = ({ match, history }) => {
         const request = !editing ? PromotionActions.create(promotionToWrite) : PromotionActions.update(id, promotionToWrite);
         request.then(response => {
                     setErrors(defaultE);
-                    //TODO : Flash notification de succès
                     history.replace("/components/promotions");
                 })
                .catch( ({ response }) => {
@@ -70,7 +65,6 @@ const Promotion = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };

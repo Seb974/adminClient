@@ -5,11 +5,10 @@ import mapboxgl from "mapbox-gl";
 import RelaypointTools from './relaypoint/RelaypointTools';
 import LocationTools from './location/LocationTools';
 import SearchBar from './search/searchBar';
-import { checkForAlternatives, getCityCondition } from 'src/helpers/map';
+import { getCityCondition } from 'src/helpers/map';
 import AuthContext from 'src/contexts/AuthContext';
 import DeliveryContext from 'src/contexts/DeliveryContext';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import PolylineOverlay from '../PolylineOverlay';
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require("worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker").default;
 
@@ -29,7 +28,6 @@ const Map = ({ informations, setInformations, displayedRelaypoints, setDiscount,
     const [locationTooltip, setLocationTooltip] = useState(undefined);
     const [locationPopup, setLocationPopup] = useState(undefined);
     const mapStyle = { top: 0, left: 0, height: '520px', width: '100', mapStyle: 'mapbox://styles/mapbox/streets-v11' };
-    // 'mapbox://styles/mapbox/light-v8'
 
     useEffect(() => {
         setCurrentCatalog(isDefined(catalog) ? catalog : selectedCatalog);

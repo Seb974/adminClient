@@ -20,7 +20,7 @@ import SupplierActions from 'src/services/SupplierActions';
 import PlatformContext from 'src/contexts/PlatformContext';
 import StoreActions from 'src/services/StoreActions';
 
-const Profitability = (props) => {
+const Profitability = ({ history }) => {
     const [itemsPerPage, setItemsPerPage] = useState(6);
     const fields = ['Produit', 'Coût U', 'Qté', 'Valeur', 'Prix de vente TTC', 'Marge'];
     const { currentUser, seller } = useContext(AuthContext);
@@ -120,8 +120,8 @@ const Profitability = (props) => {
                     setLoading(false);
                 })
                 .catch(error => {
-                    console.log(error);
                     setLoading(false);
+                    history.replace("/");
                 });
         }
     };
@@ -146,7 +146,7 @@ const Profitability = (props) => {
             })
             .catch(error => {
                 setLoading(false);
-                console.log(error);
+                history.replace("/");
             });
     };
 
@@ -160,7 +160,7 @@ const Profitability = (props) => {
             })
             .catch(error => {
                 setLoading(false);
-                console.log(error);
+                history.replace("/");
             });
     };
 
@@ -172,7 +172,7 @@ const Profitability = (props) => {
                     setStoreTaxes(response);
                 })
                 .catch(error => {
-                    console.log(error);
+                    history.replace("/");
                 });
         }
     };
@@ -197,14 +197,14 @@ const Profitability = (props) => {
                 setSelectedSeller(response[0]);
                 defineStores(response[0]);
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const fetchPriceGroup = () => {
         PriceGroupActions
             .findAll()
             .then(response => setPriceGroups(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const fetchSuppliers = () => {
@@ -216,7 +216,7 @@ const Profitability = (props) => {
                     setSuppliers(formattedSuppliers);
                     setSelectedSuppliers(formattedSuppliers);
                 })
-                .catch(error => console.log(error));
+                .catch(error => history.replace("/"));
         }
     };
 
@@ -357,10 +357,9 @@ const Profitability = (props) => {
             setUpdated([]);
             setUpdateLoading(false);
         } catch (error) {
-            console.log(error);
             setUpdateLoading(false);
+            history.replace("/");
         }
-        
     };
 
     const getProductsToWrite = filteredProducts => {

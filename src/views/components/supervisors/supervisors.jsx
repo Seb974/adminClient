@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import SupervisorActions from '../../../services/SupervisorActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
-const Supervisors = (props) => {
+const Supervisors = ({ history }) => {
 
-    const itemsPerPage = 15;
+    const itemsPerPage = 50;
     const fields = ['supervisor', ' '];
     const [supervisors, setSupervisors] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -17,21 +16,23 @@ const Supervisors = (props) => {
     useEffect(() => getDisplayedSupervisors(currentPage), [currentPage]);
 
     const getDisplayedSupervisors = async (page = 1) => {
-      const response = page >=1 ? await SupervisorActions.findAllPaginated(page, itemsPerPage) : undefined;
-      if (isDefined(response)) {
-          setSupervisors(response['hydra:member']);
-          setTotalItems(response['hydra:totalItems']);
+      try {
+        const response = page >=1 ? await SupervisorActions.findAllPaginated(page, itemsPerPage) : undefined;
+        if (isDefined(response)) {
+            setSupervisors(response['hydra:member']);
+            setTotalItems(response['hydra:totalItems']);
+        }
+      } catch (error) {
+        history.replace("/");
       }
   };
 
     const handleDelete = (id) => {
         const originalSupervisors = [...supervisors];
         setSupervisors(supervisors.filter(supervisor => supervisor.id !== id));
-        SupervisorActions.delete(id)
-                       .catch(error => {
-                            setSupervisors(originalSupervisors);
-                            console.log(error.response);
-                       });
+        SupervisorActions
+            .delete(id)
+            .catch(error => setSupervisors(originalSupervisors));
     }
 
     return (

@@ -4,7 +4,7 @@ import { CFormGroup, CInput, CInputGroupText, CInputGroupAppend, CInputGroup } f
 import { isDefinedAndNotVoid } from 'src/helpers/utils';
 import UserActions from 'src/services/UserActions';
 
-const UserSearch = ({ value, setValue }) => {
+const UserSearch = ({ value, setValue, history }) => {
 
     const [userSearch, setUserSearch] = useState("");
     const [suggestions, setSuggestions] = useState([]);
@@ -28,7 +28,7 @@ const UserSearch = ({ value, setValue }) => {
                 setSuggestions(filteredResponse);
                 setHasResults(true);
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace('/'));
     };
 
     const handleSelect = ({ currentTarget }) => {

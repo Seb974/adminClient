@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import RelaypointActions from '../../../services/RelaypointActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
 const Relaypoints = (props) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const fields = ['name', 'city', ' '];
     const [relaypoints, setRelaypoints] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -32,11 +31,9 @@ const Relaypoints = (props) => {
     const handleDelete = (id) => {
         const originalRelaypoints = [...relaypoints];
         setRelaypoints(relaypoints.filter(city => city.id !== id));
-        RelaypointActions.delete(id)
-                   .catch(error => {
-                        setRelaypoints(originalRelaypoints);
-                        console.log(error.response);
-                   });
+        RelaypointActions
+            .delete(id)
+            .catch(error => setRelaypoints(originalRelaypoints));
     }
 
     return (

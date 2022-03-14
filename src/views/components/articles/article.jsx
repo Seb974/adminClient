@@ -26,8 +26,6 @@ const Article = ({ match, history }) => {
 
     const handleChange = ({ currentTarget }) => setArticle({...article, [currentTarget.name]: currentTarget.value});
 
-    const setArticleContent = newContent => setArticle({...article, content: newContent});
-
     const fetchArticle = id => {
         if (id !== "new") {
             setEditing(true);
@@ -36,11 +34,7 @@ const Article = ({ match, history }) => {
                     setArticle(response);
                     setText(response.content);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/articles");
-                });
+                .catch(error => history.replace("/components/articles"));
         }
     };
 
@@ -51,27 +45,8 @@ const Article = ({ match, history }) => {
         input.click();
   
         input.onchange = async () => {
-            // const file = input.files[0];
-            // const formData = new FormData();
-            // formData.append('file', file);
-  
-            // Save current cursor state
             const range = quill.current.getEditor().getSelection();
-  
-            // Insert temporary loading placeholder image
-            // quill.current.editor.insertEmbed(range.index, 'image', `${ api.API_DOMAIN }/images/loaders/placeholder.gif`);
-  
-            // Move cursor to right side of image (easier to continue typing)
-            // quill.current.editor.setSelection(range.index + 1);
-
-
-            // const res = await api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}});
             const res = await ArticleActions.createImage(input.files[0]);
-  
-            // Remove placeholder image
-            // quill.current.editor.deleteText(range.index, 1);
-  
-            // Insert uploaded image
             quill.current.editor.insertEmbed(range.index, 'image', `${ api.API_DOMAIN }${ res.contentUrl }`);
             quill.current.editor.setSelection(range.index + 1);
         };
@@ -94,7 +69,6 @@ const Article = ({ match, history }) => {
         request
             .then(response => {
                 setErrors(defaultError);
-                //TODO : Flash notification de succès
                 history.replace("/components/articles");
             })
             .catch( ({ response }) => {
@@ -107,7 +81,6 @@ const Article = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                 }
             });
     };
@@ -117,16 +90,16 @@ const Article = ({ match, history }) => {
     const modules = useMemo(() => ({
         toolbar: {
           container: [
-              ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+              ['bold', 'italic', 'underline', 'strike'],
               ['blockquote', 'code-block'],
-              [{ 'header': 1 }, { 'header': 2 }],               // custom button values
+              [{ 'header': 1 }, { 'header': 2 }],
               [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-              [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-              [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
-              [{ 'direction': 'rtl' }],                         // text direction
-              [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+              [{ 'script': 'sub'}, { 'script': 'super' }],
+              [{ 'indent': '-1'}, { 'indent': '+1' }],
+              [{ 'direction': 'rtl' }],
+              [{ 'size': ['small', false, 'large', 'huge'] }],
               [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-              [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+              [{ 'color': [] }, { 'background': [] }],
               [{ 'font': [] }],
               [{ 'align': [] }],
               ['link', 'image'],

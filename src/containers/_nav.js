@@ -63,11 +63,6 @@ const _nav = [
         name: 'Collapse',
         to: '/base/collapses',
       },
-      /*
-      {
-        name: 'Dropdowns',
-        to: '/base/dropdowns',
-      },*/
       {
         _tag: 'CSidebarNavItem',
         name: 'Jumbotron',

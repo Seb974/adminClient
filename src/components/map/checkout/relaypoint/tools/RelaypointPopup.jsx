@@ -1,15 +1,10 @@
-import { object } from 'prop-types';
 import React, { useContext, useEffect, useState } from 'react';
 import { Popup, FlyToInterpolator } from 'react-map-gl';
-// import { useToasts } from 'react-toast-notifications';
 import AuthContext from 'src/contexts/AuthContext';
 import { isDefined, isSameAddress } from 'src/helpers/utils';
-// import { isSameAddress } from '../../../../../helpers/days';
-// import AddressPanel from '../../../../forms/address/AddressPanel';
 
 const RelaypointPopup = ({ relaypoint, informations, setInformations, setCondition, setViewport, setPopup, onClear, setIsRelaypoint, setDiscount, objectDiscount, setObjectDiscount }) => {
 
-    // const { addToast } = useToasts();
     const { settings } = useContext(AuthContext);
     const initialPosition = [-21.065285, 55.480270];
     const [ownCondition, setOwnCondition] = useState(undefined);
@@ -22,7 +17,6 @@ const RelaypointPopup = ({ relaypoint, informations, setInformations, setConditi
     }, [relaypoint]);
 
     const onSelect = e => {
-            // const { address, address2, zipcode, city } = relaypoint.metas;
             const { position, phone, user, ...mainMetas } = relaypoint.metas;
             const newCondition = relaypoint.conditions.find(condition => {
                 return condition.userGroups.find(group => group.value === settings.value) !== undefined;
@@ -31,7 +25,6 @@ const RelaypointPopup = ({ relaypoint, informations, setInformations, setConditi
                 setObjectDiscount(relaypoint.promotion);
                 setDiscount(isDefined(relaypoint.promotion.discount) ? relaypoint.promotion.discount : 0);
             }
-            // setInformations({...informations, address, address2, zipcode, city});
             setInformations({...informations, ...mainMetas});
             setCondition(newCondition);
             setViewport({
@@ -43,7 +36,6 @@ const RelaypointPopup = ({ relaypoint, informations, setInformations, setConditi
             });
             setPopup(undefined);
             setIsRelaypoint(true);
-            // addToast("Point de livraison sélectionné", { appearance: "success", autoDismiss: true });
         };
 
         const onDeleteSelection = () => {
@@ -58,7 +50,6 @@ const RelaypointPopup = ({ relaypoint, informations, setInformations, setConditi
                 setDiscount(0);
             }
             onClear();
-            // addToast("Point de livraison effacé", { appearance: "error", autoDismiss: true });
             setPopup(undefined);
         };
 

@@ -2,7 +2,6 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { getColor } from '@coreui/utils'
 import { CChartBar } from '@coreui/react-chartjs'
-import { isDefinedAndNotVoid } from 'src/helpers/utils'
 
 const ChartBarSimple = props => {
 
@@ -45,7 +44,6 @@ const ChartBarSimple = props => {
     }
   })()
 
-  // render
   return (
     <CChartBar
       {...attributes}
@@ -59,7 +57,6 @@ const ChartBarSimple = props => {
 ChartBarSimple.propTypes = {
   tag: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
   className: PropTypes.string,
-  //
   backgroundColor: PropTypes.string,
   pointHoverBackgroundColor: PropTypes.string,
   dataPoints: PropTypes.array,

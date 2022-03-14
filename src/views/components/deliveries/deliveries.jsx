@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup, CInputCheckbox, CLabel } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -11,7 +11,7 @@ import Spinner from 'react-bootstrap/Spinner'
 import OrderDetails from 'src/components/preparationPages/orderDetails';
 import TouringActions from 'src/services/TouringActions';
 import Select from 'src/components/forms/Select';
-import { getShop, isSamePosition } from 'src/helpers/checkout';
+import { getShop } from 'src/helpers/checkout';
 import DelivererActions from 'src/services/DelivererActions';
 import PlatformContext from 'src/contexts/PlatformContext';
 import { updateDeliveries } from 'src/data/dataProvider/eventHandlers/orderEvents';
@@ -19,7 +19,7 @@ import MercureContext from 'src/contexts/MercureContext';
 
 const Deliveries = (props) => {
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 50;
     const fields = ['name', 'date', 'total', 'selection', ' '];
     const { platform } = useContext(PlatformContext);
     const { currentUser, supervisor } = useContext(AuthContext);
@@ -358,7 +358,6 @@ const Deliveries = (props) => {
                                                         className="mx-1 my-1"
                                                         type="checkbox"
                                                         name="inline-checkbox"
-                                                        // checked={ item.selected }
                                                         checked={ isSelectedOrder(item) }
                                                         onClick={ () => handleSelect(item) }
                                                         disabled={ item.status === "WAITING" }

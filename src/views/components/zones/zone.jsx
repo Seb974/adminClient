@@ -45,11 +45,7 @@ const Zone = ({ match, history }) => {
                     const zoneCities = isDefinedAndNotVoid(response.cities) ? response.cities : [];
                     setZone({...response, cities: zoneCities});
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/zones");
-                });
+                .catch(error => history.replace("/components/zones"));
         }
     }
 
@@ -57,7 +53,7 @@ const Zone = ({ match, history }) => {
         CityActions
             .findAll()
             .then(response => setCities(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/zones"));
     };
 
     const handleSubmit = (e) => {
@@ -67,7 +63,6 @@ const Zone = ({ match, history }) => {
 
         request.then(response => {
                     setErrors({name: ""});
-                    //TODO : Flash notification de succès
                     history.replace("/components/zones");
                 })
                .catch( ({ response }) => {
@@ -79,7 +74,6 @@ const Zone = ({ match, history }) => {
                         });
                         setErrors(apiErrors);
                     }
-                    //TODO : Flash notification d'erreur
                });
     };
 

@@ -59,7 +59,7 @@ const Dashboard = () => {
                 .findSalesBetween(getUTCDates())
                 .then(response => {
                     let storesPurchases = response;
-                    if (Roles.isPicker(currentUser))        // Roles.hasAdminPrivileges(currentUser) ||
+                    if (Roles.isPicker(currentUser))
                         storesPurchases = response.filter(p => isDefined(p.store.platform));
                     const newSales = getFormattedSales(storesPurchases);
                     setStoreSales(newSales);

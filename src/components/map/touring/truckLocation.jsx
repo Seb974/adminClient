@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import mapboxgl from "mapbox-gl";
 import ReactMapGL, {GeolocateControl} from "react-map-gl";
 import TouringActions from 'src/services/TouringActions';
@@ -10,7 +10,7 @@ mapboxgl.workerClass = require("worker-loader!mapbox-gl/dist/mapbox-gl-csp-worke
 
 const TruckLocation = ({ touring, playing }) => {
 
-    const refreshDelay = 1;     //seconds
+    const refreshDelay = 1;
     const apiToken = process.env.REACT_APP_MAPBOX_TOKEN;
     const geolocateControlStyle= { right: 10, top: 10 };
     const [defaultView, setDefaultView] = useState({ latitude: 0, longitude: 0, zoom: 9});

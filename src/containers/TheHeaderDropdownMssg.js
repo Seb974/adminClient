@@ -1,7 +1,6 @@
 import React, { useContext } from 'react';
-import { CBadge, CDropdown, CDropdownItem, CDropdownMenu, CDropdownToggle, CImg } from '@coreui/react';
+import { CBadge, CDropdown, CDropdownItem, CDropdownMenu, CDropdownToggle } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { Link } from 'react-router-dom';
 import MessageContext from 'src/contexts/MessageContext';
 import { isDefinedAndNotVoid } from 'src/helpers/utils';
 
@@ -55,11 +54,6 @@ const TheHeaderDropdownMssg = () => {
                       );
                   })
         }
-        {/* <CDropdownItem href="#" className="text-center border-top" style={{ width: "100%", margin: 'auto' }}>
-          <Link to="/apps/email/inbox" style={{ width: "100%", margin: 'auto' }}>
-            <strong>Voir tous les messages</strong>
-          </Link>
-          </CDropdownItem> */}
           <CDropdownItem href="/#/apps/email/inbox" className="d-flex justify-content-center border-top" style={{ width: "100%", margin: 'auto' }}>
               <div className="text-center text-primary "><strong>Voir tous les messages</strong></div>
           </CDropdownItem>

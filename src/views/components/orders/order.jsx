@@ -21,7 +21,6 @@ import Roles from 'src/config/Roles';
 import Select from 'src/components/forms/Select';
 import { getStatus } from 'src/helpers/orders';
 import CatalogContext from 'src/contexts/CatalogContext';
-import PackageList from 'src/components/preparationPages/packageList';
 import ContainerContext from 'src/contexts/ContainerContext';
 import { getPackages } from 'src/helpers/containers';
 import PlatformContext from 'src/contexts/PlatformContext';
@@ -104,11 +103,7 @@ const Order = ({ match, history }) => {
                     if (isDefinedAndNotVoid(response.packages))
                         setPackages(response.packages);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/preparations");
-                });
+                .catch(error => history.replace("/components/preparations"));
         }
     };
 
@@ -116,21 +111,21 @@ const Order = ({ match, history }) => {
         CityActions
             .findAll()
             .then(response => setCities(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/preparations"));
     };
 
     const fetchGroups = () => {
         GroupActions
             .findAll()
             .then(response => setGroups(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/preparations"));
     };
 
     const fetchUser = user => {
         UserActions
             .find(user.id)
             .then(response => setUser(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/preparations"));
     };
 
     const addToast = newToast => setToasts([...toasts, newToast]);
@@ -183,7 +178,6 @@ const Order = ({ match, history }) => {
             const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
             request.then(response => {
                 setErrors(defaultErrors);
-                //TODO : Flash notification de succès
                 history.replace("/components/preparations");
             })
             .catch( ({ response }) => {
@@ -196,7 +190,6 @@ const Order = ({ match, history }) => {
                     setErrors(apiErrors);
                     addToast(failToast);
                 }
-                //TODO : Flash notification d'erreur
             });
         }
     };
@@ -246,13 +239,13 @@ const Order = ({ match, history }) => {
                                                 { supervisor.users.map(user => <option value={ user.id }>{ user.name + " - " + user.email }</option>) }
                                             </Select>
                                         </CCol>
-                                     : (isAdmin || Roles.isPicker(currentUser)) && editing ?    // id !== "new" 
+                                     : (isAdmin || Roles.isPicker(currentUser)) && editing ?
                                         <CCol xs="12" sm="12" md="6" className="mt-4">
                                             <Select name="status" label="Statut" onChange={ handleStatusChange } value={ order.status }>
                                                 { statuses.map((status, i) => <option key={ status.value } value={ status.value }>{ status.label }</option>) }
                                             </Select>
                                         </CCol>
-                                     : (isAdmin || Roles.isPicker(currentUser)) && !editing ?       // id === "new"
+                                     : (isAdmin || Roles.isPicker(currentUser)) && !editing ?
                                         <CCol xs="12" sm="12" md="6" className="mt-4">
                                             <Select className="mr-2" name="catalog" label="Destination" onChange={ handleCatalogChange } value={ isDefined(catalog) ? catalog.id : 0 }>
                                                 { catalogs.map(c => <option value={ c.id }>{ c.name }</option>) }
@@ -271,7 +264,6 @@ const Order = ({ match, history }) => {
                                 <Items items={ items } setItems={ setItems } defaultItem={ defaultItem } editing={ editing } packages={ packages } order={ order } user={ user }/>
 
                             </Tab>
-                            {/* { (isAdmin || Roles.isPicker(currentUser)) && */}
                                 <Tab eventKey="metas" title="Client">
                                     <ClientPart
                                         user={ order }
@@ -286,7 +278,6 @@ const Order = ({ match, history }) => {
                                         catalog={ catalog }
                                     />
                                 </Tab>
-                            {/* } */}
                         </Tabs>
                         <hr className="mt-5 mb-5"/>
                         { id === "new" && 

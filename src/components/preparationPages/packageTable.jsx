@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, PDFViewer } from '@react-pdf/renderer';
+import { Text, View, StyleSheet } from '@react-pdf/renderer';
 import { isDefined } from 'src/helpers/utils';
 
 const styles = StyleSheet.create({
@@ -78,7 +78,6 @@ const PackageTable = ({ _package }) => {
 
     return (
         <View style={styles.table}> 
-            {/* TableHeader */} 
             <View style={styles.tableRow}> 
                 <View style={styles.productCol}> 
                     <Text style={styles.tableCell}>Produit</Text> 
@@ -87,7 +86,6 @@ const PackageTable = ({ _package }) => {
                     <Text style={styles.tableCell}>Quantité</Text> 
                 </View> 
             </View>
-            {/* TableContent */}
             { _package.content.map(item => {
                 return (
                     <View style={styles.tableRow}>

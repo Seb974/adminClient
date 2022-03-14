@@ -18,7 +18,6 @@ const Image = ({ entity, setEntity, isLandscape = false, sizes = "", imageName =
             </CFormGroup>
             <CFormGroup row className="ml-1 mr-1 mt-0 mb-3">
                 <CCol xs="12" md="12">
-                    {/* <CLabel>Image</CLabel> */}
                     <CInputFile name={ imageName } custom id="custom-file-input" onChange={ handleImageChange } />
                     <CLabel htmlFor="custom-file-input" variant="custom-file">
                         { entity[imageName] === null || entity[imageName] === undefined ?

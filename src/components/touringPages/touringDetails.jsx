@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CButton, CCardBody, CCol, CRow } from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-// import TouringDetailsItem from './touringDetailsOrder';
-import { getPreparedOrder } from 'src/helpers/checkout';
 import OrderActions from 'src/services/OrderActions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
-import { Link } from 'react-router-dom';
 import TouringActions from 'src/services/TouringActions';
 import TouringModal from './touringModal';
 

@@ -80,14 +80,12 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: 'left',
-        // color: 'grey'
     }
 });
 
 const PackagePlan = ({ match }) => {
 
     const { id = "new" } = match.params;
-    const maxPerPage = 2;
     const [order, setOrder] = useState(null);
     const [packages, setPackages] = useState([]);
 

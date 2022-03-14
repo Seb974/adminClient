@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LostActions from '../../../services/LostActions';
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCardFooter } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
@@ -8,7 +8,7 @@ import Spinner from 'react-bootstrap/Spinner';
 
 const Losts = (props) => {
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 50;
     const fields = ['number', 'lostDate', 'quantity', 'comments', ' '];
     const [loading, setLoading] = useState(false);
     const [losts, setLosts] = useState([]);
@@ -54,10 +54,7 @@ const Losts = (props) => {
         setLosts(losts.filter(article => article.id !== id));
         LostActions
             .delete(id)
-            .catch(error => {
-                setLosts(originalLosts);
-                console.log(error.response);
-            });
+            .catch(error => setLosts(originalLosts));
     };
 
     const getUTCDates = () => {

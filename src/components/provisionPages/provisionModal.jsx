@@ -118,7 +118,6 @@ const ProvisionModal = ({ item, provisions, setProvisions }) => {
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body style={{ overflow: 'scroll' }}>
-                    {/* <h6>Détail</h6> */}
                     <CDataTable
                         items={ receivedProvision.goods }
                         fields={ ['Produit', 'Reçu', 'Prix U', 'Lot'] }

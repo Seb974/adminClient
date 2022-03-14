@@ -5,9 +5,9 @@ import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton 
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
-const Users = (props) => {
+const Users = ({ history }) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['name', 'email', 'roles', ' '];
     const [users, setUsers] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -19,11 +19,15 @@ const Users = (props) => {
     useEffect(() => getDisplayedUsers(currentPage), [currentPage]);
 
     const getDisplayedUsers = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedUsers(search, page) : await getUsers(page);
-        if (isDefined(response)) {
-            setUsers(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
-        }
+       try {
+         const response = isDefined(search) && search.length > 0 ? await getSearchedUsers(search, page) : await getUsers(page);
+         if (isDefined(response)) {
+             setUsers(response['hydra:member']);
+             setTotalItems(response['hydra:totalItems']);
+         }
+       } catch (error) {
+          history.replace("/");
+       }
     };
 
     const getUsers = (page = 1) => page >=1 ? UserActions.findAllPaginated(page, itemsPerPage) : undefined;
@@ -40,10 +44,7 @@ const Users = (props) => {
       const originalUsers = [...users];
       setUsers(users.filter(user => user.id !== id));
       UserActions.delete(id)
-                 .catch(error => {
-                      setUsers(originalUsers);
-                      console.log(error.response);
-                 });
+                 .catch(error => setUsers(originalUsers));
     };
 
     return (

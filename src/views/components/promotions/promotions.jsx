@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import PromotionActions from '../../../services/PromotionActions'
-import { CBadge, CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
-import { DocsLink } from 'src/reusable'
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
 const Promotions = (props) => {
 
-    const itemsPerPage = 3;
+    const itemsPerPage = 50;
     const fields = ['name', 'usage', 'validity', ' '];
     const [promotions, setPromotions] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -34,10 +33,7 @@ const Promotions = (props) => {
         setPromotions(promotions.filter(p => p.id !== id));
         PromotionActions
             .delete(id)
-            .catch(error => {
-                setPromotions(originalPromotions);
-                console.log(error.response);
-            });
+            .catch(error => setPromotions(originalPromotions));
     }
 
     return (

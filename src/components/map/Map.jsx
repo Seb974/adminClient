@@ -1,6 +1,5 @@
 import '../../assets/css/map-leaflet.css';
 import React, { useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import AlgoliaPlaces from 'algolia-places-react';
 import LocationMarker from './LocationMarker';

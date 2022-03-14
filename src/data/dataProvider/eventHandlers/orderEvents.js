@@ -51,7 +51,7 @@ const getOrdersWithUpdates = (data, dates, status, orders, user, supervisor) => 
         if (!isDeleted) {
             const deliveryDate = new Date(order.deliveryDate);
             const orderToEdit = {...order, items : getFormattedItems(order)};
-            if (deliveryDate >= start && deliveryDate <= end && hasAccess(orderToEdit, user, supervisor))   // && status.findIndex(s => s.value === order.status) !== -1
+            if (deliveryDate >= start && deliveryDate <= end && hasAccess(orderToEdit, user, supervisor))
                 updatedOrders = getUpdatedOrders(orderToEdit, updatedOrders);
         } else {
             updatedOrders = [...updatedOrders].filter(o => o['@id'] !== order['@id']);

@@ -46,21 +46,12 @@ const UserPage = ({ history, match }) => {
                     setInformations(userMetas);
                 }
             } catch (error) {
-                console.log(error.response);
-                // TODO : Notification flash d'une erreur
                 history.replace("/components/users");
             }
         }
     };
 
-    const onInformationsChange = (newInformations) => setInformations(newInformations);
     const onUserInputChange = (newUser) => setUser(newUser);
-
-    const onUpdatePosition = (newInformations) => {
-        setInformations(informations => { 
-            return {...newInformations, address2: informations.address2, phone: informations.phone};
-        });
-    };
 
     const onPhoneChange = (phone) => {
         setInformations(informations => { 
@@ -96,7 +87,6 @@ const UserPage = ({ history, match }) => {
             const request = !editing ? UserActions.create(updatedUser) : UserActions.update(id, updatedUser);
             request.then(response => {
                         setErrors({});
-                        //TODO : Flash notification de succès
                         history.replace("/components/users");
                     })
                    .catch( ({ response }) => {
@@ -107,7 +97,6 @@ const UserPage = ({ history, match }) => {
                             });
                             setErrors(apiErrors);
                         }
-                         //TODO : Flash notification d'erreur
                    });
         }
     };
@@ -129,7 +118,6 @@ const UserPage = ({ history, match }) => {
                             <CRow>
                                 <h4>Adresse</h4>
                             </CRow>
-                            {/* <AddressPanel informations={ informations } onInformationsChange={ onInformationsChange } onPositionChange={ onUpdatePosition } errors={ errors }/> */}
                             <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
                             <CRow className="mt-4 d-flex justify-content-center">
                                 <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>

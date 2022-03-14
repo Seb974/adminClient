@@ -1,6 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, PDFViewer } from '@react-pdf/renderer';
-import { isDefinedAndNotVoid } from 'src/helpers/utils';
+import { Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import PackageTable from './packageTable';
 
 const styles = StyleSheet.create({
@@ -45,7 +44,6 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         marginTop: 10,
         paddingLeft: 10,
-        // marginRight: 30
     },
     pageText: {
         marginLeft: 12,
@@ -114,9 +112,6 @@ const PackageDetails = ({order, packages }) => {
                     { "Commande N°" + order.id.toString().padStart(10, '0') + " du " + new Date(order.deliveryDate).toLocaleDateString() + " : " }
                 </Text>
             </View>
-            {/* <View style={ styles.date }>
-                <Text style={styles.text}>{"Le " + new Date(order.deliveryDate).toLocaleDateString() + ',' }</Text>
-            </View> */}
             {   packages.map((p,i) => {
                 return (
                     <View key={ i }>

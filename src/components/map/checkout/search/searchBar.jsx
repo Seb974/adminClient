@@ -1,11 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { FlyToInterpolator } from 'react-map-gl';
-// import AuthContext from '../../../../contexts/AuthContext';
 import Geocoder from 'react-map-gl-geocoder';
 import AuthContext from 'src/contexts/AuthContext';
 import { isDefined } from 'src/helpers/utils';
-// import { multilanguage } from "redux-multilanguage";
-// import { isDefined } from '../../../../helpers/utils';
 
 const SearchBar = ({ mapRef, containerRef, informations, setIsRelaypoint, setLocationPopup, setRelaypointPopup, setViewport, updatePosition, errors }) => {
 

@@ -30,19 +30,13 @@ const Price = ({product, setProduct, history }) => {
         let request = TaxActions.findAll();
         request
             .then(response => setTaxes(response))
-            .catch(error => {
-                // TODO : Notification flash d'une erreur
-                history.replace("/components/products");
-            });
+            .catch(error => history.replace("/components/products"));
     };
 
     const fetchPriceGroups = () => {
         PriceGroupActions.findAll()
                     .then(response => setPriceGroups(response))
-                    .catch(error => {
-                        // TODO : Notification flash d'une erreur
-                        history.replace("/components/products");
-                    });
+                    .catch(error => history.replace("/components/products"));
     };
 
     const handleChange = ({ currentTarget }) => setProduct({...product, [currentTarget.name]: currentTarget.value});

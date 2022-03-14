@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
-import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse, CFormGroup, CInputCheckbox, CLabel, CSwitch } from '@coreui/react';
+import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CCollapse } from '@coreui/react';
 import { Link } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
@@ -18,7 +18,7 @@ import { getExportStatuses } from 'src/helpers/orders';
 
 const Collects = (props) => {
 
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const exportStatuses = getExportStatuses();
     const fields = ['commande', 'date', 'terminer', ' '];
     const { currentUser, supervisor } = useContext(AuthContext);
@@ -255,14 +255,3 @@ const Collects = (props) => {
 }
 
 export default Collects;
-
-                    //             // <CCol xs="12" md="6" className="mt-4">
-                    //                // {/* <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
-                    //                <CCol xs="1" sm="1" md="1">
-                    //                <CSwitch name="available" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ relaypointView } onChange={ handleCheckBoxes }/>
-                    //            </CCol>
-                    //            <CCol tag="label" xs="10" sm="10" md="10" className="col-form-label ml-2">
-                    //                { relaypointView ? "Récupérations Chronopost" : "Récupérations en points relais"}
-                    //            </CCol>
-                    //        </CFormGroup> */}
-                    //    // </CCol>

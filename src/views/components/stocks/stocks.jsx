@@ -15,9 +15,9 @@ import { French } from "flatpickr/dist/l10n/fr.js";
 import Flatpickr from 'react-flatpickr';
 import Spinner from 'react-bootstrap/Spinner';
 
-const Stocks = (props) => {
+const Stocks = ({ history }) => {
 
-    const itemsPerPage = 30;
+    const itemsPerPage = 50;
     const { currentUser, seller } = useContext(AuthContext);
     const { platform } = useContext(PlatformContext);
     const mainStore = { id: -1, name: "Principal" };
@@ -52,14 +52,14 @@ const Stocks = (props) => {
                 const response = page >=1 ? await StockActions.findAllPaginated(main, entity, page, itemsPerPage) : null;
                 if (isDefined(response)) {
                     const newStocks = response['hydra:member']
-                            .map(s => ({...s, unit: getUnit(s), updated: false, batches: getCompiledBatches(s.batches)}))       // name: getStockName(s),
+                            .map(s => ({...s, unit: getUnit(s), updated: false, batches: getCompiledBatches(s.batches)}))
                             .sort((a, b) => (a.name > b.name) ? 1 : -1);
                     setStocks(newStocks);
                     setTotalItems(response['hydra:totalItems']);
                     
                 }
             } catch (error) {
-                console.log(error)
+                history.replace("/");
             } finally {
                 setLoading(false);
             }
@@ -71,7 +71,7 @@ const Stocks = (props) => {
         StoreActions
             .findAll()
             .then(response => setStores(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const getCompiledBatches = batches => {
@@ -171,7 +171,7 @@ const Stocks = (props) => {
                         setStocks(newStocks);
                     }
                 })
-                .catch(error => console.log(error));
+                .catch(error => history.replace("/"));
         })
     };
 
@@ -344,7 +344,6 @@ const Stocks = (props) => {
                                                 value={ item.security }
                                                 onChange={ e => handleChange(e, item) }
                                                 style={{ maxWidth: '180px'}}
-                                                // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
                                             />
                                             <CInputGroupAppend>
                                                 <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>
@@ -361,7 +360,6 @@ const Stocks = (props) => {
                                                 value={ item.alert }
                                                 onChange={ e => handleChange(e, item) }
                                                 style={{ maxWidth: '180px'}}
-                                                // disabled={ !(Roles.isSeller(currentUser) || Roles.hasAdminPrivileges(currentUser)) }
                                             />
                                             <CInputGroupAppend>
                                                 <CInputGroupText style={{ minWidth: '43px'}}>{ item.unit }</CInputGroupText>

@@ -17,7 +17,7 @@ import MercureContext from 'src/contexts/MercureContext';
 
 const Orders = (props) => {
 
-    const itemsPerPage = 20;
+    const itemsPerPage = 50;
     const fields = ['Client', 'Date', 'Total', 'Statut', ' '];
     const { currentUser, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
@@ -63,21 +63,16 @@ const Orders = (props) => {
                         setTotalItems(response['hydra:totalItems']);
                         setLoading(false);
                     })
-                    .catch(error => {
-                        console.log(error);
-                        setLoading(false);
-                    });
+                    .catch(error => setLoading(false));
         }
     }
 
     const handleDelete = item => {
         const originalOrders = [...orders];
         setOrders(orders.filter(order => order.id !== item.id));
-        OrderActions.delete(item, isAdmin)
-                      .catch(error => {
-                           setOrders(originalOrders);
-                           console.log(error.response);
-                      });
+        OrderActions
+            .delete(item, isAdmin)
+            .catch(error => setOrders(originalOrders));
     }
 
     const handleDateChange = datetime => {

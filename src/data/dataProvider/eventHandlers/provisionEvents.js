@@ -79,7 +79,7 @@ const getProvisionsWithUpdates = (data, dates, sellers, provisions, user, seller
         if (!isDeleted && isFromSelectedSellers(provision, sellers) && isFromSelectedSuppliers(provision, suppliers) ) {
             const provisionDate = new Date(provision.provisionDate);
             const provisionToEdit = {...provision, goods : getFormattedGoods(provision)};
-            if (provisionDate >= start && provisionDate <= end && hasAccess(provisionToEdit, user, seller))   // && status.findIndex(s => s.value === provision.status) !== -1
+            if (provisionDate >= start && provisionDate <= end && hasAccess(provisionToEdit, user, seller))
                 updatedProvisions = getUpdatedProvisions(provisionToEdit, updatedProvisions);
         } else {
             updatedProvisions = [...updatedProvisions].filter(p => p['@id'] !== provision['@id']);

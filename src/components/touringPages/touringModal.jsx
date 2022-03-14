@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import { CButton, CCol, CCollapse, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CRow } from '@coreui/react';
-import ItemDetails from './itemDetails';
-import { getFloat, isDefined } from 'src/helpers/utils';
+import { CButton, CCollapse, CDataTable, CInput, CInputGroup, CInputGroupAppend, CInputGroupText } from '@coreui/react';
+import { isDefined } from 'src/helpers/utils';
 import OrderActions from 'src/services/OrderActions';
 import { getDeliveredOrder } from 'src/helpers/checkout';
 import { Link } from 'react-router-dom';
@@ -82,7 +81,7 @@ const TouringModal = ({ order, touring, tourings, setTourings }) => {
                     Commande de "{ order.name }"
                     </Modal.Title>
                 </Modal.Header>
-                <Modal.Body style={{ overflow: 'scroll' }}>     {/* maxHeight: '200px', */}
+                <Modal.Body style={{ overflow: 'scroll' }}>
                     <h5>Détail de la livraison</h5>
                         <CDataTable
                             items={ viewedOrder.items }

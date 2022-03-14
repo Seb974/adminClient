@@ -1,12 +1,11 @@
 import CIcon from '@coreui/icons-react';
-import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInputGroupAppend, CInputGroupText, CInvalidFeedback, CLabel, CRow, CSwitch, CTextarea } from '@coreui/react';
+import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CTextarea } from '@coreui/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Image from 'src/components/forms/image';
-import AddressPanel from 'src/components/userPages/AddressPanel';
 import Roles from 'src/config/Roles';
 import AuthContext from 'src/contexts/AuthContext';
-import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined } from 'src/helpers/utils';
 import AboutUsActions from 'src/services/AboutUsActions';
 import { SwatchesPicker } from 'react-color';
 
@@ -87,11 +86,7 @@ const AboutUs = ({ history, match }) => {
                 if (isDefined(response))
                     setAboutUs(response);
             })
-            .catch(error => {
-                console.log(error);
-                // TODO : Notification flash d'une erreur
-                history.replace("/dashboard");
-            });
+            .catch(error => history.replace("/dashboard"));
     };
 
     const handleSubmit = async (e) => {
@@ -109,7 +104,6 @@ const AboutUs = ({ history, match }) => {
                             });
                             setErrors(apiErrors);
                         }
-                        //TODO : Flash notification d'erreur
                     }
                 });
     };

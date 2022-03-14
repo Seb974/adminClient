@@ -1,14 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
-import AuthContext from 'src/contexts/AuthContext';
 import DeliveryContext from 'src/contexts/DeliveryContext';
-import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefinedAndNotVoid } from 'src/helpers/utils';
 import RelaypointMarker from './tools/RelaypointMarker';
 import RelaypointPopup from './tools/RelaypointPopup';
 import RelaypointTooltip from './tools/RelaypointTooltip';
 
 const RelaypointTools = ({ informations, displayedRelaypoints, relayPointTooltip, relayPointPopup, setInformations, setRelaypointTooltip, setRelaypointPopup, setViewport, setIsRelaypoint, onClear, setDiscount, objectDiscount, setObjectDiscount }) => {
 
-    const { relaypoints, setCondition } = useContext(DeliveryContext);
+    const { setCondition } = useContext(DeliveryContext);
     const [ userRelaypoints, setUserRelaypoints ] = useState([]);
 
     useEffect(() => {

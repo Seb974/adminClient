@@ -13,7 +13,7 @@ const WidgetsDropdown = ({ sales, storeSales, interval }) => {
   const now = new Date();
   const [orders, setOrders] = useState([]);
   const [period, setPeriod] = useState([]);
-  const { currentUser, supervisor } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
   const dates = { start: getDateFrom(now, -interval, 0), end: now };
 
   useEffect(() => getPeriod(), []);

@@ -219,8 +219,8 @@ function getZPLLabel(id) {
 }
 
 function getPrintableLabel(zpl) {
-    const ticketHeight = 4.02;  //4
-    const ticketWidth = 5.88;   //6
+    const ticketHeight = 4.02;
+    const ticketWidth = 5.88;
     return axios.post(
         `http://api.labelary.com/v1/printers/8dpmm/labels/${ ticketHeight }x${ ticketWidth }/`,
         zpl,

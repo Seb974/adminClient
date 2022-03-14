@@ -81,11 +81,7 @@ const Provision = ({ match, history }) => {
                         count: key
                     })));
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/provisions");
-                });
+                .catch(error => history.replace("/components/provisions"));
         }
     };
 
@@ -93,7 +89,7 @@ const Provision = ({ match, history }) => {
         SupplierActions
             .findAll()
             .then(response => setSuppliers(response))
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/provisions"));
     };
 
     const fetchSellers = () => {
@@ -103,7 +99,7 @@ const Provision = ({ match, history }) => {
                 setSellers(response);
                 
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/provisions"));
     };
 
     const defineStores = seller => {
@@ -154,7 +150,6 @@ const Provision = ({ match, history }) => {
         const request = !editing ? ProvisionActions.create(provisionToWrite) : ProvisionActions.patch(id, provisionToWrite);
         request.then(response => {
             setErrors(defaultErrors);
-            //TODO : Flash notification de succès
             history.replace("/components/provisions");
         })
         .catch( ({ response }) => {
@@ -166,7 +161,6 @@ const Provision = ({ match, history }) => {
                 });
                 setErrors(apiErrors);
             }
-            //TODO : Flash notification d'erreur
         });
     };
 

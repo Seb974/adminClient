@@ -61,7 +61,7 @@ const Store = ({ match, history }) => {
                 if (!isDefined(selectedSeller))
                     setSelectedSeller(response[0]);
             })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/components/stores"));
     };
 
     const fetchGroups = () => {
@@ -72,9 +72,7 @@ const Store = ({ match, history }) => {
                 if (!isDefined(selectedGroup))
                     setSelectedGroup(response[0]);
             })
-            .catch(error => {
-                console.log(error);
-            });
+            .catch(error => history.replace("/components/stores"));
     };
 
     const fetchStore = id => {
@@ -93,11 +91,7 @@ const Store = ({ match, history }) => {
                     if (isDefined(response.storeGroup))
                         setSelectedGroup(response.storeGroup);
                 })
-                .catch(error => {
-                    console.log(error);
-                    // TODO : Notification flash d'une erreur
-                    history.replace("/components/stores");
-                });
+                .catch(error => history.replace("/components/stores"));
         }
     };
 
@@ -132,7 +126,6 @@ const Store = ({ match, history }) => {
         const request = !editing ? StoreActions.create(storeToWrite) : StoreActions.update(id, storeToWrite);
         request.then(response => {
                     setErrors(defaultErrors);
-                    //TODO : Flash notification de succès
                     history.replace("/components/stores");
                 })
                .catch( ({ response }) => {
@@ -145,7 +138,6 @@ const Store = ({ match, history }) => {
                            });
                            setErrors(apiErrors);
                        }
-                       //TODO : Flash notification d'erreur
                    }
                });
     };

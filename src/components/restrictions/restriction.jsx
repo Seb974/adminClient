@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CButton, CCol, CFormGroup, CInput, CLabel, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import Select from '../forms/Select';

@@ -1,8 +1,6 @@
-import axios from 'axios';
 import api from 'src/config/api';
-import Roles from 'src/config/Roles';
 import { getDateFrom, getStringDate } from 'src/helpers/days';
-import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined } from 'src/helpers/utils';
 
 function findAll() {
     return api
@@ -48,7 +46,7 @@ function findSellerInProgress(seller, main, entity) {
     const formattedDate = new Date(dateLimit.toUTCString());
     const entitySelection = main ? `platform=${ entity }` : `store=${ entity }`;
     return api
-        .get(`/api/provisions?seller[]=${ seller['@id'] }&${ entitySelection }&status[]=ORDERED&provisionDate[after]=${ getStringDate(formattedDate) }`)        // &pagination=true&itemsPerPage=${ items }&page=${ page }
+        .get(`/api/provisions?seller[]=${ seller['@id'] }&${ entitySelection }&status[]=ORDERED&provisionDate[after]=${ getStringDate(formattedDate) }`)
         .then(response => response.data['hydra:member']);
 }
 
@@ -84,15 +82,6 @@ function patch(id, provision) {
 function create(provision) {
     return api.post('/api/provisions', {...provision});
 }
-
-// function getSuppliersList(suppliers) {
-//     let suppliersList = "";
-//     suppliers.map((s, i) => {
-//         const separator = i < suppliers.length - 1 ? "&" : "";
-//         suppliersList += "supplier[]=" + s.value + separator;
-//     });
-//     return suppliersList;
-// }
 
 function getSellersList(sellers) {
     let sellersList = "";
