@@ -39,10 +39,7 @@ const Deliverers = (props) => {
         setDeliverers(deliverers.filter(deliverer => deliverer.id !== id));
         DelivererActions
             .delete(id)
-            .catch(error => {
-                setDeliverers(originalDeliverers);
-                console.log(error.response);
-            });
+            .catch(error => setDeliverers(originalDeliverers));
     }
 
     return (

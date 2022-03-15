@@ -77,8 +77,8 @@ function closeTouring(touring) {
         isOpen: false,
         orderEntities: 
         touring.orderEntities.map(order => ({
-            id: order.id, 
-            deliveredQty: order.preparedQty,
+            id: order['@id'], 
+            items: order.items.map(i => ({...i, deliveredQty: isDefined(order.paymentId) ? i.orderedQty : i.preparedQty})),
             status: isDefined(order.metas.isRelaypoint) && order.metas.isRelaypoint ? 'COLLECTABLE' : 'DELIVERED'
         })),
         deliverer: isDefined(touring.deliverer) ? typeof touring.deliverer === 'string' ? touring.deliverer : touring.deliverer['@id'] : null

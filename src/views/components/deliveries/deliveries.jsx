@@ -17,7 +17,7 @@ import PlatformContext from 'src/contexts/PlatformContext';
 import { updateDeliveries } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import MercureContext from 'src/contexts/MercureContext';
 
-const Deliveries = (props) => {
+const Deliveries = ({ history }) => {
 
     const itemsPerPage = 50;
     const fields = ['name', 'date', 'total', 'selection', ' '];
@@ -76,8 +76,8 @@ const Deliveries = (props) => {
                     setLoading(false);
                 })
                 .catch(error => {
-                    console.log(error);
                     setLoading(false);
+                    history.replace("/")
                 });
         }
     }
@@ -89,17 +89,14 @@ const Deliveries = (props) => {
                     setDeliverers(response);
                     setSelectedDeliverer(response[0]);
                 })
-            .catch(error => console.log(error));
+            .catch(error => history.replace("/"));
     };
 
     const handleDelete = item => {
         const originalOrders = [...orders];
         setOrders(orders.filter(order => order.id !== item.id));
         OrderActions.delete(item, isAdmin)
-                      .catch(error => {
-                           setOrders(originalOrders);
-                           console.log(error.response);
-                      });
+                      .catch(error => setOrders(originalOrders));
     }
 
     const handleDateChange = datetime => {
@@ -129,7 +126,7 @@ const Deliveries = (props) => {
     };
 
     const isSelectedOrder = order => {
-        return selection.findIndex(s => s.id === order.id) !== -1;
+        return selection.findIndex(s => s.id === order.id) !== -1 && !isDefined(order.touring);
     }
 
     const updateSelection = item => {
@@ -243,7 +240,9 @@ const Deliveries = (props) => {
                 deliverer: selectedDeliverer['@id']
             })
             .then(response => {
-                setOrders(orders.filter(o => isSelectedOrder(o)));
+                const treatedOrders = response.data.orderEntities.map(o => o.id);
+                const notTreatedOrders = orders.filter(o => !treatedOrders.includes(o.id) && !isSelectedOrder(o));
+                setOrders(notTreatedOrders);
                 setSelection([]);
             });
     };

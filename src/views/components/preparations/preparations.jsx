@@ -182,7 +182,7 @@ const Preparations = ({ history }) => {
     const handleSetPreparator = (order) => {
         const formattedOrder = getOrderWithPreparator(order);
         OrderActions
-            .update(order.id, formattedOrder)
+            .patch(order.id, formattedOrder)
             .then(response => {
                 const newOrders = orders.map(o => o.id === order.id ? {...order, preparator: response.data.preparator} : o);
                 setOrders(newOrders);
