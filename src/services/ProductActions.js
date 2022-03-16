@@ -76,8 +76,9 @@ function findFromSupplierAndStore(seller, supplier, enabledIds, page = 1, items 
 }
 
 function findFromSupplierAndPlatform(seller, supplier, page = 1, items = 30) {
+    // &available=true
     return api
-        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&available=true&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
+        .get(`/api/products?seller=${ seller['@id'] }&suppliers[]=${ supplier['@id'] }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
         .then(response => response.data); 
 }
 
