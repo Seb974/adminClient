@@ -3,12 +3,14 @@ import CIcon from '@coreui/icons-react';
 import { CFormGroup, CInput, CInputGroupText, CInputGroupAppend, CInputGroup } from '@coreui/react';
 import { isDefinedAndNotVoid } from 'src/helpers/utils';
 import UserActions from 'src/services/UserActions';
+import { Spinner } from 'react-bootstrap';
 
 const UserSearch = ({ value, setValue, history }) => {
 
     const [userSearch, setUserSearch] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [hasResults, setHasResults] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (userSearch.length === 0)
@@ -19,6 +21,7 @@ const UserSearch = ({ value, setValue, history }) => {
     const handleUserSearch = ({ currentTarget }) => setUserSearch(currentTarget.value);
 
     const handleSearch = () => {
+        setLoading(true);
         UserActions
             .findUser(userSearch)
             .then(response => {
@@ -27,8 +30,12 @@ const UserSearch = ({ value, setValue, history }) => {
                         response.filter(suggestion => suggestion.id !== value.id);
                 setSuggestions(filteredResponse);
                 setHasResults(true);
+                setLoading(false);
             })
-            .catch(error => history.replace('/'));
+            .catch(error => {
+                setLoading(false);
+                history.replace('/');
+            });
     };
 
     const handleSelect = ({ currentTarget }) => {
@@ -52,11 +59,16 @@ const UserSearch = ({ value, setValue, history }) => {
                     placeholder="Rechercher..."
                 />
                 <CInputGroupAppend>
+                { loading ? 
+                    <CInputGroupText>
+                        <Spinner animation="border" variant="warning" size="sm"/>
+                    </CInputGroupText> : 
                     <CInputGroupText onClick={ handleSearch }>
                         <span className={ userSearch.length === 0 ? "" : "text-success" }>
                             <CIcon name="cil-magnifying-glass"/>
                         </span>
                     </CInputGroupText>
+                }
                 </CInputGroupAppend>
             </CInputGroup>
             <div className="mapboxgl-ctrl-geocoder">
