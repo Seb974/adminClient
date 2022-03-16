@@ -24,6 +24,7 @@ import CatalogContext from 'src/contexts/CatalogContext';
 import ContainerContext from 'src/contexts/ContainerContext';
 import { getPackages } from 'src/helpers/containers';
 import PlatformContext from 'src/contexts/PlatformContext';
+import { Spinner } from 'react-bootstrap';
 
 const Order = ({ match, history }) => {
 
@@ -50,6 +51,7 @@ const Order = ({ match, history }) => {
     const [catalog, setCatalog] = useState(selectedCatalog);
     const [packages, setPackages] = useState([]);
     const [toasts, setToasts] = useState([]);
+    const [loading, setLoading] = useState(false);
     const statuses = getStatus();
     const failMessage = "Des informations sont manquantes ou erronées. Vérifiez s'il vous plaît le formulaire."
     const failToast = { position: 'top-right', autohide: 5000, closeButton: true, fade: true, color: 'danger', messsage: failMessage, title: 'Commande invalide' };
@@ -163,10 +165,10 @@ const Order = ({ match, history }) => {
         setCatalog(newCatalog);
     };
 
-    const handleNotificationChange = ({ currentTarget }) => {
-        if ((currentTarget.value.includes("SMS") && informations.phone.length >= 10) || (currentTarget.value.includes("Email") && order.email.length > 0) || currentTarget.value === "No")
-            setOrder({...order, notification: currentTarget.value});
-    };
+    // const handleNotificationChange = ({ currentTarget }) => {
+    //     if ((currentTarget.value.includes("SMS") && informations.phone.length >= 10) || (currentTarget.value.includes("Email") && order.email.length > 0) || currentTarget.value === "No")
+    //         setOrder({...order, notification: currentTarget.value});
+    // };
 
     const handleSubmit = () => {
         const newErrors = validateForm(order, informations, (isDefined(order.calalog) ? order.catalog : catalog), condition, relaypoints);
@@ -174,13 +176,16 @@ const Order = ({ match, history }) => {
             setErrors({...errors, ...newErrors});
             addToast(failToast);
         } else {
+            setLoading(true);
             const orderToWrite = getOrderToWrite(order, user, informations, items, order.deliveryDate, objectDiscount, catalog, condition, settings);
             const request = !editing ? OrderActions.create(orderToWrite) : OrderActions.patch(id, orderToWrite);
             request.then(response => {
                 setErrors(defaultErrors);
+                setLoading(false);
                 history.replace("/components/preparations");
             })
             .catch( ({ response }) => {
+                setLoading(false);
                 const { violations } = response.data;
                 if (violations) {
                     const apiErrors = {};
@@ -279,7 +284,7 @@ const Order = ({ match, history }) => {
                                     />
                                 </Tab>
                         </Tabs>
-                        <hr className="mt-5 mb-5"/>
+                        {/* <hr className="mt-5 mb-5"/>
                         { id === "new" && 
                             <CRow>
                                 <CCol xs="12" sm="12" md="12" className="my-4">
@@ -291,9 +296,21 @@ const Order = ({ match, history }) => {
                                     </Select>
                                 </CCol>
                             </CRow>
-                        }
+                        } */}
                         <CRow className="mt-4 d-flex justify-content-center">
-                            <CButton onClick={ handleSubmit } size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
+                            <CButton onClick={ handleSubmit } size="sm" color="success" style={{ minWidth: '114px'}}>
+                                { loading ?
+                                    <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                    />
+                                : 
+                                    <><CIcon name="cil-save"/> Enregistrer</>
+                                }
+                            </CButton>
                         </CRow>
                     </CCardBody>
                     <CCardFooter>

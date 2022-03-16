@@ -6,6 +6,7 @@ import AuthActions from 'src/services/AuthActions'
 import { useTranslation } from 'react-i18next'
 import PlatformContext from 'src/contexts/PlatformContext'
 import { isDefined } from 'src/helpers/utils'
+import { Spinner } from 'react-bootstrap'
 import api from 'src/config/api'
 
 const Login = ({ history }) => {
@@ -14,6 +15,7 @@ const Login = ({ history }) => {
   const { platform } = useContext(PlatformContext);
   const [credentials, setCredentials] = useState({username: '', password: ''});
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
@@ -25,14 +27,19 @@ const Login = ({ history }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setLoading(true);
     AuthActions
         .authenticate(credentials)
         .then(response => {
             setError("");
             setIsAuthenticated(true);
+            setLoading(false);
             history.push('/');
         })
-        .catch(error => setError("Paramètres de connexion invalides"));
+        .catch(error => {
+          setError("Paramètres de connexion invalides");
+          setLoading(false);
+        });
   }
 
   return (
@@ -90,7 +97,20 @@ const Login = ({ history }) => {
                     </CFormGroup>
                     <CRow>
                       <CCol xs="6" className="mt-4">
-                        <CButton type="submit" color="success" className="px-4">{ t("login.button.label") }</CButton>
+                        <CButton type="submit" color="success" className="px-4" style={{ minWidth: '114px' }}>
+                            { loading ?
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                />
+                              </>
+                              : t("login.button.label")
+                             }
+                        </CButton>
                       </CCol>
                       <CCol xs="6" className="text-right mt-4">
                         <CButton color="link" className="px-0" style={{ color: "#2a2b36" }}>{ t("login.forgot-pwd.label") }</CButton>

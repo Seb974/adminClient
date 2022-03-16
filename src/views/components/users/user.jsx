@@ -9,6 +9,7 @@ import Roles from 'src/config/Roles';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CRow } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { isDefinedAndNotVoid } from 'src/helpers/utils';
+import { Spinner } from 'react-bootstrap';
 
 const UserPage = ({ history, match }) => {
 
@@ -18,6 +19,7 @@ const UserPage = ({ history, match }) => {
     const [editing, setEditing] = useState(false);
     const [user, setUser] = useState({name:"", email: "", password: "", confirmPassword: "", roles: "ROLE_USER"});
     const [informations, setInformations] = useState(initialInformations);
+    const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({name:"", email: "", password: "", confirmPassword: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", roles: ""});
 
     useEffect(() => fetchUser(id), []);
@@ -84,12 +86,15 @@ const UserPage = ({ history, match }) => {
         let apiErrors = {};
         const updatedUser = getFormattedUser();
         if (updatedUser !== null) {
+            setLoading(true);
             const request = !editing ? UserActions.create(updatedUser) : UserActions.update(id, updatedUser);
             request.then(response => {
                         setErrors({});
+                        setLoading(false);
                         history.replace("/components/users");
                     })
                    .catch( ({ response }) => {
+                        setLoading(false);
                         const { violations } = response.data;
                         if (violations) {
                             violations.forEach(({propertyPath, message}) => {
@@ -120,7 +125,19 @@ const UserPage = ({ history, match }) => {
                             </CRow>
                             <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
                             <CRow className="mt-4 d-flex justify-content-center">
-                                <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
+                                <CButton type="submit" size="sm" color="success"  style={{ minWidth: '114px'}}>
+                                    { loading ?
+                                        <Spinner
+                                            as="span"
+                                            animation="border"
+                                            size="sm"
+                                            role="status"
+                                            aria-hidden="true"
+                                        />
+                                    : 
+                                        <><CIcon name="cil-save"/> Enregistrer</>
+                                    }
+                                    </CButton>
                             </CRow>
                         </CForm>
                     </CCardBody>

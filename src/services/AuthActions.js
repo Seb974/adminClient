@@ -90,14 +90,16 @@ function getUserSettings() {
     return api
             .get('/api/groups')
             .then(response => {
-                let data = response.data['hydra:member'];
-                if (data.length > 1) {
-                    const superAdmin = data.find(group => group.value === "ROLE_SUPER_ADMIN");
-                    const admin = data.find(group => group.value === "ROLE_ADMIN");
-                    return isDefined(superAdmin) ? superAdmin : admin;
-                } else {
-                    return data[0];
-                }
+                if (isDefined(response)) {
+                    const data = response.data['hydra:member'];
+                    if (data.length > 1) {
+                        const superAdmin = data.find(group => group.value === "ROLE_SUPER_ADMIN");
+                        const admin = data.find(group => group.value === "ROLE_ADMIN");
+                        return isDefined(superAdmin) ? superAdmin : admin;
+                    } else {
+                        return data[0];
+                    }
+                } 
             });
 }
 
