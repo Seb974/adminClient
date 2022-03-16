@@ -443,7 +443,8 @@ const Profitability = ({ history }) => {
     const getIdealPrice = (product, price) => {
         const { cost } = product;
         const group = priceGroups.find(group => group.id === price.priceGroup.id);
-        const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100 : 0;
+        // const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100 : 0;
+        const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( (100 * cost / (100 - group.rate / 100)) * 100 ) / 100 : 0;
         return isNaN(cost) ? "-" : idealPrice + " €";
     };
 
