@@ -21,7 +21,7 @@ import PlatformContext from 'src/contexts/PlatformContext';
 import StoreActions from 'src/services/StoreActions';
 
 const Profitability = ({ history }) => {
-    const [itemsPerPage, setItemsPerPage] = useState(6);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
     const fields = ['Produit', 'Coût U', 'Qté', 'Valeur', 'Prix de vente TTC', 'Marge'];
     const { currentUser, seller } = useContext(AuthContext);
     const { platform } = useContext(PlatformContext);
@@ -66,7 +66,7 @@ const Profitability = ({ history }) => {
     }, [selectedSeller]);
 
     useEffect(() => {
-        const limit = mainView ? 6 : 250;
+        const limit = mainView ? 50 : 250;
         setItemsPerPage(limit);
         setValuation("LAST");
     }, [mainView]);
@@ -435,16 +435,17 @@ const Profitability = ({ history }) => {
     const getSignedGain = (product, price) => {
         const { cost } = product;
         const { amount } = price;
-        const gain = isDefined(cost) && isDefined(amount) && getFloat(amount) > 0 && getFloat(cost) > 0 ? 
-                    getFloat((getFloat(amount) - getFloat(cost)) * 100 / getFloat(amount)) : 0;
+        const gain = isDefined(cost) && isDefined(amount) && getFloat(amount) > 0 && getFloat(cost) > 0 ?
+                    getFloat((getFloat(amount) - getFloat(cost)) * 100 / getFloat(cost)) : 0;
+                    // getFloat((getFloat(amount) - getFloat(cost)) * 100 / getFloat(amount)) : 0;
         return gain > 0 ? gain.toFixed(2) + ' %' : '-';
     };
 
     const getIdealPrice = (product, price) => {
         const { cost } = product;
         const group = priceGroups.find(group => group.id === price.priceGroup.id);
-        // const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100 : 0;
-        const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( (100 * cost / (100 - group.rate / 100)) * 100 ) / 100 : 0;
+        const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( cost * (1 + group.rate / 100) * 100 ) / 100 : 0;
+        // const idealPrice = isDefined(group) && isDefined(group.rate) ? Math.ceil( (100 * cost / (100 - group.rate)) * 100 ) / 100 : 0;
         return isNaN(cost) ? "-" : idealPrice + " €";
     };
 
