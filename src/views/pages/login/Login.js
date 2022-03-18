@@ -124,7 +124,7 @@ const Login = ({ history }) => {
                   <div>
                     <img src="assets/img/logo/logo_fp_2.png" alt={ isDefined(platform) ? platform.name : "" } width={ 300 }/>
                     <p className="my-3">Accès réservé aux administrateurs.</p>
-                    <a href={ api.CLIENT_DOMAIN }>
+                    <a href={ api.CLIENT_DOMAIN } target="_blank">
                       <CButton color="success" className="mt-3" active tabIndex={-1}>Aller au site public</CButton>
                     </a>
                   </div>
