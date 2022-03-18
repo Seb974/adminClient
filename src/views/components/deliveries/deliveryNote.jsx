@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Document, StyleSheet, PDFViewer } from '@react-pdf/renderer';
 import TouringActions from 'src/services/TouringActions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import DeliveryInformations from 'src/components/deliveryNotes/deliveryInformations';
+import PlatformContext from 'src/contexts/PlatformContext';
 
 const styles = StyleSheet.create({
     viewer: {
@@ -14,7 +15,6 @@ const styles = StyleSheet.create({
         width: '100vw'
     },
     page: {
-    //   backgroundColor: '#E4E4E4',
       width: 100,
       height: 100
     },
@@ -87,6 +87,7 @@ const DeliveryNote = ({ match }) => {
     const { id = "new" } = match.params;
     const maxPerPage = 15;
     const [orders, setOrders] = useState([]);
+    const { platform } = useContext(PlatformContext);
 
     useEffect(() => {
         if (id !== "new")
@@ -103,7 +104,7 @@ const DeliveryNote = ({ match }) => {
     return !isDefinedAndNotVoid(orders) ? <></> : (
         <PDFViewer id="deliveryViewer" style={ styles.viewer }>
             <Document style={ styles.viewer }>
-                { orders.map(order => <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 }/> )}
+                { orders.map(order => <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 } platform={ platform }/> )}
             </Document>
         </PDFViewer>
     );

@@ -23,8 +23,8 @@ const Platform = ({ history, match }) => {
     const initialPosition = AddressPanel.getInitialInformations();
     const initialInformations = {...initialPosition};
     const defaultSocial = {name: "", link: "", icon: "", count: 0};
-    const [platform, setPlatform] = useState({name: "", email: ""});
-    const initialErrors = {name: "", email: "", ...initialInformations};
+    const [platform, setPlatform] = useState({name: "", email: "", siret: ""});
+    const initialErrors = {name: "", email: "", siret: "", ...initialInformations};
     const [informations, setInformations] = useState(initialInformations);
     const [errors, setErrors] = useState(initialErrors);
     const [pickers, setPickers] = useState([]);
@@ -149,7 +149,7 @@ const Platform = ({ history, match }) => {
                                         <Tabs defaultActiveKey="home" id="uncontrolled-tab-example" className="mb-3">
                                             <Tab eventKey="home" title="Informations générales">
                                                 <CRow className="mb-3">
-                                                    <CCol xs="12" sm="12" md="4">
+                                                    <CCol xs="12" sm="12" md="6">
                                                         <CFormGroup>
                                                             <CLabel htmlFor="name">Nom</CLabel>
                                                             <CInput
@@ -163,7 +163,23 @@ const Platform = ({ history, match }) => {
                                                             <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                                         </CFormGroup>
                                                     </CCol>
-                                                    <CCol xs="12" sm="12" md="4">
+                                                    <CCol xs="12" sm="12" md="6">
+                                                        <CFormGroup>
+                                                            <CLabel htmlFor="siret">SIRET</CLabel>
+                                                            <CInput
+                                                                id="siret"
+                                                                name="siret"
+                                                                value={ platform.siret }
+                                                                onChange={ handleChange }
+                                                                placeholder="N° de SIRET de l'entreprise"
+                                                                invalid={ errors.siret.length > 0 } 
+                                                            />
+                                                            <CInvalidFeedback>{ errors.siret }</CInvalidFeedback>
+                                                        </CFormGroup>
+                                                    </CCol>
+                                                </CRow>
+                                                <CRow className="mb-3">
+                                                    <CCol xs="12" sm="12" md="6">
                                                         <CFormGroup>
                                                             <CLabel htmlFor="phone">N° Téléphone</CLabel>
                                                             <CInput
@@ -178,7 +194,7 @@ const Platform = ({ history, match }) => {
                                                             <CInvalidFeedback>{ errors.phone }</CInvalidFeedback>
                                                         </CFormGroup>
                                                     </CCol>
-                                                    <CCol xs="12" sm="12" md="4">
+                                                    <CCol xs="12" sm="12" md="6">
                                                         <CFormGroup>
                                                             <CLabel htmlFor="name">Adresse email</CLabel>
                                                             <CInput

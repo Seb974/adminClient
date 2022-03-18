@@ -1,7 +1,7 @@
 import React from 'react';
 import DeliveryTable from 'src/components/deliveryNotes/deliveryTable';
 import { Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { isDefinedAndNotVoid } from 'src/helpers/utils';
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 
 const styles = StyleSheet.create({
     viewer: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     }
 });
 
-const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength = 0 }) => {
+const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength = 0, platform = null }) => {
 
     const totalPages = Math.ceil((ordersLength + packagesLength) / maxPerPage);
     const pages = [...Array(totalPages).keys()];
@@ -121,7 +121,28 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
         [...order.items.map(i => ({...i, isPackage: false}))] : 
         [...order.items.map(i => ({...i, isPackage: false})), ...order.packages.map(p => ({...p, isPackage: true}))];
 
-    return (
+    const getPlatformAddress = () => {
+        if (isDefined(platform) && isDefined(platform.metas)) {
+            const address = platform.metas.address;
+            return isDefined(address) && address.length > 0 ? (address.split(','))[0] :  "";
+        }
+        return "";
+    };
+
+    const getPlatformCity = () => {
+        if (isDefined(platform) && isDefined(platform.metas)) {
+            const zipcode = platform.metas.zipcode;
+            const city = platform.metas.city;
+            return isDefined(zipcode) && isDefined(city) ? `${zipcode} - ${city}` : "";
+        }
+        return "";
+    };
+
+    const getPlatformSiret = () => {
+        return isDefined(platform) && isDefined(platform.siret) ? `N° SIRET : ${platform.siret}` : "";
+    };
+
+    return !isDefined(platform) ? <></> : (
         pages.map((page, i) => {
 
             const itemsToDisplay = invoicedElements.slice((i * maxPerPage), ((i + 1) * maxPerPage));
@@ -135,9 +156,9 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
                                 <View style={ styles.society }>
                                     <Image src="/assets/img/logo/logo_fp_4.png" style={{ width: '120px', marginLeft: 5, marginTop: -10, marginBottom: -15}} />
                                     <View >
-                                        <Text style={styles.text}>19 chemin Raphaël</Text>
-                                        <Text style={styles.text}>97410 SAINT PIERRE</Text>
-                                        <Text style={styles.small}>N° SIRET : 832719181 00014</Text>
+                                        <Text style={styles.text}>{ getPlatformAddress() }</Text>
+                                        <Text style={styles.text}>{ getPlatformCity() }</Text>
+                                        <Text style={styles.small}>{ getPlatformSiret() }</Text>
                                     </View>
                                 </View>
                             <View style={ styles.client }>
