@@ -45,15 +45,18 @@ const DataProvider = ({ children }) => {
     useEffect(() => {
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
         PlatformActions.find()
-                       .then(response => setPlatform(response));
+                       .then(response => setPlatform(response))
+                       .catch(error => error)
         CatalogActions.findAll()
-                      .then(response => setCatalogs(response));
+                      .then(response => setCatalogs(response))
+                      .catch(error => error)
     },[]);
 
     useEffect(() => {
         setCurrentUser(AuthActions.getCurrentUser());
         AuthActions.getUserSettings()
-                   .then(response => setSettings(response));
+                   .then(response => setSettings(response))
+                   .catch(error => error);
     }, [isAuthenticated]);
 
     useEffect(() => {
@@ -70,10 +73,12 @@ const DataProvider = ({ children }) => {
         else if (Roles.isSupervisor(currentUser))
             SupervisorActions
                 .getSupervisor(currentUser)
-                .then(response => setSupervisor(response));
+                .then(response => setSupervisor(response))
+                .catch(error => error);
         else if (Roles.hasAdminPrivileges(currentUser))
             MessageActions.findAll()
-                          .then(response => setMessages(response));
+                          .then(response => setMessages(response))
+                          .catch(error => error);
     },[currentUser]);
 
     useEffect(() => {
