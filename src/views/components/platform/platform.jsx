@@ -13,6 +13,7 @@ import 'src/scss/TextEditors.scss';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import PlatformActions from 'src/services/PlatformActions';
 import { Tabs, Tab } from 'react-bootstrap';
+import ImgixAccount from 'src/components/Imgix/ImgixAccount';
 
 const Platform = ({ history, match }) => {
 
@@ -23,7 +24,7 @@ const Platform = ({ history, match }) => {
     const initialPosition = AddressPanel.getInitialInformations();
     const initialInformations = {...initialPosition};
     const defaultSocial = {name: "", link: "", icon: "", count: 0};
-    const [platform, setPlatform] = useState({name: "", email: "", siret: ""});
+    const [platform, setPlatform] = useState({name: "", email: "", siret: "", imgDomain: "", imgKey: ""});
     const initialErrors = {name: "", email: "", siret: "", ...initialInformations};
     const [informations, setInformations] = useState(initialInformations);
     const [errors, setErrors] = useState(initialErrors);
@@ -50,8 +51,9 @@ const Platform = ({ history, match }) => {
         PlatformActions
             .find()
             .then(response => {
-                const {metas, pickers, terms, notices, socials, ...mainPlatform} = response;
-                setPlatform(mainPlatform);
+                const {metas, pickers, terms, notices, socials, imgKey, imgDomain, ...mainPlatform} = response;
+                const viewedPlatform = isDefined(imgDomain) ? {...mainPlatform, imgDomain} : mainPlatform;
+                setPlatform(viewedPlatform);
                 if (isDefinedAndNotVoid(metas))
                     setInformations(metas);
                 if (isDefinedAndNotVoid(pickers))
@@ -294,6 +296,9 @@ const Platform = ({ history, match }) => {
                                                         <ReactQuill value={ terms } modules={ termsModules } onChange={ setTerms } theme="snow" ref={ termsRef }/>
                                                     </CCol>
                                                 </CRow>
+                                            </Tab>
+                                            <Tab eventKey="accounts" title="Paramètres">
+                                                <ImgixAccount imageOwner={ platform } handleChange={ handleChange }/>
                                             </Tab>
                                         </Tabs>
                                         <CRow className="mt-4 d-flex justify-content-center">

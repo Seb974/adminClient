@@ -1,4 +1,5 @@
 import api from 'src/config/api';
+import { isDefined } from 'src/helpers/utils';
 
 function findAll() {
     return api
@@ -116,11 +117,12 @@ function deleteFromMercure(products, id) {
     return products.filter(item => parseInt(item.id) !== parseInt(id));
 }
 
-function createImage(image) {
+function createImage(image, owner) {
     let formData = new FormData();
     formData.append('file', image);
     formData.append('instance', "Product");
-    return api.post('/api/pictures', formData, {headers: {'Content-type': 'multipart/form-data'}})
+    const rootRequest = isDefined(owner) ? `/api/pictures?owner=${ owner.id }` : `/api/pictures`;
+    return api.post(rootRequest, formData, {headers: {'Content-type': 'multipart/form-data'}})
               .then(response => response.data['@id']);
 }
 

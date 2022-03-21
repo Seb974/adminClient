@@ -83,10 +83,10 @@ const ProductPage = ({ match, history }) => {
     };
 
     const adaptProduct = (variations = [], adaptedComponents = []) => {
-        const { image } = product;
+        const { image, seller } = product;
         const productToWrite = getProductToWrite(product, type, categories, variations, adaptedComponents, components);
         if (image && !image.filePath) {
-            ProductActions.createImage(product.image)
+            ProductActions.createImage(product.image, seller)
                           .then(image => writeProduct({...productToWrite, image}));
         } else {
             writeProduct(productToWrite);
@@ -113,10 +113,10 @@ const ProductPage = ({ match, history }) => {
 
     const writeVariations = async () => {
         const savedVariations = await Promise.all(variations.map( async variation => {
-            const { image } = variation;
+            const { image, seller } = variation;
             const suitedVariation = getVariationToWrite(variation, product);
             if (image && !image.filePath) {
-                const savedImage = await ProductActions.createImage(image);
+                const savedImage = await ProductActions.createImage(image, seller);
                 return await suitedVariation['@id'] ? 
                     ProductActions.updateVariation(suitedVariation.id, {...suitedVariation, image: savedImage}) :
                     ProductActions.createVariation({...suitedVariation, image: savedImage});

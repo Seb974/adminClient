@@ -9,7 +9,9 @@ import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import Image from 'src/components/forms/image';
+import { Tabs, Tab } from 'react-bootstrap';
 import AddressPanel from 'src/components/userPages/AddressPanel';
+import ImgixAccount from 'src/components/Imgix/ImgixAccount';
 
 const Seller = ({ match, history }) => {
 
@@ -18,7 +20,7 @@ const Seller = ({ match, history }) => {
     const [editing, setEditing] = useState(false);
     const initialInformations =  AddressPanel.getInitialInformations();
     const [informations, setInformations] = useState(initialInformations);
-    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "" };
+    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", imgDomain: "", imgKey: "" };
     const [seller, setSeller] = useState({...defaultSeller, needsRecovery: false, delayInDays: true, image: null, isActive: true });
     const [errors, setErrors] = useState(defaultSeller);
     const [users, setUsers] = useState([]);
@@ -41,8 +43,9 @@ const Seller = ({ match, history }) => {
             setEditing(true);
             SellerActions.find(id)
                 .then(response => {
-                    const {metas, ...dbSeller} = response;
-                    setSeller(dbSeller);
+                    const {metas, imgDomain, imgKey, ...dbSeller} = response;
+                    const viewedSeller = isDefined(imgDomain) ? {...dbSeller, imgDomain} : dbSeller;
+                    setSeller(viewedSeller);
                     if (isDefined(metas))
                         setInformations(metas);
                     if (isDefinedAndNotVoid(response.users))
@@ -136,144 +139,153 @@ const Seller = ({ match, history }) => {
                     </CCardHeader>
                     <CCardBody>
                         <CForm onSubmit={ handleSubmit }>
-                            <CRow>
-                                <CCol xs="12" sm="12" md="6" className="mt-4">
-                                    <CFormGroup>
-                                        <CLabel htmlFor="name">Nom</CLabel>
-                                        <CInput
-                                            id="name"
-                                            name="name"
-                                            value={ seller.name }
-                                            onChange={ handleChange }
-                                            placeholder="Nom du vendeur"
-                                            invalid={ errors.name.length > 0 } 
-                                        />
-                                        <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
-                                    </CFormGroup>
-                                </CCol>
-                                <CCol xs="12" sm="12" md="6" className="mt-4">
-                                    <CFormGroup>
-                                        <CLabel htmlFor="name">Téléphone</CLabel>
-                                        <CInput
-                                            type="tel"
-                                            id="phone"
-                                            name="phone"
-                                            value={ informations.phone }
-                                            onChange={ onPhoneChange }
-                                            placeholder="N° de téléphone"
-                                            invalid={ errors.phone.length > 0 } 
-                                        />
-                                        <CInvalidFeedback>{ errors.phone }</CInvalidFeedback>
-                                    </CFormGroup>
-                                </CCol>
-                            </CRow>
-                            <CRow>
-                                <CCol xs="12" md="12">
-                                    <Image entity={ seller } setEntity={ setSeller } isLandscape={ true }/>
-                                </CCol>
-                            </CRow>
-                            <CRow>
-                                <h5 className="ml-3 mt-3">Adresse du stock principal</h5>
-                            </CRow>
-                            <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
-                            <hr/>
-                            <CRow>
-                                <CCol xs="12" md="6" className="my-4">
-                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
-                                        <CCol xs="3" sm="2" md="3">
-                                            <CSwitch name="isActive" className="mr-1" color="danger" shape="pill" variant="opposite" checked={ seller.isActive } onChange={ handleStatus }/>
+                            <Tabs defaultActiveKey="home" id="uncontrolled-tab-example" className="mb-3">
+                                <Tab eventKey="home" title="Informations générales">
+                                    <CRow>
+                                        <CCol xs="12" sm="12" md="6" className="mt-4">
+                                            <CFormGroup>
+                                                <CLabel htmlFor="name">Nom</CLabel>
+                                                <CInput
+                                                    id="name"
+                                                    name="name"
+                                                    value={ seller.name }
+                                                    onChange={ handleChange }
+                                                    placeholder="Nom du vendeur"
+                                                    invalid={ errors.name.length > 0 } 
+                                                />
+                                                <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
+                                            </CFormGroup>
                                         </CCol>
-                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Actif</CCol>
-                                    </CFormGroup>
-                                </CCol>
-                                <CCol xs="12" md="6" className="my-4">
-                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
-                                        <CCol xs="3" sm="2" md="3">
-                                            <CSwitch name="needsRecovery" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.needsRecovery } onChange={ handleRecovery }/>
+                                        <CCol xs="12" sm="12" md="6" className="mt-4">
+                                            <CFormGroup>
+                                                <CLabel htmlFor="name">Téléphone</CLabel>
+                                                <CInput
+                                                    type="tel"
+                                                    id="phone"
+                                                    name="phone"
+                                                    value={ informations.phone }
+                                                    onChange={ onPhoneChange }
+                                                    placeholder="N° de téléphone"
+                                                    invalid={ errors.phone.length > 0 } 
+                                                />
+                                                <CInvalidFeedback>{ errors.phone }</CInvalidFeedback>
+                                            </CFormGroup>
                                         </CCol>
-                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Récupération des produits</CCol>
-                                    </CFormGroup>
-                                </CCol>
-                            </CRow>
-
-                            { seller.needsRecovery &&
-                                <CRow className="mt-3">
-                                    <CCol xs="12" md="6" className="mt-4">
-                                        <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
-                                            <CCol xs="3" sm="2" md="3">
-                                                <CSwitch name="delayInDays" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.delayInDays } onChange={ handleDelayType }/>
+                                    </CRow>
+                                    <CRow>
+                                        <CCol xs="12" md="12">
+                                            <Image entity={ seller } setEntity={ setSeller } isLandscape={ true }/>
+                                        </CCol>
+                                    </CRow>
+                                    <CRow>
+                                        <h5 className="ml-3 mt-3">Adresse du stock principal</h5>
+                                    </CRow>
+                                    <AddressPanel informations={ informations } setInformations={ setInformations } errors={ errors } />
+                                    <UserSearchMultiple users={ users } setUsers={ setUsers }/>
+                                </Tab>
+                                { Roles.hasAdminPrivileges(currentUser) && 
+                                    <Tab eventKey="accounts" title="Paramètres">
+                                        <CRow>
+                                            <CCol xs="12" md="6" className="my-4">
+                                                <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                                    <CCol xs="3" sm="2" md="3">
+                                                        <CSwitch name="isActive" className="mr-1" color="danger" shape="pill" variant="opposite" checked={ seller.isActive } onChange={ handleStatus }/>
+                                                    </CCol>
+                                                    <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Actif</CCol>
+                                                </CFormGroup>
                                             </CCol>
-                                            <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Décalage en jour</CCol>
-                                        </CFormGroup>
-                                    </CCol>
-                                    <CCol xs="12" md="6">
-                                        <CFormGroup>
-                                            <CLabel htmlFor="name">Délais entre récupération et livraison</CLabel>
-                                            <CInputGroup>
-                                                <CInput
-                                                    id="recoveryDelay"
-                                                    name="recoveryDelay"
-                                                    type="number"
-                                                    value={ seller.recoveryDelay }
-                                                    onChange={ handleChange }
-                                                    placeholder=" "
-                                                    invalid={ errors.recoveryDelay.length > 0 } 
-                                                />
-                                                <CInputGroupAppend>
-                                                    <CInputGroupText>{ seller.delayInDays ? "Jour(s)" : "Minute(s)" }</CInputGroupText>
-                                                </CInputGroupAppend>
-                                            </CInputGroup>
-                                            <CInvalidFeedback>{ errors.recoveryDelay }</CInvalidFeedback>
-                                        </CFormGroup>
-                                    </CCol>
-                                </CRow>
-                        }
+                                            <CCol xs="12" md="6" className="my-4">
+                                                <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                                    <CCol xs="3" sm="2" md="3">
+                                                        <CSwitch name="needsRecovery" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.needsRecovery } onChange={ handleRecovery }/>
+                                                    </CCol>
+                                                    <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Récupération des produits</CCol>
+                                                </CFormGroup>
+                                            </CCol>
+                                        </CRow>
 
-                            <CRow className="mt-4">
-                                { isAdmin && 
-                                    <CCol xs="12" sm="12" md="6">
-                                        <CFormGroup>
-                                            <CLabel htmlFor="name">Rétribution sur vente</CLabel>
-                                            <CInputGroup>
-                                                <CInput
-                                                    id="ownerRate"
-                                                    name="ownerRate"
-                                                    type="number"
-                                                    value={ seller.ownerRate }
-                                                    onChange={ handleChange }
-                                                    placeholder="Marge par vente"
-                                                    invalid={ errors.ownerRate.length > 0 } 
-                                                />
-                                                <CInputGroupAppend>
-                                                    <CInputGroupText>%</CInputGroupText>
-                                                </CInputGroupAppend>
-                                            </CInputGroup>
-                                            <CInvalidFeedback>{ errors.ownerRate }</CInvalidFeedback>
-                                        </CFormGroup>
-                                    </CCol>
+                                        { seller.needsRecovery &&
+                                            <CRow className="mt-3">
+                                                <CCol xs="12" md="6" className="mt-4">
+                                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                                        <CCol xs="3" sm="2" md="3">
+                                                            <CSwitch name="delayInDays" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.delayInDays } onChange={ handleDelayType }/>
+                                                        </CCol>
+                                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Décalage en jour</CCol>
+                                                    </CFormGroup>
+                                                </CCol>
+                                                <CCol xs="12" md="6">
+                                                    <CFormGroup>
+                                                        <CLabel htmlFor="name">Délais entre récupération et livraison</CLabel>
+                                                        <CInputGroup>
+                                                            <CInput
+                                                                id="recoveryDelay"
+                                                                name="recoveryDelay"
+                                                                type="number"
+                                                                value={ seller.recoveryDelay }
+                                                                onChange={ handleChange }
+                                                                placeholder=" "
+                                                                invalid={ errors.recoveryDelay.length > 0 } 
+                                                            />
+                                                            <CInputGroupAppend>
+                                                                <CInputGroupText>{ seller.delayInDays ? "Jour(s)" : "Minute(s)" }</CInputGroupText>
+                                                            </CInputGroupAppend>
+                                                        </CInputGroup>
+                                                        <CInvalidFeedback>{ errors.recoveryDelay }</CInvalidFeedback>
+                                                    </CFormGroup>
+                                                </CCol>
+                                            </CRow>
+                                        }
+
+                                        <CRow className="mt-4">
+                                            { isAdmin && 
+                                                <CCol xs="12" sm="12" md="6">
+                                                    <CFormGroup>
+                                                        <CLabel htmlFor="name">Rétribution sur vente</CLabel>
+                                                        <CInputGroup>
+                                                            <CInput
+                                                                id="ownerRate"
+                                                                name="ownerRate"
+                                                                type="number"
+                                                                value={ seller.ownerRate }
+                                                                onChange={ handleChange }
+                                                                placeholder="Marge par vente"
+                                                                invalid={ errors.ownerRate.length > 0 } 
+                                                            />
+                                                            <CInputGroupAppend>
+                                                                <CInputGroupText>%</CInputGroupText>
+                                                            </CInputGroupAppend>
+                                                        </CInputGroup>
+                                                        <CInvalidFeedback>{ errors.ownerRate }</CInvalidFeedback>
+                                                    </CFormGroup>
+                                                </CCol>
+                                            }
+                                            <CCol xs="12" md={isAdmin ? "6" : "12"}>
+                                                <CFormGroup>
+                                                    <CLabel htmlFor="name">Délais entre réception et livraison</CLabel>
+                                                    <CInputGroup>
+                                                        <CInput
+                                                            id="delay"
+                                                            name="delay"
+                                                            type="number"
+                                                            value={ seller.delay }
+                                                            onChange={ handleChange }
+                                                            placeholder=" "
+                                                            invalid={ errors.delay.length > 0 } 
+                                                        />
+                                                        <CInputGroupAppend>
+                                                            <CInputGroupText>Jour(s)</CInputGroupText>
+                                                        </CInputGroupAppend>
+                                                        <CInvalidFeedback>{ errors.delay }</CInvalidFeedback>
+                                                    </CInputGroup>
+                                                </CFormGroup>
+                                            </CCol>
+                                        </CRow>
+                                        <hr/>
+                                            <ImgixAccount imageOwner={ seller } handleChange={ handleChange }/>
+                                    </Tab>
                                 }
-                                <CCol xs="12" md={isAdmin ? "6" : "12"}>
-                                <CFormGroup>
-                                        <CLabel htmlFor="name">Délais entre réception et livraison</CLabel>
-                                        <CInputGroup>
-                                            <CInput
-                                                id="delay"
-                                                name="delay"
-                                                type="number"
-                                                value={ seller.delay }
-                                                onChange={ handleChange }
-                                                placeholder=" "
-                                                invalid={ errors.delay.length > 0 } 
-                                            />
-                                            <CInputGroupAppend>
-                                                <CInputGroupText>Jour(s)</CInputGroupText>
-                                            </CInputGroupAppend>
-                                            <CInvalidFeedback>{ errors.delay }</CInvalidFeedback>
-                                        </CInputGroup>
-                                    </CFormGroup>
-                                </CCol>
-                            </CRow>
-                            <UserSearchMultiple users={ users } setUsers={ setUsers }/>
+                            </Tabs>
                             <CRow className="mt-4 d-flex justify-content-center">
                                 <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
                             </CRow>
