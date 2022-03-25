@@ -1,8 +1,9 @@
 import React from 'react';
 import CIcon from '@coreui/icons-react';
 import Roles from 'src/config/Roles';
+import { isDefined } from 'src/helpers/utils';
 
-function getNav(translation, currentUser)
+function getNav(translation, currentUser, platform)
 {
   const defineUserRole = () => {
     const mainRole = Roles.hasAdminPrivileges(currentUser) ? "ADMIN" : 
@@ -220,19 +221,19 @@ function getNav(translation, currentUser)
         to: '/components/account/deliverers',
         icon: <CIcon name="cil-car-alt" customClasses="c-sidebar-nav-icon"/>,
       },
-    !["ADMIN"].includes(mainRole) ? voidValue :
+    !["ADMIN"].includes(mainRole) || !isDefined(platform) || !platform.hasAxonautLink ? voidValue :
       {
         _tag: 'CSidebarNavTitle',
         _children: [translation("accounting.label")]
       },
-      !["ADMIN"].includes(mainRole) ? voidValue :  
+      !["ADMIN"].includes(mainRole) || !isDefined(platform) || !platform.hasAxonautLink ? voidValue :  
         {
           _tag: 'CSidebarNavItem',
           name: translation("billing.label"),
           to: '/components/accounting',
           icon: <CIcon name="cil-description" customClasses="c-sidebar-nav-icon"/>,
         },
-      !["ADMIN", "SUPERVISOR"].includes(mainRole) ? voidValue :  
+      !["ADMIN", "SUPERVISOR"].includes(mainRole) || !isDefined(platform) || !platform.hasAxonautLink ? voidValue :  
         {
           _tag: 'CSidebarNavItem',
           name: translation("bills.label"),

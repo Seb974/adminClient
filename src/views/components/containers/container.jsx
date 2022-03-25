@@ -4,24 +4,28 @@ import ContainerActions from 'src/services/ContainerActions';
 import { CButton, CCard, CCardBody, CCardFooter, CCardHeader, CCol, CForm, CFormGroup, CInput, CInvalidFeedback, CLabel, CRow, CInputGroupText, CInputGroupAppend, CInputGroup, CSwitch, CSelect } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import TaxActions from 'src/services/TaxActions';
-import { getFloat, isDefinedAndNotVoid } from 'src/helpers/utils';
+import GroupActions from 'src/services/GroupActions';
+import { getFloat, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import CatalogPrice from 'src/components/containerPages/catalogPrice';
 import CatalogActions from 'src/services/CatalogActions';
+import SelectMultiple from 'src/components/forms/SelectMultiple';
 
 const Container = ({ match, history }) => {
 
     const { id = "new" } = match.params;
-    const defaultCatalog = {id: -1, name: "", amount: 0};
+    const defaultCatalog = {id: -1, name: ""};
     const [editing, setEditing] = useState(false);
+    const [groups, setGroups] = useState([]);
     const [taxes, setTaxes] = useState([]);
     const [catalogs, setCatalogs] = useState([]);
-    const [catalogOptions, setCatalogOptions] = useState([defaultCatalog]);
-    const defaultErrors = {name: "", available: "", max: "", tare: "", tax: "", length: "", width: "", height: ""};
+    const [catalogOptions, setCatalogOptions] = useState([{catalog: defaultCatalog, amount: 0}]);
+    const defaultErrors = {name: "", available: "", max: "", tare: "", tax: "", length: "", width: "", height: "", userGroups: "", isReturnable: ""};
     const defaultStock = {quantity: 0, alert: 0, security: 0};
-    const [container, setContainer] = useState({ name: "", max: "", tare: "", available: true, tax: "", length: "", width: "", height: "", stock: defaultStock });
+    const [container, setContainer] = useState({ name: "", max: "", tare: "", available: true, tax: "", length: "", width: "", height: "", stock: defaultStock, userGroups: [], isReturnable: false });
     const [errors, setErrors] = useState(defaultErrors);
 
     useEffect(() => {
+        fetchGroups();
         fetchCatalogs();
         fetchTaxes();
         fetchContainer(id);
@@ -54,13 +58,21 @@ const Container = ({ match, history }) => {
             setEditing(true);
             ContainerActions.find(id)
                 .then( response => {
-                    const { catalogPrices, ...container } = response; 
-                    setContainer(container);
-                    if (catalogPrices.length > 0) {
-                        setCatalogOptions(catalogPrices);
-                    }
+                    const viewedContainer = getViewedContainer(response);
+                    setContainer(viewedContainer);
+                    if (response.catalogPrices.length > 0)
+                        setCatalogOptions(response.catalogPrices);
                 })
                 .catch(error => history.replace("/components/containers"));
+        }
+    };
+
+    const getViewedContainer = data => {
+        const { catalogPrices, userGroups, isReturnable, ...dbContainer } = data;
+        return {
+            ...dbContainer, 
+            userGroups: isDefinedAndNotVoid(userGroups) ? userGroups.map(g => ({...g, isFixed: false})) : container.userGroups,
+            isReturnable: isDefined(isReturnable) ? isReturnable : container.isReturnable
         }
     };
 
@@ -77,15 +89,28 @@ const Container = ({ match, history }) => {
             .catch(error => history.replace("/components/containers"));
     };
 
+    const fetchGroups = () => {
+        GroupActions.findGroupsWithShopAccess()
+                    .then(response => {
+                        setGroups(response);
+                        if (!isDefinedAndNotVoid(container.userGroups)) {
+                            setContainer({...container, userGroups: response})
+                        }
+                    })
+                    .catch(error => history.replace("/components/containers"));
+    };
+
     const handleAdd = e => {
         e.preventDefault();
         if (catalogOptions.length < catalogs.length) {
             let next = catalogs.findIndex(catalog => catalogOptions.find(selection => selection.id === catalog.id) === undefined);
             setCatalogOptions(catalogOptions => {
-                return [...catalogOptions, {...catalogs[next], amount: 0}];
+                return [...catalogOptions, {catalog: catalogs[next], amount: 0}];
             });
         }
     };
+
+    const handleUsersChange = userGroups => setContainer(container => ({...container, userGroups}));
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -126,7 +151,8 @@ const Container = ({ match, history }) => {
                 alert: getFloat(container.stock.alert),
                 security: getFloat(container.stock.security),
             },
-            catalogPrices: catalogOptions.map(catalogPrice => ({...catalogPrice, catalog: catalogPrice.catalog['@id'], amount: getFloat(catalogPrice.amount) }))
+            catalogPrices: catalogOptions.map(catalogPrice => ({...catalogPrice, catalog: catalogPrice.catalog['@id'], amount: getFloat(catalogPrice.amount) })),
+            userGroups: isDefinedAndNotVoid(container.userGroups) ? container.userGroups.map(g => g['@id']) : []
         };
     }
 
@@ -154,13 +180,26 @@ const Container = ({ match, history }) => {
                                         <CInvalidFeedback>{ errors.name }</CInvalidFeedback>
                                     </CFormGroup>
                                 </CCol>
-                                <CCol xs="12" md="6" className="mt-4">
+                                <CCol xs="6" md="3" className="mt-4">
                                     <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
                                         <CCol xs="3" sm="2" md="3">
                                             <CSwitch name="available" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ container.available } onChange={ handleCheckBoxes }/>
                                         </CCol>
                                         <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Disponible</CCol>
                                     </CFormGroup>
+                                </CCol>
+                                <CCol xs="6" md="3" className="mt-4">
+                                    <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                        <CCol xs="3" sm="2" md="3">
+                                            <CSwitch name="isReturnable" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ container.isReturnable } onChange={ handleCheckBoxes }/>
+                                        </CCol>
+                                        <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Consigné</CCol>
+                                    </CFormGroup>
+                                </CCol>
+                            </CRow>
+                            <CRow className="mb-3">
+                                <CCol xs="12" sm="12">
+                                    <SelectMultiple name="userGroups" label="Pour les utilisateurs" value={ container.userGroups } error={ errors.userGroups } onChange={ handleUsersChange } data={ groups }/>
                                 </CCol>
                             </CRow>
                             <CRow>

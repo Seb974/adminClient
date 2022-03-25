@@ -9,12 +9,15 @@ import Spinner from 'react-bootstrap/Spinner'
 import Select from 'src/components/forms/Select';
 import { isSameDate } from 'src/helpers/days';
 import PaymentForm from 'src/components/payment/PaymentForm';
+import PlatformContext from 'src/contexts/PlatformContext';
+import { Redirect } from 'react-router-dom';
 
 const Bills = (props) => {
 
     const itemsPerPage = 50;
     const fields = ['client', 'facture', 'échéance', 'total HT', 'total TTC', 'etat', 'selection'];
     const { currentUser, supervisor } = useContext(AuthContext);
+    const { platform } = useContext(PlatformContext);
     const [orders, setOrders] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -46,11 +49,12 @@ const Bills = (props) => {
         OrderActions
             .getInvoices(user, UTCDates)
             .then(response => {
-                setOrders(response.map(data => ({...data, selected: false})));
+                if (isDefined(response) && Array.isArray(response)) {
+                    setOrders(response.map(data => ({...data, selected: false})));
+                }
                 setLoading(false);
             })
             .catch(error => {
-                console.log(error);
                 setLoading(false);
             });
     }
@@ -97,7 +101,7 @@ const Bills = (props) => {
         setBillingLoading(true);
     };
 
-    return (
+    return !isDefined(platform) || !platform.hasAxonautLink ? <Redirect to="/"/> :(
         <CRow>
             <CCol xs="12" lg="12">
                 <CCard>

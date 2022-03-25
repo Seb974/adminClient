@@ -146,9 +146,46 @@ const DeliveryTable = ({ order, items }) => {
                 }
               }
             )}
+            <View style={styles.tableRow}>
+                <View style={styles.productCol}>
+                    <Text style={styles.tableCell}>{ "Livraison" }</Text> 
+                </View> 
+                <View style={styles.tableCol}> 
+                    <Text style={styles.tableCell}>{ "" }</Text>
+                </View>
+                <View style={styles.tableCol}> 
+                    <Text style={styles.tableCell}>{ "" }</Text>
+                </View> 
+                <View style={styles.tableCol}> 
+                    <Text style={styles.tableCell}>{ "" }</Text> 
+                </View>
+                <View style={styles.tableCol}> 
+                    <Text style={styles.tableCell}>{ isDefined(order.appliedCondition) && order.appliedCondition.minForFree > getTotalHT(order) ? order.appliedCondition.price.toFixed(2) + " €" : "Offerte" }</Text> 
+                </View>
+            </View> 
             { ((!isDefinedAndNotVoid(order.packages) && order.items[order.items.length - 1].id === items[items.length - 1].id) ||
               (isDefinedAndNotVoid(order.packages) && order.packages[order.packages.length - 1].id === items[items.length - 1].id)) &&
                 <>
+
+                    {/* <View style={styles.tableRow}> 
+                        <View style={styles.productFooterCol}> 
+                            <Text style={styles.tableCell}>{ " " }</Text> 
+                        </View> 
+                        <View style={styles.footerCol}> 
+                            <Text style={styles.tableCell}>{ " " }</Text> 
+                        </View> 
+                        <View style={styles.footerCol}> 
+                            <Text style={styles.tableCell}>{ " " }</Text>
+                        </View> 
+                        <View style={styles.footerCol}> 
+                            <Text style={styles.tableCell}>Livraison</Text> 
+                        </View>
+                        <View style={styles.footerCol}> 
+                            <Text style={styles.tableCell}>{ order.appliedCondition.minForFree < getTotalHT(order) ? order.appliedCondition.price.toFixed(2) + " €" : "Offerte" }</Text>
+                        </View> 
+                    </View> */}
+
+
                     <View style={styles.tableRow}> 
                         <View style={styles.productFooterCol}> 
                             <Text style={styles.tableCell}>{ " " }</Text> 

@@ -4,7 +4,7 @@ import CIcon from '@coreui/icons-react';
 import OrderDetailsItem from './orderDetailsItem';
 import { getPreparedOrder } from 'src/helpers/checkout';
 import OrderActions from 'src/services/OrderActions';
-import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getInt, isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import PackageList from './packageList';
@@ -51,6 +51,11 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
             .catch(error => console.log(error));
     };
 
+    const handlePackagesChange = ({ currentTarget }) => {
+        const updatedPackage = viewedOrder.packages.find(p => p.id === getInt(currentTarget.name));
+        setViewedOrder({...viewedOrder, packages: viewedOrder.packages.map(p => p.id === updatedPackage.id ? {...updatedPackage, quantity: currentTarget.value} : p)});
+    };
+
     return (
         <>
             { !isDefined(viewedOrder) ? <></> : 
@@ -89,7 +94,7 @@ const OrderDetails = ({ orders = null, order, setOrders = null, isDelivery = fal
                             <CRow>
                                 <CCol md="1">{""}</CCol>
                                 <CCol md="10">
-                                    <PackageList _package={ _pack } total={ viewedOrder.packages.length } index={ i }/>
+                                    <PackageList _package={ _pack } total={ viewedOrder.packages.length } index={ i } handleQtyChange={ handlePackagesChange } order={ viewedOrder } setOrders={ setOrders } orders={ orders }/>
                                 </CCol>
                             </CRow>
                         </CCardBody>

@@ -1,4 +1,5 @@
 import api from 'src/config/api';
+import { isDefined } from 'src/helpers/utils';
 
 function findAll() {
     return api
@@ -18,6 +19,13 @@ function findWord(word, page = 1, items = 30) {
         .get(`/api/containers?name=${ word }&order[name]=asc&pagination=true&page=${ page }&itemsPerPage=${ items }`)
         .then(response => response.data)
         .catch(error => []);
+}
+
+function findAvailable(userGroup = null) {
+    const group = isDefined(userGroup) ? `group[]=${ userGroup['@id'] }&` : '';
+    return api
+        .get(`/api/containers?available=true&${ group }order[name]=asc`)
+        .then(response => response.data['hydra:member']);
 }
 
 function deleteContainer(id) {
@@ -42,6 +50,7 @@ export default {
     findAll,
     findAllPaginated,
     findWord,
+    findAvailable,
     delete: deleteContainer,
     find,
     update,

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import OrderActions from '../../../services/OrderActions'
 import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton, CFormGroup } from '@coreui/react';
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import AuthContext from 'src/contexts/AuthContext';
 import Roles from 'src/config/Roles';
 import RangeDatePicker from 'src/components/forms/RangeDatePicker';
@@ -13,12 +13,14 @@ import MercureContext from 'src/contexts/MercureContext';
 import { getDeliveredStatus } from 'src/helpers/orders';
 import UserActions from 'src/services/UserActions';
 import UserSearchMultiple from 'src/components/forms/UserSearchMultiple';
+import PlatformContext from 'src/contexts/PlatformContext';
 
 const Accounting = (props) => {
 
     const itemsPerPage = 50;
     const fields = ['name', 'date', 'CodePaiement', 'Etat', 'selection', ' '];
     const deliveredStatus = getDeliveredStatus();
+    const { platform } = useContext(PlatformContext);
     const { currentUser, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
     const [mercureOpering, setMercureOpering] = useState(false);
@@ -170,7 +172,7 @@ const Accounting = (props) => {
         return invoices;
     };
 
-    return (
+    return !isDefined(platform) || !platform.hasAxonautLink ? <Redirect to="/"/> : (
         <CRow>
             <CCol xs="12" lg="12">
                 <CCard>

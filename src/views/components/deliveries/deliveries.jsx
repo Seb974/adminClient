@@ -329,8 +329,8 @@ const Deliveries = ({ history }) => {
                                                     <Link to="#" onClick={ e => { toggleDetails(item.id, e) }} disabled={ item.status === "WAITING" }>
                                                         { item.isRemains ? 
                                                             <i className="fas fa-sync-alt mr-2"></i> :
-                                                        isDefinedAndNotVoid(item.packages) ? 
-                                                        <i className="fas fa-plane mr-2"></i> :
+                                                        isDefined(item.catalog) && item.catalog.deliveredByChronopost ? 
+                                                            <i className="fas fa-plane mr-2"></i> :
                                                             <i className="fas fa-truck mr-2"></i>
                                                         }{ item.name }<br/>
                                                         <small><i>{ item.metas.zipcode } { item.metas.city }</i></small>

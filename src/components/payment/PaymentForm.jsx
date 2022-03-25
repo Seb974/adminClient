@@ -65,11 +65,15 @@ const PaymentForm = ({ name, available, bills, orders, setOrders }) => {
         setLoading(true);
         api.post('/api/bills-payment', { bills: bills })
             .then(({data}) => {
-                setClientSecret(data.clientSecret);
-                setAmount(data.amount / 100 );
-                setError(null);
-                setInputError(null);
-                setLoading(false);
+                if (isDefined(data)) {
+                    setClientSecret(data.clientSecret);
+                    setAmount(data.amount / 100 );
+                    setError(null);
+                    setInputError(null);
+                    setLoading(false);
+                } else {
+                    setError(paymentConnexionError);
+                }
             })
             .catch(error => setError(paymentConnexionError));
     };

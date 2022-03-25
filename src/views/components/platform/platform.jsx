@@ -13,7 +13,10 @@ import 'src/scss/TextEditors.scss';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import PlatformActions from 'src/services/PlatformActions';
 import { Tabs, Tab } from 'react-bootstrap';
-import ImgixAccount from 'src/components/Imgix/ImgixAccount';
+import ImgixAccount from 'src/components/Externs/ImgixAccount';
+import AxonautAccount from 'src/components/Externs/AxonautAccount';
+import StripeAccount from 'src/components/Externs/StripeAccount';
+import ChronopostAccount from 'src/components/Externs/ChronopostAccount';
 
 const Platform = ({ history, match }) => {
 
@@ -24,7 +27,9 @@ const Platform = ({ history, match }) => {
     const initialPosition = AddressPanel.getInitialInformations();
     const initialInformations = {...initialPosition};
     const defaultSocial = {name: "", link: "", icon: "", count: 0};
-    const [platform, setPlatform] = useState({name: "", email: "", siret: "", imgDomain: "", imgKey: ""});
+    const [platform, setPlatform] = useState({name: "", email: "", siret: "", imgDomain: "", imgKey: "", hasAxonautLink: false,
+                                             axonautKey: "", axonautEmail: "", stripePublicKey: "", stripePublicKey: "", 
+                                             hasChronopostLink: false, chronopostNumber: "", chronopostPassword: ""});
     const initialErrors = {name: "", email: "", siret: "", ...initialInformations};
     const [informations, setInformations] = useState(initialInformations);
     const [errors, setErrors] = useState(initialErrors);
@@ -45,14 +50,15 @@ const Platform = ({ history, match }) => {
     useEffect(() => setIsAdmin(Roles.hasAdminPrivileges(currentUser)), [currentUser]);
     
     const handleChange = ({ currentTarget }) => setPlatform({...platform, [currentTarget.name]: currentTarget.value});
+    const handleCheckBox = ({ currentTarget }) => setPlatform({...platform, [currentTarget.name]: !platform[currentTarget.name]});
     const handleInformationChange = ({ currentTarget }) => setInformations({...informations, [currentTarget.name]: currentTarget.value});
 
     const fetchPlatform = () => {
         PlatformActions
             .find()
             .then(response => {
-                const {metas, pickers, terms, notices, socials, imgKey, imgDomain, ...mainPlatform} = response;
-                const viewedPlatform = isDefined(imgDomain) ? {...mainPlatform, imgDomain} : mainPlatform;
+                const { metas, pickers, terms, notices, socials } = response;
+                const viewedPlatform = getDbPlatform(response);
                 setPlatform(viewedPlatform);
                 if (isDefinedAndNotVoid(metas))
                     setInformations(metas);
@@ -66,6 +72,22 @@ const Platform = ({ history, match }) => {
                     setSocials(socials.map((s, i) => ({...s, count: i})))
             })
             .catch(error => history.replace("/dashboard"));
+    };
+
+    const getDbPlatform = dbPlatform => {
+        const { metas, pickers, terms, notices, socials, imgKey, imgDomain, hasAxonautLink, 
+                axonautKey, axonautEmail, stripePublicKey, stripePrivateKey, hasChronopostLink,
+                chronopostNumber, chronopostPassword, ...mainPlatform } = dbPlatform;
+        let viewedPlatform = isDefined(imgDomain) ? {...mainPlatform, imgDomain} :  {...mainPlatform, imgDomain: ""};
+            viewedPlatform = isDefined(hasAxonautLink) ? {...viewedPlatform, hasAxonautLink} : {...viewedPlatform, hasAxonautLink: false};
+            viewedPlatform = isDefined(axonautKey) ? {...viewedPlatform, axonautKey} : {...viewedPlatform, axonautKey: ""};
+            viewedPlatform = isDefined(axonautEmail) ? {...viewedPlatform, axonautEmail} : {...viewedPlatform, axonautEmail: ""};
+            viewedPlatform = isDefined(stripePublicKey) ? {...viewedPlatform, stripePublicKey} : {...viewedPlatform, stripePublicKey: ""};
+            viewedPlatform = isDefined(axonautEmail) ? {...viewedPlatform, stripePrivateKey} : {...viewedPlatform, stripePrivateKey: ""};
+            viewedPlatform = isDefined(hasChronopostLink) ? {...viewedPlatform, hasChronopostLink} : {...viewedPlatform, hasChronopostLink: false};
+            viewedPlatform = isDefined(chronopostNumber) ? {...viewedPlatform, chronopostNumber} : {...viewedPlatform, chronopostNumber: ""};
+            viewedPlatform = isDefined(chronopostPassword) ? {...viewedPlatform, chronopostPassword} :  {...viewedPlatform, chronopostPassword: ""};
+        return viewedPlatform;
     };
 
     const handleSubmit = (e) => {
@@ -88,15 +110,16 @@ const Platform = ({ history, match }) => {
     };
 
     const getPlatformToWrite = () => {
-        return {
-            ...platform,
-            metas: {...informations},
-            pickers: pickers.map(picker => picker['@id']),
-            terms,
-            notices,
-            socials
-        };
+        const { imgKey, axonautKey, stripePrivateKey, chronopostPassword } = platform;
+        let main = {...platform, metas: {...informations}, pickers: pickers.map(picker => picker['@id']), terms, notices, socials };
+        main = isUpdated(imgKey) ? {...main, imgKey} : main;
+        main = isUpdated(axonautKey) ? {...main, axonautKey} : main;
+        main = isUpdated(stripePrivateKey) ? {...main, stripePrivateKey} : main;
+        main = isUpdated(chronopostPassword) ? {...main, chronopostPassword} : main;
+        return main;
     };
+
+    const isUpdated = variable => isDefined(variable) && variable.length > 0;
 
     const noticesImageHandler = () => {
         const input = document.createElement('input');
@@ -298,7 +321,10 @@ const Platform = ({ history, match }) => {
                                                 </CRow>
                                             </Tab>
                                             <Tab eventKey="accounts" title="Paramètres">
+                                                <StripeAccount platform={ platform }  handleChange={ handleChange }/>
                                                 <ImgixAccount imageOwner={ platform } handleChange={ handleChange }/>
+                                                <ChronopostAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
+                                                <AxonautAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
                                             </Tab>
                                         </Tabs>
                                         <CRow className="mt-4 d-flex justify-content-center">

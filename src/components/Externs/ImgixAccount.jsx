@@ -7,12 +7,13 @@ const ImgixAccount = ({ imageOwner, handleChange }) => {
             <CRow>
                 <CFormGroup row className="ml-1 mt-2 mb-0">
                     <CCol xs="12" sm="12" md="12">
-                        <CLabel><a href="https://imgix.com/pricing" target="_blank">Compte ImgIX</a></CLabel>
+                        <CLabel><h5><a href="https://imgix.com/pricing" target="_blank">Compte ImgIX</a></h5></CLabel>
                     </CCol>
                 </CFormGroup>
             </CRow>
             <CRow>
-                <CCol xs="12" sm="12" md="6" className="mt-4">
+                <CCol xs="12" sm="12" md="6" className="my-2">
+                {/* className="mt-4" */}
                     <CFormGroup>
                         <CLabel htmlFor="name">Domaine</CLabel>
                         <CInputGroup>
@@ -26,7 +27,8 @@ const ImgixAccount = ({ imageOwner, handleChange }) => {
                         </CInputGroup>
                     </CFormGroup>
                 </CCol>
-                <CCol xs="12" sm="12" md="6" className="mt-4">
+                <CCol xs="12" sm="12" md="6" className="my-2">
+                    {/* className="mt-4" */}
                     <CFormGroup>
                         <CLabel htmlFor="name">Clé</CLabel>
                         <CInputGroup>

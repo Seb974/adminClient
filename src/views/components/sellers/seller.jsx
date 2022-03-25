@@ -11,7 +11,7 @@ import Roles from 'src/config/Roles';
 import Image from 'src/components/forms/image';
 import { Tabs, Tab } from 'react-bootstrap';
 import AddressPanel from 'src/components/userPages/AddressPanel';
-import ImgixAccount from 'src/components/Imgix/ImgixAccount';
+import ImgixAccount from 'src/components/Externs/ImgixAccount';
 
 const Seller = ({ match, history }) => {
 
@@ -203,7 +203,6 @@ const Seller = ({ match, history }) => {
                                                 </CFormGroup>
                                             </CCol>
                                         </CRow>
-
                                         { seller.needsRecovery &&
                                             <CRow className="mt-3">
                                                 <CCol xs="12" md="6" className="mt-4">

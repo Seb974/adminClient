@@ -12,6 +12,8 @@ import OrderDetails from 'src/components/preparationPages/orderDetails';
 import DayOffActions from 'src/services/DayOffActions';
 import { updatePreparations } from 'src/data/dataProvider/eventHandlers/orderEvents';
 import MercureContext from 'src/contexts/MercureContext';
+import ContainerActions from 'src/services/ContainerActions';
+import ContainerContext from 'src/contexts/ContainerContext';
 
 const Preparations = ({ history }) => {
 
@@ -19,6 +21,7 @@ const Preparations = ({ history }) => {
     const fields = ['name', 'date', 'total', 'préparateur', ' '];
     const { currentUser, seller, supervisor } = useContext(AuthContext);
     const { updatedOrders, setUpdatedOrders } = useContext(MercureContext);
+    const { containers, setContainers} = useContext(ContainerContext);
     const [mercureOpering, setMercureOpering] = useState(false);
     const [orders, setOrders] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -34,6 +37,7 @@ const Preparations = ({ history }) => {
     useEffect(() => {
         setIsAdmin(Roles.hasAdminPrivileges(currentUser));
         fetchDaysOff();
+        fetchContainers();
     }, []);
 
     useEffect(() => {
@@ -70,6 +74,13 @@ const Preparations = ({ history }) => {
         DayOffActions
             .findActives()
             .then(closedDays => setDaysOff(closedDays))
+            .catch(error => history.replace("/"));
+    };
+
+    const fetchContainers = () => {
+        ContainerActions
+            .findAvailable()
+            .then(response => setContainers(response))
             .catch(error => history.replace("/"));
     };
 
@@ -207,7 +218,7 @@ const Preparations = ({ history }) => {
     const getSign = item => {
         return item.isRemains ? 
             <i className="fas fa-sync-alt mr-2"></i> :
-        isDefinedAndNotVoid(item.packages) ? 
+        isDefined(item.catalog) && item.catalog.deliveredByChronopost ?
             <i className="fas fa-plane mr-2"></i> :
             <i className="fas fa-truck mr-2"></i>;
     };

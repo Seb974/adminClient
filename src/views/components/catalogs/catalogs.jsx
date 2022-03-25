@@ -4,7 +4,7 @@ import { CCard, CCardBody, CCardHeader, CCol, CDataTable, CRow, CButton } from '
 import { Link } from 'react-router-dom';
 import { isDefined } from 'src/helpers/utils';
 
-const Catalogs = (props) => {
+const Catalogs = ({ history }) => {
 
     const itemsPerPage = 50;
     const fields = ['name', 'code', 'etat', ' '];
@@ -18,10 +18,14 @@ const Catalogs = (props) => {
     useEffect(() => getDisplayedCatalogs(currentPage), [currentPage]);
 
     const getDisplayedCatalogs = async (page = 1) => {
-        const response = isDefined(search) && search.length > 0 ? await getSearchedCatalogs(search, page) : await getCatalogs(page);
-        if (isDefined(response)) {
-            setCatalogs(response['hydra:member']);
-            setTotalItems(response['hydra:totalItems']);
+        try {
+          const response = isDefined(search) && search.length > 0 ? await getSearchedCatalogs(search, page) : await getCatalogs(page);
+          if (isDefined(response)) {
+              setCatalogs(response['hydra:member']);
+              setTotalItems(response['hydra:totalItems']);
+          }
+        } catch (error) {
+            history.replace("/")
         }
     };
 

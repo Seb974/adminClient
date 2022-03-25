@@ -5,10 +5,12 @@ import AuthContext from 'src/contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import navigation from './navigation/navigation';
 import { isDefined } from 'src/helpers/utils'
+import PlatformContext from 'src/contexts/PlatformContext'
 
 const TheSidebar = () => {
   const dispatch = useDispatch();
   const { currentUser } = useContext(AuthContext);
+  const { platform } = useContext(PlatformContext);
   const show = useSelector(state => state.sidebarShow);
   const { t, i18n } = useTranslation();
   const [nav, setNav] = useState([]);
@@ -19,10 +21,10 @@ const TheSidebar = () => {
 
   useEffect(() => {
       setAppropriateNavigation()
-  }, [currentUser]);
+  }, [currentUser, platform]);
 
   const setAppropriateNavigation = () => {
-        setNav(navigation.getNav(t, currentUser));
+        setNav(navigation.getNav(t, currentUser, platform));
   };
 
   return !isDefined(nav) ? <></> : (

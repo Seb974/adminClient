@@ -1,6 +1,6 @@
 import Roles from "src/config/Roles";
 import { isInSelectedCountry } from "./map";
-import { getFloat, isDefined, isDefinedAndNotVoid } from "./utils";
+import { getFloat, getInt, isDefined, isDefinedAndNotVoid } from "./utils";
 
 export const shop = {
     id: "-1",
@@ -114,7 +114,7 @@ export const getPreparedOrder = (order, currentUser) => {
                 :
                 item['@id']
         }),
-        packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id']})),
+        packages: !isDefinedAndNotVoid(order.packages) ? [] : order.packages.map(p => ({...p, container: p.container['@id'], quantity: getInt(p.quantity)})),
         isRemains: false
     };
 }

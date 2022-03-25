@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CButton, CCol, CFormGroup, CInput, CInputGroup, CInputGroupAppend, CInputGroupText, CLabel, CRow } from '@coreui/react';
 import Select from 'src/components/forms/Select';
 import CIcon from '@coreui/icons-react';
+import { isDefined } from 'src/helpers/utils';
 
 const CatalogPrice = ({ index, details, options, catalogs, setCatalogOptions }) => {
 
@@ -32,7 +33,7 @@ const CatalogPrice = ({ index, details, options, catalogs, setCatalogOptions }) 
             <CRow className="mt-4 mr-1 d-flex justify-content-start">
                 <CCol xs="12" sm="5">
                     <CFormGroup>
-                        <Select name={ index } label="Catalogue" value={ details.id } onChange={ handleCatalogChange }>
+                        <Select name={ index } label="Catalogue" value={ isDefined(details.catalog) ? details.catalog.id : 0 } onChange={ handleCatalogChange }>
                             { catalogs
                                 .filter(catalog => options.find(option => catalog.id === option.id) === undefined || catalog.id === details.id )
                                 .map(catalog => <option key={ catalog.id } value={ catalog.id }>{ catalog.name }</option>)

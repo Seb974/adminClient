@@ -17,7 +17,7 @@ import MessageContext from 'src/contexts/MessageContext';
 import MessageActions from 'src/services/MessageActions';
 import { getStore } from 'src/helpers/user';
 
-const DataProvider = ({ children }) => {
+const DataProvider = ({ loadedPlatform, children }) => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(AuthActions.isAuthenticated());
     const [currentUser, setCurrentUser] = useState(AuthActions.getCurrentUser());
@@ -43,10 +43,8 @@ const DataProvider = ({ children }) => {
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
+        fetchPlatform();
         AuthActions.setErrorHandler(setCurrentUser, setIsAuthenticated);
-        PlatformActions.find()
-                       .then(response => setPlatform(response))
-                       .catch(error => error)
         CatalogActions.findAll()
                       .then(response => setCatalogs(response))
                       .catch(error => error)
@@ -88,6 +86,16 @@ const DataProvider = ({ children }) => {
             setSelectedCatalog(selection);
         }
     }, [catalogs, country]);
+
+    const fetchPlatform = () => {
+        if (!isDefined(loadedPlatform))
+            PlatformActions
+                .find()
+                .then(response => setPlatform(response))
+                .catch(error => error)
+        else
+            setPlatform(loadedPlatform);
+    };
 
     return (
         <PlatformContext.Provider value={ {platform, setPlatform} }>
