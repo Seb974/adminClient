@@ -1,4 +1,5 @@
 import api from 'src/config/api';
+import { isDefined } from 'src/helpers/utils';
 
 function find() {
     return api
@@ -26,10 +27,20 @@ function createImage(image) {
               .then(response => response.data);
 }
 
+function createLogo(image, type, owner = null) {
+    let formData = new FormData();
+    formData.append('file', image);
+    formData.append('instance', type);
+    const rootRequest = isDefined(owner) ? `/api/pictures?owner=${ owner.id }` : `/api/pictures`;
+    return api.post(rootRequest, formData, {headers: {'Content-type': 'multipart/form-data'}})
+              .then(response => response.data['@id']);
+}
+
 export default {
     find, 
     delete: deletePlatform,
     update,
     create,
-    createImage
+    createImage,
+    createLogo
 }

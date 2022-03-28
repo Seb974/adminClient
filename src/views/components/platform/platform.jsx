@@ -17,6 +17,8 @@ import ImgixAccount from 'src/components/Externs/ImgixAccount';
 import AxonautAccount from 'src/components/Externs/AxonautAccount';
 import StripeAccount from 'src/components/Externs/StripeAccount';
 import ChronopostAccount from 'src/components/Externs/ChronopostAccount';
+import Logos from 'src/components/forms/Logos';
+import { lowerFirst } from 'lodash';
 
 const Platform = ({ history, match }) => {
 
@@ -90,9 +92,10 @@ const Platform = ({ history, match }) => {
         return viewedPlatform;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const platformToWrite = getPlatformToWrite();
+        const logos = await writeLogos();
+        const platformToWrite = getPlatformToWrite(logos);
         const request = !isDefined(platform['@id']) ? PlatformActions.create(platformToWrite) : PlatformActions.update(platform.id, platformToWrite);
         request.then(response => setErrors(initialErrors))
                 .catch( ({ response }) => {
@@ -109,9 +112,9 @@ const Platform = ({ history, match }) => {
                 });
     };
 
-    const getPlatformToWrite = () => {
+    const getPlatformToWrite = (logos = []) => {
         const { imgKey, axonautKey, stripePrivateKey, chronopostPassword } = platform;
-        let main = {...platform, metas: {...informations}, pickers: pickers.map(picker => picker['@id']), terms, notices, socials };
+        let main = {...platform, metas: {...informations}, pickers: pickers.map(picker => picker['@id']), terms, notices, socials, logos };
         main = isUpdated(imgKey) ? {...main, imgKey} : main;
         main = isUpdated(axonautKey) ? {...main, axonautKey} : main;
         main = isUpdated(stripePrivateKey) ? {...main, stripePrivateKey} : main;
@@ -161,6 +164,18 @@ const Platform = ({ history, match }) => {
 
     const termsModules = useMemo(() => ({ toolbar: { container: CONTAINER, handlers: { image: termsImageHandler } }}), []);
     const noticesModules = useMemo(() => ({ toolbar: { container: CONTAINER, handlers: { image: noticesImageHandler } }}), []);
+
+    const writeLogos = async () => {
+        const savedLogos = await Promise.all(platform.logos.map( async logo => {
+            const { image, type } = logo;
+            if (image && !image.filePath) {
+                const savedImage = await PlatformActions.createLogo(image, type);
+                return { ...logo, image: savedImage };
+            } else
+                return isDefined(image) ? {...logo, image: image['@id']} : lowerFirst;
+        }));
+        return savedLogos;
+    };
 
     return !isDefined(platform) ? <></> : (
                     <CRow>
@@ -326,10 +341,15 @@ const Platform = ({ history, match }) => {
                                                 <ChronopostAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
                                                 <AxonautAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
                                             </Tab>
+                                            <Tab eventKey="logos" title="Logos">
+                                                <Logos owner={ platform } setOwner={ setPlatform }/>
+                                            </Tab>
                                         </Tabs>
-                                        <CRow className="mt-4 d-flex justify-content-center">
-                                            <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
-                                        </CRow>
+                                        { Tabs.eventKey !== "logos" &&
+                                            <CRow className="mt-4 d-flex justify-content-center">
+                                                <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>
+                                            </CRow>
+                                        }
                                     </CForm>
                                 </CCardBody>
                                 <CCardFooter>

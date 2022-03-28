@@ -4,7 +4,7 @@ import { CCreateElement, CSidebar, CSidebarBrand, CSidebarNav, CSidebarNavDivide
 import AuthContext from 'src/contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import navigation from './navigation/navigation';
-import { isDefined } from 'src/helpers/utils'
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils'
 import PlatformContext from 'src/contexts/PlatformContext'
 
 const TheSidebar = () => {
@@ -30,8 +30,26 @@ const TheSidebar = () => {
   return !isDefined(nav) ? <></> : (
     <CSidebar show={show} unfoldable onShowChange={(val) => dispatch({type: 'set', sidebarShow: val })}>
       <CSidebarBrand className="d-md-down-none" to="/">
-        <img src="assets/img/logo/logo_navbar_full.png" height={30} alt="logo" className="c-sidebar-brand-full" name="logo-negative"/>
-        <img src="assets/img/logo/logo_fp_7.png" height={32} alt="logo" className="c-sidebar-brand-minimized" name="sygnet"/>
+        { isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_STRETCHED_LIGHT")) && 
+          <img 
+            src={ (platform.logos.find(l => l.type === "LOGO_STRETCHED_LIGHT")).image.imgPath }
+            height={ 45 } 
+            alt={ isDefined(platform) ? platform.name : "LOGO" }
+            className="c-sidebar-brand-full" 
+            name="logo-negative"
+            loading="lazy"
+          />
+        }
+        { isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_SQUARE")) &&
+          <img 
+            src={ (platform.logos.find(l => l.type === "LOGO_SQUARE")).image.imgPath }
+            height={ 32 } 
+            alt={ isDefined(platform) ? platform.name : "LOGO" }
+            className="c-sidebar-brand-minimized" 
+            name="sygnet"
+            loading="lazy"
+          />
+        }
       </CSidebarBrand>
       <CSidebarNav>
         <CCreateElement items={ nav } components={{ CSidebarNavDivider, CSidebarNavDropdown, CSidebarNavItem, CSidebarNavTitle }}/>

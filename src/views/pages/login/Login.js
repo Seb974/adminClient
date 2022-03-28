@@ -5,7 +5,7 @@ import AuthContext from 'src/contexts/AuthContext'
 import AuthActions from 'src/services/AuthActions'
 import { useTranslation } from 'react-i18next'
 import PlatformContext from 'src/contexts/PlatformContext'
-import { isDefined } from 'src/helpers/utils'
+import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils'
 import { Spinner } from 'react-bootstrap'
 import api from 'src/config/api'
 
@@ -52,7 +52,14 @@ const Login = ({ history }) => {
                 <CCardBody>
                   <CForm onSubmit={ handleSubmit }>
                     <h1 className="text-center mb-0">
-                      <img src="assets/img/logo/logo_fp_4.png" alt={ isDefined(platform) ? platform.name : "" } width={ 150 }/>
+                      { isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_STRETCHED_DARK")) &&
+                          <img 
+                              src={ (platform.logos.find(l => l.type === "LOGO_STRETCHED_DARK")).image.imgPath }
+                              alt={ isDefined(platform) ? platform.name : "LOGO" } 
+                              width={ 175 }
+                              loading="lazy"
+                            />
+                      }
                     </h1>
                     <p className="text-muted mt-0 text-center">{ t("login.text-muted.label") }</p>
                     <CFormGroup className="mt-4">
@@ -122,7 +129,14 @@ const Login = ({ history }) => {
               <CCard className="text-white py-5 d-md-down-none" style={{ width: '44%', backgroundColor: "#2a2b36"}}>  
                 <CCardBody className="text-center">
                   <div>
-                    <img src="assets/img/logo/logo_fp_2.png" alt={ isDefined(platform) ? platform.name : "" } width={ 300 }/>
+                    { isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_FULL_LIGHT")) &&
+                          <img 
+                              src={ (platform.logos.find(l => l.type === "LOGO_FULL_LIGHT")).image.imgPath }
+                              alt={ isDefined(platform) ? platform.name : "LOGO" } 
+                              width={ 300 }
+                              loading="lazy"
+                            />
+                    }
                     <p className="my-3">Accès réservé aux administrateurs.</p>
                     <a href={ api.CLIENT_DOMAIN } target="_blank">
                       <CButton color="success" className="mt-3" active tabIndex={-1}>Aller au site public</CButton>
