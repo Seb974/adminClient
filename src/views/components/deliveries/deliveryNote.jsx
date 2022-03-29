@@ -4,6 +4,7 @@ import TouringActions from 'src/services/TouringActions';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import DeliveryInformations from 'src/components/deliveryNotes/deliveryInformations';
 import PlatformContext from 'src/contexts/PlatformContext';
+import SellerActions from 'src/services/SellerActions';
 
 const styles = StyleSheet.create({
     viewer: {
@@ -87,9 +88,11 @@ const DeliveryNote = ({ match }) => {
     const { id = "new" } = match.params;
     const maxPerPage = 15;
     const [orders, setOrders] = useState([]);
+    const [sellers, setSellers] = useState([]);
     const { platform } = useContext(PlatformContext);
 
     useEffect(() => {
+        fetchSellers();
         if (id !== "new")
             fetchTouring(id);
     }, []);
@@ -101,10 +104,17 @@ const DeliveryNote = ({ match }) => {
             .catch(error => console.log(error));
     };
 
+    const fetchSellers = () => {
+        SellerActions
+            .findActiveSellers()
+            .then(response => setSellers(response))
+            .catch(error => console.log(error));
+    };
+
     return !isDefinedAndNotVoid(orders) ? <></> : (
         <PDFViewer id="deliveryViewer" style={ styles.viewer }>
             <Document style={ styles.viewer }>
-                { orders.map(order => <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 } platform={ platform }/> )}
+                { orders.map(order => <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 } platform={ platform } activeSellers={ sellers }/> )}
             </Document>
         </PDFViewer>
     );

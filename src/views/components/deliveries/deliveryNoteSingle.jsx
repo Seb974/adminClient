@@ -4,6 +4,7 @@ import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
 import DeliveryInformations from 'src/components/deliveryNotes/deliveryInformations';
 import OrderActions from 'src/services/OrderActions';
 import PlatformContext from 'src/contexts/PlatformContext';
+import SellerActions from 'src/services/SellerActions';
 
 const styles = StyleSheet.create({
     viewer: {
@@ -88,8 +89,10 @@ const DeliveryNoteSingle = ({ match }) => {
     const maxPerPage = 15;
     const [order, setOrder] = useState([]);
     const { platform } = useContext(PlatformContext);
+    const [sellers, setSellers] = useState([]);
 
     useEffect(() => {
+        fetchSellers();
         if (id !== "new")
             fetchOrder(id);
     }, []);
@@ -106,10 +109,17 @@ const DeliveryNoteSingle = ({ match }) => {
             .catch(error => console.log(error));
     };
 
+    const fetchSellers = () => {
+        SellerActions
+            .findActiveSellers()
+            .then(response => setSellers(response))
+            .catch(error => console.log(error));
+    };
+
     return !isDefined(order) || !isDefinedAndNotVoid(order.items) ? <></> : (
         <PDFViewer id="deliveryViewer" style={ styles.viewer }>
             <Document style={ styles.viewer }>
-                <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 } platform={ platform }/>
+                <DeliveryInformations order={ order } ordersLength={ order.items.length } maxPerPage={ maxPerPage } packagesLength={ isDefined(order.packages) ? order.packages.length : 0 } platform={ platform } activeSellers={ sellers }/>
             </Document>
         </PDFViewer>
     );

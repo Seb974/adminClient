@@ -12,6 +12,8 @@ import Image from 'src/components/forms/image';
 import { Tabs, Tab } from 'react-bootstrap';
 import AddressPanel from 'src/components/userPages/AddressPanel';
 import ImgixAccount from 'src/components/Externs/ImgixAccount';
+import Logos from 'src/components/forms/Logos';
+import PlatformActions from 'src/services/PlatformActions';
 
 const Seller = ({ match, history }) => {
 
@@ -20,8 +22,8 @@ const Seller = ({ match, history }) => {
     const [editing, setEditing] = useState(false);
     const initialInformations =  AddressPanel.getInitialInformations();
     const [informations, setInformations] = useState(initialInformations);
-    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", imgDomain: "", imgKey: "" };
-    const [seller, setSeller] = useState({...defaultSeller, needsRecovery: false, delayInDays: true, image: null, isActive: true });
+    const defaultSeller = {name: "", delay: "", ownerRate: "", needsRecovery: "", recoveryDelay: "", delayInDays: "", image: "", isActive: "", phone: "", address: "", address2: "", zipcode: "", city: "", position: "", imgDomain: "", imgKey: "", hasSeparatedNote: "" };
+    const [seller, setSeller] = useState({...defaultSeller, needsRecovery: false, delayInDays: true, image: null, isActive: true, hasSeparatedNote: false });
     const [errors, setErrors] = useState(defaultSeller);
     const [users, setUsers] = useState([]);
     const [isAdmin, setIsAdmin] = useState([]);
@@ -43,8 +45,9 @@ const Seller = ({ match, history }) => {
             setEditing(true);
             SellerActions.find(id)
                 .then(response => {
-                    const {metas, imgDomain, imgKey, ...dbSeller} = response;
-                    const viewedSeller = isDefined(imgDomain) ? {...dbSeller, imgDomain} : dbSeller;
+                    const {metas, imgDomain, imgKey, hasSeparatedNote, ...dbSeller} = response;
+                    let viewedSeller = isDefined(imgDomain) ? {...dbSeller, imgDomain} : {...dbSeller, imgDomain: seller.imgDomain};
+                    viewedSeller = isDefined(hasSeparatedNote) ? {...dbSeller, hasSeparatedNote} : {...dbSeller, hasSeparatedNote: seller.hasSeparatedNote};
                     setSeller(viewedSeller);
                     if (isDefined(metas))
                         setInformations(metas);
@@ -58,11 +61,13 @@ const Seller = ({ match, history }) => {
     const handleRecovery = ({ currentTarget }) => setSeller({...seller, needsRecovery: !seller.needsRecovery});
     const handleStatus = ({ currentTarget }) => setSeller({...seller, isActive: !seller.isActive});
     const handleDelayType = ({ currentTarget }) => setSeller({...seller, delayInDays: !seller.delayInDays});
+    const handleSeparatedNotes = ({ currentTarget }) => setSeller({...seller, hasSeparatedNote: !seller.hasSeparatedNote});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!seller.needsRecovery || (seller.needsRecovery && delaysConsistency())) {
-            const sellerToWrite = await getSellerWithImage();
+            const logos = await writeLogos();
+            const sellerToWrite = await getSellerWithImage(logos);
             const request = !editing ? SellerActions.create(sellerToWrite) : SellerActions.update(id, sellerToWrite);
             request.then(response => {
                         setErrors(defaultSeller);
@@ -105,9 +110,10 @@ const Seller = ({ match, history }) => {
         return new Date(today.getFullYear(), today.getMonth(), (today.getDate() + days), (9 + hours), trueMinutes, 0);
     };
 
-    const getSellerToWrite = () => {
+    const getSellerToWrite = (logos = []) => {
         return {
-            ...seller, 
+            ...seller,
+            logos,
             ownerRate: getFloat(seller.ownerRate),
             delay: getInt(seller.delay),
             recoveryDelay: seller.needsRecovery ? getInt(seller.recoveryDelay) : null,
@@ -117,8 +123,8 @@ const Seller = ({ match, history }) => {
         };
     };
 
-    const getSellerWithImage = async () => {
-        let sellerWithImage = getSellerToWrite();
+    const getSellerWithImage = async (logos = []) => {
+        let sellerWithImage = getSellerToWrite(logos);
         if (seller.image) {
              if (!seller.image.filePath) {
                 const image = await SellerActions.createImage(seller.image);
@@ -128,6 +134,18 @@ const Seller = ({ match, history }) => {
             }
         }
         return sellerWithImage;
+    };
+
+    const writeLogos = async () => {
+        const savedLogos = await Promise.all(seller.logos.map( async logo => {
+            const { image, type } = logo;
+            if (image && !image.filePath) {
+                const savedImage = await PlatformActions.createLogo(image, type);
+                return { ...logo, image: savedImage };
+            } else
+                return isDefined(image) ? {...logo, image: image['@id']} : logo;
+        }));
+        return savedLogos;
     };
 
     return (
@@ -186,7 +204,7 @@ const Seller = ({ match, history }) => {
                                 { Roles.hasAdminPrivileges(currentUser) && 
                                     <Tab eventKey="accounts" title="Paramètres">
                                         <CRow>
-                                            <CCol xs="12" md="6" className="my-4">
+                                            <CCol xs="12" md="4" className="my-4">
                                                 <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
                                                     <CCol xs="3" sm="2" md="3">
                                                         <CSwitch name="isActive" className="mr-1" color="danger" shape="pill" variant="opposite" checked={ seller.isActive } onChange={ handleStatus }/>
@@ -194,7 +212,15 @@ const Seller = ({ match, history }) => {
                                                     <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">Actif</CCol>
                                                 </CFormGroup>
                                             </CCol>
-                                            <CCol xs="12" md="6" className="my-4">
+                                            <CCol xs="12" md="4" className="my-4">
+                                                <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
+                                                    <CCol xs="3" sm="2" md="3">
+                                                        <CSwitch name="hasSeparatedNote" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.hasSeparatedNote } onChange={ handleSeparatedNotes }/>
+                                                    </CCol>
+                                                    <CCol tag="label" xs="9" sm="10" md="9" className="col-form-label">BL séparé</CCol>
+                                                </CFormGroup>
+                                            </CCol>
+                                            <CCol xs="12" md="4" className="my-4">
                                                 <CFormGroup row className="mb-0 ml-1 d-flex align-items-end">
                                                     <CCol xs="3" sm="2" md="3">
                                                         <CSwitch name="needsRecovery" className="mr-1" color="dark" shape="pill" variant="opposite" checked={ seller.needsRecovery } onChange={ handleRecovery }/>
@@ -284,6 +310,9 @@ const Seller = ({ match, history }) => {
                                             <ImgixAccount imageOwner={ seller } handleChange={ handleChange }/>
                                     </Tab>
                                 }
+                                <Tab eventKey="logos" title="Logos">
+                                    <Logos owner={ seller } setOwner={ setSeller }/>
+                                </Tab>
                             </Tabs>
                             <CRow className="mt-4 d-flex justify-content-center">
                                 <CButton type="submit" size="sm" color="success"><CIcon name="cil-save"/> Enregistrer</CButton>

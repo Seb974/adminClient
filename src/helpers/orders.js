@@ -108,13 +108,24 @@ export const getTotalHT = order => {
     return Math.round((totalHT) * 100) / 100;
 };
 
-export const getTotalTTC = order => {
-    // const { packages, catalog, totalHT } = order
-    // // const containersTotal = getContainerTotalTTC(packages, catalog);
-    // const productsTax = getProductsTotalTax(order, catalog);
-    // return Math.round((totalHT + productsTax) * 100) / 100;
-    return getTotalHT(order) + getTotalTax(order);
+export const getSubTotalHT = (items, onlinePayment) => {
+    return items.reduce((sum, curr) => {
+        const quantity = onlinePayment ? curr.orderedQty : 
+                        isDefined(curr.deliveredQty) ? curr.deliveredQty : 
+                        isDefined(curr.preparedQty) ? curr.preparedQty : curr.orderedQty;
+        return sum += isDefined(quantity) ? curr.price * quantity : 0;
+    }, 0);
 };
+
+export const getContainerCosts = (items, catalog) => {
+    return items.filter(i => i.isPackage).reduce((sum, curr) => {
+        const priceEntity = curr.container.catalogPrices.find(c => c.catalog.code === catalog.code);
+        const price = isDefined(priceEntity) ? priceEntity.amount : 0;
+        return sum += curr.quantity * price;
+    }, 0);
+};
+
+export const getTotalTTC = order => getTotalHT(order) + getTotalTax(order);
 
 export const getTotalTax = order => {
     const { packages, catalog } = order;

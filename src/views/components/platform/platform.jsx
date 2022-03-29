@@ -18,7 +18,6 @@ import AxonautAccount from 'src/components/Externs/AxonautAccount';
 import StripeAccount from 'src/components/Externs/StripeAccount';
 import ChronopostAccount from 'src/components/Externs/ChronopostAccount';
 import Logos from 'src/components/forms/Logos';
-import { lowerFirst } from 'lodash';
 
 const Platform = ({ history, match }) => {
 
@@ -172,7 +171,7 @@ const Platform = ({ history, match }) => {
                 const savedImage = await PlatformActions.createLogo(image, type);
                 return { ...logo, image: savedImage };
             } else
-                return isDefined(image) ? {...logo, image: image['@id']} : lowerFirst;
+                return isDefined(image) ? {...logo, image: image['@id']} : logo;
         }));
         return savedLogos;
     };

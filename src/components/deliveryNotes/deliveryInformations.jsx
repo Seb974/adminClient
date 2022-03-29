@@ -114,46 +114,87 @@ const styles = StyleSheet.create({
     }
 });
 
-const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength = 0, platform = null }) => {
+const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength = 0, platform = null, activeSellers = [] }) => {
 
-    const totalPages = Math.ceil((ordersLength + packagesLength) / maxPerPage);
-    const pages = [...Array(totalPages).keys()];
-    const invoicedElements = packagesLength === 0 ? 
-        [...order.items.map(i => ({...i, isPackage: false}))] : 
-        [...order.items.map(i => ({...i, isPackage: false})), ...order.packages.map(p => ({...p, isPackage: true}))];
+    const sellers = order.items.map(i => i.product.seller).reduce((arr, curr) => {
+        return arr = arr.find(s => s.id === curr.id) === undefined ? [...arr, curr] : arr;
+    }, []);
 
-    const getPlatformAddress = () => {
-        if (isDefined(platform) && isDefined(platform.metas)) {
-            const address = platform.metas.address;
+    const getItemsSellers = sellers => {
+        const dbSellers = sellers.map(s => activeSellers.find(seller => seller.id === s.id)).filter(s => isDefined(s));
+        const separatedSellers = dbSellers.filter(s => s.hasSeparatedNote);
+        const separatedItems = separatedSellers.map(s => {
+            const relatedItems = order.items.filter(i => i.product.seller.id === s.id)
+                                            .map(i => ({...i, isPackage: false}));
+            return { seller: s, items: relatedItems };
+        });
+        
+        const linkedSellers = dbSellers.filter(s => !isDefined(s.hasSeparatedNote) || !s.hasSeparatedNote).map(s => s.id);
+        const linkedItems = order.items.filter(i => linkedSellers.includes(i.product.seller.id))
+                                       .map(i => ({...i, isPackage: false}));
+
+        const platformItems = isDefined(order.packages) ? [...linkedItems, ...order.packages.map(p => ({...p, isPackage: true}))] : linkedItems;
+
+        return [...separatedItems, { platform: platform, items: platformItems}];
+    };
+
+    const itemsSellers = getItemsSellers(sellers);
+
+
+    const getPages = sellersItems => {
+        let pageItems = [];
+        sellersItems.map((sellerItems, i) => {
+            if (sellerItems.items.length <= maxPerPage) {
+                pageItems = [...pageItems, {...sellerItems, page: i }];
+            } else {
+                let j = 0;
+                while (j * maxPerPage < sellerItems.items.length) {
+                    pageItems = [...pageItems, {...sellerItems, items: sellerItems.items.slice((j * maxPerPage), ((j + 1) * maxPerPage)), page: i + j}];
+                    j++;
+                }
+            }
+        });
+        return pageItems;
+    };
+
+    const pages = getPages(itemsSellers);
+
+    const getEntityAddress = (entity) => {
+        if (isDefined(entity) && isDefined(entity.metas)) {
+            const address = entity.metas.address;
             return isDefined(address) && address.length > 0 ? (address.split(','))[0] :  "";
         }
         return "";
     };
 
-    const getPlatformCity = () => {
-        if (isDefined(platform) && isDefined(platform.metas)) {
-            const zipcode = platform.metas.zipcode;
-            const city = platform.metas.city;
+    const getEntityCity = (entity) => {
+        if (isDefined(entity) && isDefined(entity.metas)) {
+            const zipcode = entity.metas.zipcode;
+            const city = entity.metas.city;
             return isDefined(zipcode) && isDefined(city) ? `${zipcode} - ${city}` : "";
         }
         return "";
     };
 
-    const getPlatformSiret = () => {
-        return isDefined(platform) && isDefined(platform.siret) ? `N° SIRET : ${platform.siret}` : "";
+    const getEntitySiret = (entity) => {
+        return isDefined(entity) && isDefined(entity.siret) ? `N° SIRET : ${entity.siret}` : "";
     };
 
-    return !isDefined(platform) ? <></> : (
+    return !isDefined(platform) || !isDefinedAndNotVoid(pages) ? <></> : (
         pages.map((page, i) => {
-
-            const itemsToDisplay = invoicedElements.slice((i * maxPerPage), ((i + 1) * maxPerPage));
-            const orderPages = Math.ceil(invoicedElements.length / maxPerPage);
-
-            return !isDefinedAndNotVoid(itemsToDisplay) ? <></> : (
+            return (
                 <Page size="A4" style={ styles.page }>
-                    { isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_FULL_DARK")) && 
+                    { !isDefined(page.seller) && isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_FULL_DARK")) &&
                         <Image 
                             src={ (platform.logos.find(l => l.type === "LOGO_FULL_DARK")).image.imgPath }
+                            style={styles.background}
+                            loading="lazy"
+                            alt=""
+                        />
+                    }
+                    { isDefined(page.seller) && isDefinedAndNotVoid(page.seller.logos) && isDefined(page.seller.logos.find(l => l.type === "LOGO_FULL_DARK")) &&
+                        <Image 
+                            src={ (page.seller.logos.find(l => l.type === "LOGO_FULL_DARK")).image.imgPath }
                             style={styles.background}
                             loading="lazy"
                             alt=""
@@ -162,7 +203,7 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
                     <View style={ styles.body }>
                         <View style={styles.header}>
                                 <View style={ styles.society }>
-                                    { isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_STRETCHED_DARK")) && 
+                                    { !isDefined(page.seller) && isDefined(platform) && isDefinedAndNotVoid(platform.logos) && isDefined(platform.logos.find(l => l.type === "LOGO_STRETCHED_DARK")) &&
                                         <Image 
                                             src={ (platform.logos.find(l => l.type === "LOGO_STRETCHED_DARK")).image.imgPath }
                                             style={{ width: '120px', marginLeft: 5, marginTop: -10, marginBottom: 10}}
@@ -170,10 +211,18 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
                                             alt=""
                                         />
                                     }
+                                    { isDefined(page.seller) && isDefinedAndNotVoid(page.seller.logos) && isDefined(page.seller.logos.find(l => l.type === "LOGO_STRETCHED_DARK")) &&
+                                        <Image 
+                                            src={ (page.seller.logos.find(l => l.type === "LOGO_STRETCHED_DARK")).image.imgPath }
+                                            style={{ width: '120px', marginLeft: 5, marginTop: -10, marginBottom: 10}}
+                                            loading="lazy"
+                                            alt=""
+                                        />
+                                    }
                                     <View >
-                                        <Text style={styles.text}>{ getPlatformAddress() }</Text>
-                                        <Text style={styles.text}>{ getPlatformCity() }</Text>
-                                        <Text style={styles.small}>{ getPlatformSiret() }</Text>
+                                        <Text style={styles.text}>{ getEntityAddress(page.page + 1 === pages.length || !isDefined(page.seller) ? platform : page.seller) }</Text>
+                                        <Text style={styles.text}>{ getEntityCity(page.page + 1 === pages.length || !isDefined(page.seller) ? platform : page.seller) }</Text>
+                                        <Text style={styles.small}>{ getEntitySiret(page.page + 1 === pages.length || !isDefined(page.seller) ? platform : page.seller) }</Text>
                                     </View>
                                 </View>
                             <View style={ styles.client }>
@@ -193,10 +242,10 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
                             <Text style={styles.text}>{"Le " + new Date(order.deliveryDate).toLocaleDateString() + ',' }</Text>
                         </View>
                         <View style={ styles.pageNumber }>
-                            <Text style={styles.pageText}>Page { i + 1 } sur { orderPages }</Text>
+                            <Text style={styles.pageText}>Page { i + 1 } sur { pages.length }</Text>
                         </View>
 
-                        <DeliveryTable order={ order } items={ itemsToDisplay }/>
+                        <DeliveryTable order={ order } items={ page.items } currentPage={ i } numberOfPages={ pages.length }/>
             
                     </View>
                         <View style={ styles.footer }>
