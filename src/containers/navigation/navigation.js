@@ -167,6 +167,13 @@ function getNav(translation, currentUser, platform)
         to: '/components/traceabilities',
         icon: <CIcon name="cil-zoom" customClasses="c-sidebar-nav-icon"/>,
       },
+    !["ADMIN", "PICKER"].includes(mainRole) ? voidValue :  
+    {
+      _tag: 'CSidebarNavItem',
+      name: translation("returnables.label"),
+      to: '/components/returnables',
+      icon: <CIcon name="cil-basket" customClasses="c-sidebar-nav-icon"/>,
+    },
     !["ADMIN", "SELLER"].includes(mainRole) ? voidValue :
       {
         _tag: 'CSidebarNavItem',

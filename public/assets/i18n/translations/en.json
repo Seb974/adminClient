@@ -60,5 +60,6 @@
     "departments.label": "Department",
     "physical_sales.label": "Physical sales",
     "traceability.label": "Traceability",
-    "losts.label": "Losts"
+    "losts.label": "Losts",
+    "returnables.label": "Returnables"
 }

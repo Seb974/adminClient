@@ -60,5 +60,6 @@
     "departments.label": "Rayons",
     "physical_sales.label": "Ventes physiques",
     "traceability.label": "Traçabilité",
-    "losts.label": "Pertes"
+    "losts.label": "Pertes",
+    "returnables.label": "Consignes"
 }
