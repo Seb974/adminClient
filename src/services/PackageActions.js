@@ -18,7 +18,6 @@ function findPackagesNeedingReturn() {
               .then(response => response.data['hydra:member']);
 }
 
-
 function deletePackage(id) {
     return api.delete('/api/packages/' + id);
 }
@@ -34,7 +33,7 @@ function update(id, _package) {
 }
 
 function updateReturns(id, _package) {
-    return api.patch('/api/packages/' + id, {..._package});
+    return api.put('/api/packages/' + id, {..._package});
 }
 
 function create(_package) {
