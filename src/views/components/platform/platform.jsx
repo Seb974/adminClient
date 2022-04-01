@@ -18,6 +18,7 @@ import AxonautAccount from 'src/components/Externs/AxonautAccount';
 import StripeAccount from 'src/components/Externs/StripeAccount';
 import ChronopostAccount from 'src/components/Externs/ChronopostAccount';
 import Logos from 'src/components/forms/Logos';
+import TextingHouseAccount from 'src/components/Externs/TextingHouseAccount';
 
 const Platform = ({ history, match }) => {
 
@@ -28,9 +29,11 @@ const Platform = ({ history, match }) => {
     const initialPosition = AddressPanel.getInitialInformations();
     const initialInformations = {...initialPosition};
     const defaultSocial = {name: "", link: "", icon: "", count: 0};
-    const [platform, setPlatform] = useState({name: "", email: "", siret: "", imgDomain: "", imgKey: "", hasAxonautLink: false,
-                                             axonautKey: "", axonautEmail: "", stripePublicKey: "", stripePublicKey: "", 
-                                             hasChronopostLink: false, chronopostNumber: "", chronopostPassword: ""});
+    const [platform, setPlatform] = useState({ name: "", email: "", siret: "", imgDomain: "", imgKey: "", hasAxonautLink: false,
+                                               axonautKey: "", axonautEmail: "", stripePublicKey: "", stripePublicKey: "",
+                                               hasChronopostLink: false, chronopostNumber: "", chronopostPassword: "",
+                                               hasSMSOption: false, SMSUser: "", SMSKey: ""
+                                            });
     const initialErrors = {name: "", email: "", siret: "", ...initialInformations};
     const [informations, setInformations] = useState(initialInformations);
     const [errors, setErrors] = useState(initialErrors);
@@ -78,7 +81,7 @@ const Platform = ({ history, match }) => {
     const getDbPlatform = dbPlatform => {
         const { metas, pickers, terms, notices, socials, imgKey, imgDomain, hasAxonautLink, 
                 axonautKey, axonautEmail, stripePublicKey, stripePrivateKey, hasChronopostLink,
-                chronopostNumber, chronopostPassword, ...mainPlatform } = dbPlatform;
+                chronopostNumber, chronopostPassword, hasSMSOption, SMSUser, SMSKey, ...mainPlatform } = dbPlatform;
         let viewedPlatform = isDefined(imgDomain) ? {...mainPlatform, imgDomain} :  {...mainPlatform, imgDomain: ""};
             viewedPlatform = isDefined(hasAxonautLink) ? {...viewedPlatform, hasAxonautLink} : {...viewedPlatform, hasAxonautLink: false};
             viewedPlatform = isDefined(axonautKey) ? {...viewedPlatform, axonautKey} : {...viewedPlatform, axonautKey: ""};
@@ -88,6 +91,9 @@ const Platform = ({ history, match }) => {
             viewedPlatform = isDefined(hasChronopostLink) ? {...viewedPlatform, hasChronopostLink} : {...viewedPlatform, hasChronopostLink: false};
             viewedPlatform = isDefined(chronopostNumber) ? {...viewedPlatform, chronopostNumber} : {...viewedPlatform, chronopostNumber: ""};
             viewedPlatform = isDefined(chronopostPassword) ? {...viewedPlatform, chronopostPassword} :  {...viewedPlatform, chronopostPassword: ""};
+            viewedPlatform = isDefined(hasSMSOption) ? {...viewedPlatform, hasSMSOption} :  {...viewedPlatform, hasSMSOption: ""};
+            viewedPlatform = isDefined(SMSUser) ? {...viewedPlatform, SMSUser} :  {...viewedPlatform, SMSUser: ""};
+            viewedPlatform = isDefined(SMSKey) ? {...viewedPlatform, SMSKey} :  {...viewedPlatform, SMSKey: ""};
         return viewedPlatform;
     };
 
@@ -112,16 +118,17 @@ const Platform = ({ history, match }) => {
     };
 
     const getPlatformToWrite = (logos = []) => {
-        const { imgKey, axonautKey, stripePrivateKey, chronopostPassword } = platform;
+        const { imgKey, axonautKey, stripePrivateKey, chronopostPassword, SMSKey } = platform;
         let main = {...platform, metas: {...informations}, pickers: pickers.map(picker => picker['@id']), terms, notices, socials, logos };
         main = isUpdated(imgKey) ? {...main, imgKey} : main;
         main = isUpdated(axonautKey) ? {...main, axonautKey} : main;
         main = isUpdated(stripePrivateKey) ? {...main, stripePrivateKey} : main;
         main = isUpdated(chronopostPassword) ? {...main, chronopostPassword} : main;
+        main = isUpdated(SMSKey) ? {...main, SMSKey} : main;
         return main;
     };
 
-    const isUpdated = variable => isDefined(variable) && variable.length > 0;
+    const isUpdated = variable => isDefined(variable) && variable.length > 0 && variable !== "" && variable !== " ";
 
     const noticesImageHandler = () => {
         const input = document.createElement('input');
@@ -339,6 +346,7 @@ const Platform = ({ history, match }) => {
                                                 <ImgixAccount imageOwner={ platform } handleChange={ handleChange }/>
                                                 <ChronopostAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
                                                 <AxonautAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
+                                                <TextingHouseAccount platform={ platform } handleChange={ handleChange } handleCheckBox={ handleCheckBox }/>
                                             </Tab>
                                             <Tab eventKey="logos" title="Logos">
                                                 <Logos owner={ platform } setOwner={ setPlatform }/>

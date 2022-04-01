@@ -7,7 +7,6 @@ import PackageActions from 'src/services/PackageActions';
 const Returnables = () => {
 
     const itemsPerPage = 50;
-    const { currentUser } = useContext(AuthContext);
     const fields = ['Client', 'ChezLeClient', 'Récupéré', ' '];
     const [packages, setPackages] = useState([]);
 

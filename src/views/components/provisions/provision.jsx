@@ -334,8 +334,12 @@ const Provision = ({ match, history }) => {
                                         <CCol xs="12" lg="6">
                                             <Select className="mr-2" name="sendingMode" label="Mode d'envoi de la commande" value={ provision.sendingMode } onChange={ onChange }>
                                                 <option value={"email"}>{"Email"}</option>
-                                                <option value={"sms"}>{"SMS"}</option>
-                                                <option value={"email & sms"}>{"Email & SMS"}</option>
+                                                { platform.hasSMSOption &&
+                                                    <>
+                                                        <option value={"sms"}>{"SMS"}</option>
+                                                        <option value={"email & sms"}>{"Email & SMS"}</option>
+                                                    </>
+                                                }
                                             </Select>
                                         </CCol>
                                     </CRow>
