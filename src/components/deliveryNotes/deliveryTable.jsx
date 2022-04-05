@@ -60,6 +60,11 @@ const styles = StyleSheet.create({
         margin: "auto",
         marginTop: 5,
         fontSize: 10
+    },
+    tableCellBody: {
+        marginTop: 5,
+        fontSize: 10,
+        textAlign: "start"
     }
 });
 
@@ -105,7 +110,7 @@ const DeliveryTable = ({ order, items, currentPage, numberOfPages }) => {
                     return (
                         <View key={ i } style={styles.tableRow}>
                             <View style={styles.productCol}>
-                                <Text style={styles.tableCell}>{ getProductName(item) }</Text> 
+                                <Text style={styles.tableCellBody}>{ getProductName(item) }</Text> 
                             </View> 
                             <View style={styles.tableCol}> 
                                 <Text style={styles.tableCell}>{ item.orderedQty }</Text>
@@ -127,7 +132,7 @@ const DeliveryTable = ({ order, items, currentPage, numberOfPages }) => {
                     return (
                         <View style={styles.tableRow}>
                             <View style={styles.productCol}>
-                                <Text style={styles.tableCell}>{ item.container.name }</Text> 
+                                <Text style={styles.tableCellBody}>{ item.container.name }</Text> 
                             </View> 
                             <View style={styles.tableCol}> 
                                 <Text style={styles.tableCell}>{ item.quantity }</Text>
@@ -170,7 +175,7 @@ const DeliveryTable = ({ order, items, currentPage, numberOfPages }) => {
                 <>
                     <View style={styles.tableRow}>
                         <View style={styles.productCol}>
-                            <Text style={styles.tableCell}>{ "Livraison" }</Text> 
+                            <Text style={styles.tableCellBody}>{ "Livraison" }</Text> 
                         </View> 
                         <View style={styles.tableCol}> 
                             <Text style={styles.tableCell}>{ "" }</Text>

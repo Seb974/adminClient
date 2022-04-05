@@ -135,10 +135,7 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
                                        .map(i => ({...i, isPackage: false}));
 
         const platformItems = isDefined(order.packages) ? [...linkedItems, ...order.packages.map(p => ({...p, isPackage: true}))] : linkedItems;
-
-        const containersCost = getContainerCosts(platformItems, order.catalog);
-        const conditionCost = isDefined(order.appliedCondition) && order.appliedCondition.minForFree > getTotalHT(order) ? order.appliedCondition.price : 0;
-        return containersCost + conditionCost > 0 || platformItems.length > 0 ? [...separatedItems, { platform: platform, items: platformItems}] : separatedItems;
+        return platformItems.length > 0 ? [...separatedItems, { platform: platform, items: platformItems}] : separatedItems;
     };
 
     const itemsSellers = getItemsSellers(sellers);
