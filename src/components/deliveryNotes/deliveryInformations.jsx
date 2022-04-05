@@ -2,6 +2,7 @@ import React from 'react';
 import DeliveryTable from 'src/components/deliveryNotes/deliveryTable';
 import { Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { isDefined, isDefinedAndNotVoid } from 'src/helpers/utils';
+import { getContainerCosts, getTotalHT } from 'src/helpers/orders';
 
 const styles = StyleSheet.create({
     viewer: {
@@ -135,7 +136,9 @@ const DeliveryInformations = ({order, ordersLength, maxPerPage, packagesLength =
 
         const platformItems = isDefined(order.packages) ? [...linkedItems, ...order.packages.map(p => ({...p, isPackage: true}))] : linkedItems;
 
-        return [...separatedItems, { platform: platform, items: platformItems}];
+        const containersCost = getContainerCosts(platformItems, order.catalog);
+        const conditionCost = isDefined(order.appliedCondition) && order.appliedCondition.minForFree > getTotalHT(order) ? order.appliedCondition.price : 0;
+        return containersCost + conditionCost > 0 || platformItems.length > 0 ? [...separatedItems, { platform: platform, items: platformItems}] : separatedItems;
     };
 
     const itemsSellers = getItemsSellers(sellers);
